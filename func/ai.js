@@ -4,15 +4,15 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GEMMA_MODEL_NAME = "gemma2-9b-it";
-const API_KEY = Math.random() < 0.5 ? "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" : "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";
+const API_KEY = "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"
 const GEMINI_API_KEY = "AIzaSyCtBDTdbx37uvBqiImuFdZFfAf5RD5igVY";
 const dbPath = 'db/data.json';
 const modelPath = 'db/model.json';
 
 const generationConfig = {
-  temperature: 0.7,
+  temperature: 1,
   max_tokens: 500,
-  top_p: 1,
+  top_p: 0.9,
   stream: false,
   stop: null,
 };
@@ -116,9 +116,9 @@ const handleTextQuery = async (text, user) => {
       ...generationConfig,
     }, {
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${API_KEY}`,
-      },
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${API_KEY}`
+},
     });
 
     const responseText = responseGemma.data.choices[0].message.content;
@@ -131,14 +131,14 @@ const handleTextQuery = async (text, user) => {
     return responseText;
   } catch (error) {
     console.error('Error in handleTextQuery:', error);
-    return 'Terjadi kesalahan saat memproses permintaan Anda. Silakan tunggu beberapa detik atau menit, lalu coba lagi.';
+    return `> ${error.message}\n*Coba lagi lain waktu*`;
   }
 };
 
 const handleImageQuery = async (url, text, user) => {
   try {
     const history = loadHistory(user);
-    
+
     const response = await axios.get(url, { responseType: 'arraybuffer' });
     const imageData = Buffer.from(response.data).toString('base64');
 
@@ -161,7 +161,7 @@ const handleImageQuery = async (url, text, user) => {
     return cleanedOutputText;
   } catch (error) {
     console.error('Error in handleImageQuery:', error);
-    return 'Terjadi kesalahan saat memproses permintaan Anda. Silakan tunggu beberapa detik atau menit, lalu coba lagi.';
+    return `> ${error.message}\n*Coba lagi lain waktu*`;
   }
 };
 
