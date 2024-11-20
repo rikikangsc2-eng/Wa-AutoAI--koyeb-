@@ -1,0 +1,39 @@
+{
+  "name": "example-expressjs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@bochilteam/scraper": "^4.2.4",
+    "@google/generative-ai": "^0.21.0",
+    "@hapi/boom": "^10.0.0",
+    "@replit/node-fetch": "*",
+    "@whiskeysockets/baileys": "*",
+    "awesome-phonenumber": "^2.64.0",
+    "axios": "^1.3.4",
+    "chalk": "^4.1.2",
+    "crypto": "^1.0.1",
+    "dayjs": "*",
+    "discord.js": "^14.16.3",
+    "express": "^4.18.2",
+    "ffmpeg": "*",
+    "figlet": "^1.5.2",
+    "fs": "0.0.1-security",
+    "google-it": "*",
+    "gpti": "^2.0.1",
+    "index.js": "^0.0.3",
+    "jimp": "*",
+    "link-preview-js": "*",
+    "lodash": "^4.17.21",
+    "os": "*",
+    "pino": "^7.0.5",
+    "sharp": "*",
+    "util": "^0.12.4"
+  }
+}
