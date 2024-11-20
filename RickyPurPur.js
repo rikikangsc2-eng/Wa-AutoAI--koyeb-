@@ -14,7 +14,6 @@ const util = require("util");
 const chalk = require("chalk");
 const axios = require("axios");
 const toUrl = require("./func/tools-toUrl.js");
-const gameku = require("./func/fun-game.js");
 const ai = require("./func/ai.js");
 
 const botOwner = "6283894391287";
@@ -210,8 +209,8 @@ case "ai":
 
                 case "tourl":
                     if (m.mtype.includes("imageMessage") || m.mtype.includes("videoMessage")) {
-                        const hasil = await toUrl.get(m, client);
-                        m.reply(`${hasil}`);
+                        const hasil = await toUrl.get(m, client, true);
+                        m.reply(`${hasil}\n*note:* media is public with no expiration date, please be careful!.`);
                     } else {
                         m.reply("*Ex:* Upload gambar atau video dengan caption .tourl pastikan ukuran tidak melebihi 30 MB");
                     }

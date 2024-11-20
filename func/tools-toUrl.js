@@ -1,18 +1,17 @@
 const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const axios = require('axios');
-const qs = require('qs'); // Untuk encoding form data
+const qs = require('qs');
 
-const uploadToImgBB = async (buffer) => {
+const uploadToImgBB = async (buffer, noExpiration) => {
   try {
-    const base64Image = buffer.toString('base64'); // Konversi buffer ke base64
-    const expiration = 86400; // 24 jam dalam detik
+    const base64Image = buffer.toString('base64');
     const apiKey = '9e4671c6ee232da278ad037fe8a23ae8';
 
-    const formData = qs.stringify({
-      key: apiKey,
-      image: base64Image,
-      expiration: expiration,
-    });
+    const formData = qs.stringify(
+      noExpiration
+        ? { key: apiKey, image: base64Image }
+        : { key: apiKey, image: base64Image, expiration: 86400 }
+    );
 
     const response = await axios.post(
       `https://api.imgbb.com/1/upload`,
@@ -24,14 +23,13 @@ const uploadToImgBB = async (buffer) => {
       }
     );
 
-    return response.data.data.url; // Mengambil URL gambar dari respons
+    return response.data.data.url;
   } catch (error) {
-    console.error('Terjadi kesalahan saat mengunggah ke ImgBB:', error.message);
     throw error;
   }
 };
 
-const get = async (m, client) => {
+const get = async (m, client, noExpiration = false) => {
   const messageType = m.mtype;
   let fileExtension;
 
@@ -50,13 +48,12 @@ const get = async (m, client) => {
   }
 
   const buffer = await downloadMediaMessage(m, 'buffer', {}, {
-    reuploadRequest: client.updateMediaMessage
+    reuploadRequest: client.updateMediaMessage,
   });
 
-  // Unggah gambar ke ImgBB tanpa menyimpan ke file
-  const imageUrl = await uploadToImgBB(buffer);
+  const imageUrl = await uploadToImgBB(buffer, noExpiration);
 
-  return imageUrl; // Mengembalikan URL gambar
+  return imageUrl;
 };
 
 module.exports = { get };
