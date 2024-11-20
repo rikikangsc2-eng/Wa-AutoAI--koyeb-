@@ -5,6 +5,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GEMMA_MODEL_NAME = "gemma2-9b-it";
 const API_KEY = "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"
+const API_KEY2 = "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"
 const GEMINI_API_KEY = "AIzaSyCtBDTdbx37uvBqiImuFdZFfAf5RD5igVY";
 const dbPath = 'db/data.json';
 const modelPath = 'db/model.json';
@@ -110,16 +111,36 @@ const handleTextQuery = async (text, user) => {
       ? [{ role: 'system', content: modelConfig.systemPrompt }, ...history]
       : [{ role: 'system', content: dafPrompt }, ...history];
 
-    const responseGemma = await axios.post(GEMMA_API_URL, {
-      model: GEMMA_MODEL_NAME,
-      messages,
-      ...generationConfig,
-    }, {
-      headers: {
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${API_KEY}`
-},
-    });
+    const sendRequest = async (apiKey) => {
+      return await axios.post(GEMMA_API_URL, {
+        model: GEMMA_MODEL_NAME,
+        messages,
+        ...generationConfig,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+      });
+    };
+
+    let responseGemma;
+    try {
+      responseGemma = await sendRequest(API_KEY);
+    } catch (error) {
+      if (error.response && error.response.status === 429) {
+        try {
+          responseGemma = await sendRequest(API_KEY2);
+        } catch (error2) {
+          if (error2.response && error2.response.status === 429) {
+            return `> ${error2.message}\n*Coba lagi lain waktu*`;
+          }
+          throw error2;
+        }
+      } else {
+        throw error;
+      }
+    }
 
     const responseText = responseGemma.data.choices[0].message.content;
     history.push({ role: 'assistant', content: responseText });
