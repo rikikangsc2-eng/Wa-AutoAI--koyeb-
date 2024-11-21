@@ -22,7 +22,7 @@ const botGroup = "https://chat.whatsapp.com/DVSbBEUOE3PEctcarjkeQC";
 let gambar = {};
 let mkey = {};
 
-const arrMenuDownloader = ["tiktok", "ig", "play", "lahelu"];
+const arrMenuDownloader = ["tiktok", "ig", "play"];
 const arrMenuAI = ["bawaan", "reset", "set"];
 const arrMenuAnime = [];
 const arrMenuTools = ["tourl"];
@@ -156,61 +156,7 @@ const autoAI = async () => {
 
         if (cekCmd(m.body)) {
             switch (command) {
-                    case "lahelu":{
-    if (!msg) return m.reply("*Ex:* Meme");
-    try {
-        m.reply("*Mengirim media..*");
-        const response = await axios.get("https://itzpire.com/search/lahelu", { params: { query: msg } });
-        const mediaList = response.data.data;
-
-        if (!mediaList || mediaList.length === 0) {
-            return m.reply("Tidak ditemukan media untuk permintaan tersebut.");
-        }
-
-        let media;
-        let attempts = 0;
-        while (attempts < 5) {
-            const randomMedia = mediaList[Math.floor(Math.random() * mediaList.length)];
-            const mediaUrl = new URL(randomMedia.media);
-            
-            // Cek apakah media URL valid
-            try {
-                await axios.get(mediaUrl.href); // Coba akses URL media
-                media = randomMedia;
-                break;
-            } catch {
-                attempts++;
-            }
-        }
-
-        if (!media) {
-            return m.reply("Gagal mendapatkan media setelah beberapa percobaan.");
-        }
-
-        // Kirim media ke user berdasarkan jenisnya
-        if (media.mediaType === 1) {
-            client.sendMessage(m.chat, { video: { url: media.media }, mimetype: "video/mp4" }, { quoted: m });
-        } else if (media.mediaType === 0) {
-            client.sendMessage(m.chat, { image: { url: media.media }, caption: media.title }, { quoted: m });
-        } else {
-            m.reply("Jenis media tidak dikenali.");
-        }
-    } catch (e) {
-        // Penanganan error lengkap
-        if (e.response) {
-            // Server memberikan respons error
-            m.reply(`Error dari server: ${e.response.status} - ${e.response.statusText}`);
-        } else if (e.request) {
-            // Tidak ada respons dari server
-            m.reply("Tidak ada respons dari server. Periksa koneksi Anda.");
-        } else {
-            // Kesalahan lainnya
-            m.reply(`Terjadi kesalahan: ${e.message}`);
-        }
-    }
-            }
-    break;
-
+                    
                 case "sewa": {
                     m.reply("Sewa Bot ke Group\n\n*1 Bulan:* Rp. 5.000\n\nNote: Jika Bot Mati/perbaikan, waktu expired akan berhenti secara otomatis")
                 }break
@@ -283,13 +229,23 @@ case "ai":
                     }
                     break;
 
-                case "tiktok":
-                    if (!msg) return m.reply("*ex:* .tiktok https://vm.tiktok.com/ZSjBQ6t9g/");
+                    case "tiktok":
+                    if (!msg) return m.reply("*Ex:* .tiktok https://vm.tiktok.com/ZSjBQ6t9g/\n*Ex:* .tiktok JJ naruto");
                     try {
                         m.reply("*Mengirim media..*");
-                        const response = await axios.get("https://rikiapi.vercel.app/aio", { params: { url: msg } });
-                        const video = response.data.data;
-                        client.sendMessage(m.chat, { video: { url: video.high || video.low }, mimetype: "video/mp4" }, { quoted: m });
+                        if (msg.startsWith("http")) {
+                            const response = await axios.get("https://rikiapi.vercel.app/aio", { params: { url: msg } });
+                            const video = response.data.data;
+                            client.sendMessage(m.chat, { video: { url: video.high || video.low }, mimetype: "video/mp4" }, { quoted: m });
+                        } else {
+                            const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: msg } });
+                            const result = searchResponse.data.data;
+                            client.sendMessage(m.chat, { 
+                                video: { url: result.no_watermark }, 
+                                caption: `*Title:* ${result.title}\n*Author:* ${searchResponse.data.author}`, 
+                                mimetype: "video/mp4" 
+                            }, { quoted: m });
+                        }
                     } catch (e) {
                         m.reply(e.message);
                     }
