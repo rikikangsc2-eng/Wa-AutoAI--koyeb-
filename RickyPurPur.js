@@ -22,7 +22,7 @@ const botGroup = "https://chat.whatsapp.com/DVSbBEUOE3PEctcarjkeQC";
 let gambar = {};
 let mkey = {};
 
-const arrMenuDownloader = ["tiktok", "ig", "play"];
+const arrMenuDownloader = ["tiktok", "ig", "play", "lahelu"];
 const arrMenuAI = ["bawaan", "reset", "set"];
 const arrMenuAnime = [];
 const arrMenuTools = ["tourl"];
@@ -156,6 +156,26 @@ const autoAI = async () => {
 
         if (cekCmd(m.body)) {
             switch (command) {
+                    case "lahelu":
+    if (!msg) return m.reply("*Ex:* Meme");
+    try {
+        m.reply("*Mengirim media..*");
+        const response = await axios.get("https://itzpire.com/search/lahelu", { params: { query: msg } });
+        const data = response.data.data;
+        const randomMedia = data[Math.floor(Math.random() * data.length)];
+        const fixedMediaUrl = randomMedia.media.replace("https://cache.lahelu.com/https://cache.lahelu.com", "https://cache.lahelu.com");
+        
+        if (randomMedia.mediaType === 1) {
+            client.sendMessage(m.chat, { video: { url: fixedMediaUrl }, mimetype: "video/mp4" }, { quoted: m });
+        } else if (randomMedia.mediaType === 0) {
+            client.sendMessage(m.chat, { image: { url: fixedMediaUrl }, caption: randomMedia.title }, { quoted: m });
+        } else {
+            m.reply("Media tidak dikenali.");
+        }
+    } catch (e) {
+        m.reply(e.message);
+    }
+    break;
 
                 case "sewa": {
                     m.reply("Sewa Bot ke Group\n\n*1 Bulan:* Rp. 5.000\n\nNote: Jika Bot Mati/perbaikan, waktu expired akan berhenti secara otomatis")
