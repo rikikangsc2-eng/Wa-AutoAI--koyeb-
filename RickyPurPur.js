@@ -156,25 +156,59 @@ const autoAI = async () => {
 
         if (cekCmd(m.body)) {
             switch (command) {
-                    case "lahelu":
+                    case "lahelu":{
     if (!msg) return m.reply("*Ex:* Meme");
     try {
         m.reply("*Mengirim media..*");
         const response = await axios.get("https://itzpire.com/search/lahelu", { params: { query: msg } });
-        const data = response.data.data;
-        const randomMedia = data[Math.floor(Math.random() * data.length)];
-        const fixedMediaUrl = randomMedia.media.replace("https://cache.lahelu.com/https://cache.lahelu.com", "https://cache.lahelu.com");
-        
-        if (randomMedia.mediaType === 1) {
-            client.sendMessage(m.chat, { video: { url: fixedMediaUrl }, mimetype: "video/mp4" }, { quoted: m });
-        } else if (randomMedia.mediaType === 0) {
-            client.sendMessage(m.chat, { image: { url: fixedMediaUrl }, caption: randomMedia.title }, { quoted: m });
+        const mediaList = response.data.data;
+
+        if (!mediaList || mediaList.length === 0) {
+            return m.reply("Tidak ditemukan media untuk permintaan tersebut.");
+        }
+
+        let media;
+        let attempts = 0;
+        while (attempts < 5) {
+            const randomMedia = mediaList[Math.floor(Math.random() * mediaList.length)];
+            const mediaUrl = new URL(randomMedia.media);
+            
+            // Cek apakah media URL valid
+            try {
+                await axios.get(mediaUrl.href); // Coba akses URL media
+                media = randomMedia;
+                break;
+            } catch {
+                attempts++;
+            }
+        }
+
+        if (!media) {
+            return m.reply("Gagal mendapatkan media setelah beberapa percobaan.");
+        }
+
+        // Kirim media ke user berdasarkan jenisnya
+        if (media.mediaType === 1) {
+            client.sendMessage(m.chat, { video: { url: media.media }, mimetype: "video/mp4" }, { quoted: m });
+        } else if (media.mediaType === 0) {
+            client.sendMessage(m.chat, { image: { url: media.media }, caption: media.title }, { quoted: m });
         } else {
-            m.reply("Media tidak dikenali.");
+            m.reply("Jenis media tidak dikenali.");
         }
     } catch (e) {
-        m.reply(e.message);
+        // Penanganan error lengkap
+        if (e.response) {
+            // Server memberikan respons error
+            m.reply(`Error dari server: ${e.response.status} - ${e.response.statusText}`);
+        } else if (e.request) {
+            // Tidak ada respons dari server
+            m.reply("Tidak ada respons dari server. Periksa koneksi Anda.");
+        } else {
+            // Kesalahan lainnya
+            m.reply(`Terjadi kesalahan: ${e.message}`);
+        }
     }
+            }
     break;
 
                 case "sewa": {
