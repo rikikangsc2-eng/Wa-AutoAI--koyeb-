@@ -28,7 +28,7 @@ const arrMenuAnime = [];
 const arrMenuTools = ["tourl"];
 const arrMenuFun = [];
 const arrMenuMaker = [];
-const arrMenuOther = ["owner"];
+const arrMenuOther = ["owner","sewa"];
 
 const generateMenuOptions = (options) =>
     options.map((option) => `║│─≽ .${option}\n`).join("");
@@ -96,8 +96,7 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
 
         if (
             (m.mtype.includes("imageMessage") ||
-                (m.mtype.includes("stickerMessage") && m.msg.mimetype.includes("image"))) &&
-            !m.isGroup
+                (m.mtype.includes("stickerMessage") && m.msg.mimetype.includes("image"))) && !m.isGroup && !cekCmd(m.body)
         ) {
             await client.sendMessage(m.chat, {
                 react: { text: "🆙", key: m.key }
@@ -158,7 +157,9 @@ const autoAI = async () => {
         if (cekCmd(m.body)) {
             switch (command) {
 
-
+                case "sewa": {
+                    m.reply("Sewa Bot ke Group\n\n*1 Bulan:* Rp. 5.000\n\nNote: Jika Bot Mati/perbaikan, waktu expired akan berhenti secara otomatis")
+                }break
 case "ai":
     if (!m.isGroup) return m.reply("Fitur AI hanya untuk di group chat.");
     if (m.mtype.includes("imageMessage") || (m.mtype.includes("stickerMessage") && m.msg.mimetype.includes("image"))) {
