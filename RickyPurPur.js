@@ -156,14 +156,6 @@ const autoAI = async () => {
 
         if (cekCmd(m.body)) {
             switch (command) {
-                case "sticker": {
-                    if (m.mtype.includes("imageMessage")) {
-            const bufstick = await toUrl.get(m, client);
-            client.sendStickerReply(m, bufstick)
-                    } else {
-                m.reply("Kirim gambar dengan caption *.sticker*");
-                    }
-                }break
                 case "sewa": {
                     m.reply("Sewa Bot ke Group\n\n*1 Bulan:* Rp. 5.000\n\nNote: Jika Bot Mati/perbaikan, waktu expired akan berhenti secara otomatis")
                 }break
