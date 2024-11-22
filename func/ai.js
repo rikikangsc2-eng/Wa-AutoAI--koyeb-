@@ -1,4 +1,3 @@
-const fs = require('fs');
 const axios = require('axios');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
@@ -101,13 +100,20 @@ const handleTextQuery = async (text, user) => {
     };
 
     let responseGemma;
-    try {
-      responseGemma = await sendRequest(API_KEY);
-    } catch (error) {
-      if (error.response && error.response.status === 429) {
-        responseGemma = await sendRequest(API_KEY2);
-      } else {
-        throw error;
+    let attempts = 0;
+
+    while (attempts < 2) {
+      try {
+        responseGemma = await sendRequest(attempts === 0 ? API_KEY : API_KEY2);
+        break;
+      } catch (error) {
+        attempts++;
+        if (error.response && error.response.status === 429 && attempts < 2) {
+          continue;
+        } else if (error.response && error.response.status !== 429) {
+          throw new Error(`Key ${attempts === 1 ? 1 : 2} Error\nError: ${error.message}`);
+        }
+        if (attempts === 2) throw new Error(`Key ${attempts} Error\nError: ${error.message}`);
       }
     }
 
