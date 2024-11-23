@@ -5,7 +5,7 @@ const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GEMMA_MODEL_NAME = "gemma2-9b-it";
 const API_KEY = "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";
 const API_KEY2 = "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";
-const GEMINI_API_KEY = "AIzaSyCtBDTdbx37uvBqiImuFdZFfAf5RD5igVY";
+const GEMINI_API_KEY = "AIzaSyCHDNKFSjqXd5J_ruHNE7XmbY1k5_-sGzQ";
 const generationConfig = {
   temperature: 0.9,
   max_tokens: 500,
@@ -79,8 +79,8 @@ const handleTextQuery = async (text, user) => {
     history = manageTokenCount(history);
 
     const messages = modelConfig.systemPrompt
-      ? [{ role: 'system', content: modelConfig.systemPrompt }, ...history]
-      : [{ role: 'system', content: dafPrompt }, ...history];
+      ? [{ role: 'system', content: modelConfig.systemPrompt+`\n\n[${new Date().toLocaleString('en-GB', { timeZone: 'UTC', hour12: false }).replace(',', '') + " (UTC +0)"}]` }, ...history]
+      : [{ role: 'system', content: dafPrompt+`\n\n[${new Date().toLocaleString('en-GB', { timeZone: 'UTC', hour12: false }).replace(',', '') + " (UTC +0)"}]` }, ...history];
 
     const sendRequest = async (apiKey) => {
       return await axios.post(
