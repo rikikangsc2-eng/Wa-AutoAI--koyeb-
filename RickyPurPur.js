@@ -10,7 +10,6 @@ const {
     getContentType
 } = require("@whiskeysockets/baileys");
 const fs = require("fs");
-const path = require("path");
 const util = require("util");
 const chalk = require("chalk");
 const axios = require("axios");
@@ -132,58 +131,17 @@ const autoAI = async () => {
 
         const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
-        if (lines.length > 4) {
-    const firstReply = lines.slice(0, lines.length - 1).join("\n").trim();
-    const lastReply = lines[lines.length - 1].trim();
+        if (lines.length > 3) {
+            const firstReply = lines.slice(0, lines.length - 1).join("\n").trim();
+            const lastReply = lines[lines.length - 1].trim();
 
-    m.reply(firstReply);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    try {
-        const axios = require("axios");
-        const elevenApiKey = "sk_ca6a039660ea3a37c1835a2900c44f7d2989c025c7473717";
-
-        // Request ke API ElevenLabs
-        const response = await axios.post(
-            "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
-            {
-                model_id: "eleven_multilingual_v2",
-                text: lastReply
-            },
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    "xi-api-key": elevenApiKey
-                },
-                responseType: "arraybuffer"
-            }
-        );
-
-        // Simpan buffer audio ke file sementara
-        const audioBuffer = response.data;
-        const tempAudioPath = path.join(__dirname, "temp_audio.mp3");
-        fs.writeFileSync(tempAudioPath, audioBuffer);
-
-        // Kirim audio sebagai pesan
-        await client.sendMessage(
-            m.chat,
-            { audio: { url: tempAudioPath }, mimetype: "audio/mpeg", ptt: true },
-            { quoted: m }
-        );
-
-        // Hapus file sementara
-        fs.unlinkSync(tempAudioPath);
-    } catch (error) {
-        if (error.response && error.response.status === 429) {
-            m.reply(lastReply); // Jika rate limit, kirim teks sebagai fallback
+            m.reply(firstReply);
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            m.reply(lastReply);
         } else {
-            return m.reply(error.message); // Kirim pesan error
+            const singleReply = lines.join(" ").trim();
+            m.reply(singleReply);
         }
-    }
-} else {
-    const singleReply = lines.join(" ").trim();
-    m.reply(singleReply);
-}
     } catch (error) {
         console.error(error);
         m.reply("Coba lagi dalam beberapa detik!");
@@ -212,57 +170,16 @@ case "ai":
         const hasil = await ai.handleTextQuery(msg, m.chat);
         const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
-        if (lines.length > 4) {
-    const firstReply = lines.slice(0, lines.length - 1).join("\n").trim();
-    const lastReply = lines[lines.length - 1].trim();
+        if (lines.length > 3) {
+            const firstReply = lines.slice(0, lines.length - 1).join("\n").trim();
+            const lastReply = lines[lines.length - 1].trim();
 
-    m.reply(firstReply);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    try {
-        const axios = require("axios");
-        const elevenApiKey = "sk_ca6a039660ea3a37c1835a2900c44f7d2989c025c7473717";
-
-        // Request ke API ElevenLabs
-        const response = await axios.post(
-            "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
-            {
-                model_id: "eleven_multilingual_v2",
-                text: lastReply
-            },
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    "xi-api-key": elevenApiKey
-                },
-                responseType: "arraybuffer"
-            }
-        );
-
-        // Simpan buffer audio ke file sementara
-        const audioBuffer = response.data;
-        const tempAudioPath = path.join(__dirname, "temp_audio.mp3");
-        fs.writeFileSync(tempAudioPath, audioBuffer);
-
-        // Kirim audio sebagai pesan
-        await client.sendMessage(
-            m.chat,
-            { audio: { url: tempAudioPath }, mimetype: "audio/mpeg", ptt: true },
-            { quoted: m }
-        );
-
-        // Hapus file sementara
-        fs.unlinkSync(tempAudioPath);
-    } catch (error) {
-        if (error.response && error.response.status === 429) {
-            m.reply(lastReply); // Jika rate limit, kirim teks sebagai fallback
+            m.reply(firstReply);
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            m.reply(lastReply);
         } else {
-            return m.reply(error.message); // Kirim pesan error
-        }
-    }
-} else {
-    const singleReply = lines.join(" ").trim();
-    m.reply(singleReply);
+            const singleReply = lines.join(" ").trim();
+            m.reply(singleReply);
         }
     } catch (error) {
         console.error(error);
