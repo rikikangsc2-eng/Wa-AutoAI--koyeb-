@@ -10,6 +10,7 @@ const {
     getContentType
 } = require("@whiskeysockets/baileys");
 const fs = require("fs");
+const path = require("path");
 const util = require("util");
 const chalk = require("chalk");
 const axios = require("axios");
