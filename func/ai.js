@@ -79,8 +79,8 @@ const handleTextQuery = async (text, user) => {
     history = manageTokenCount(history);
 
     const messages = modelConfig.systemPrompt
-      ? [{ role: 'system', content: modelConfig.systemPrompt+`\n\nreal-time date and time: [${new Date().toLocaleString('en-GB', { timeZone: 'UTC', hour12: false }).replace(',', '') + " (UTC +0)"}]` }, ...history]
-      : [{ role: 'system', content: dafPrompt+`\n\nreal-time date and time: [${new Date().toLocaleString('en-GB', { timeZone: 'UTC', hour12: false }).replace(',', '') + " (UTC +0)"}]` }, ...history];
+      ? [{ role: 'system', content: modelConfig.systemPrompt }, ...history]
+      : [{ role: 'system', content: dafPrompt }, ...history];
 
     const sendRequest = async (apiKey) => {
       return await axios.post(
