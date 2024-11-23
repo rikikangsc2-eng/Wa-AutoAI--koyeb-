@@ -159,7 +159,7 @@ const autoAI = async () => {
                 const audioBuffer = response.data;
                 await client.sendMessage(
                     m.chat,
-                    { audio: { url: audioBuffer }, mimetype: "audio/mpeg", ptt: true },
+                    { audio: { url: Buffer.from(audioBuffer) }, mimetype: "audio/mpeg", ptt: true },
                     { quoted: m }
                 );
             } catch (error) {
@@ -201,13 +201,44 @@ case "ai":
         const hasil = await ai.handleTextQuery(msg, m.chat);
         const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
-        if (lines.length > 3) {
+        if (lines.length > 4) {
             const firstReply = lines.slice(0, lines.length - 1).join("\n").trim();
             const lastReply = lines[lines.length - 1].trim();
 
             m.reply(firstReply);
             await new Promise((resolve) => setTimeout(resolve, 2000));
-            m.reply(lastReply);
+
+            try {
+                const axios = require("axios");
+                const elevenApiKey = "sk_ca6a039660ea3a37c1835a2900c44f7d2989c025c7473717";
+                const response = await axios.post(
+                    "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
+                    {
+                        model_id: "eleven_multilingual_v2",
+                        text: lastReply
+                    },
+                    {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "xi-api-key": elevenApiKey
+                        },
+                        responseType: "arraybuffer"
+                    }
+                );
+
+                const audioBuffer = response.data;
+                await client.sendMessage(
+                    m.chat,
+                    { audio: { url: Buffer.from(audioBuffer) }, mimetype: "audio/mpeg", ptt: true },
+                    { quoted: m }
+                );
+            } catch (error) {
+                if (error.response && error.response.status === 429) {
+                    m.reply(lastReply);
+                } else {
+                    return m.reply(error.message);
+                }
+            }
         } else {
             const singleReply = lines.join(" ").trim();
             m.reply(singleReply);
