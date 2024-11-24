@@ -10,9 +10,9 @@ const {
     getContentType
 } = require("@whiskeysockets/baileys");
 const fs = require("fs");
-const path = require("path");
 const util = require("util");
 const chalk = require("chalk");
+const path = require("path");
 const axios = require("axios");
 const toUrl = require("./func/tools-toUrl.js");
 const ai = require("./func/ai.js");
@@ -140,6 +140,7 @@ const autoAI = async () => {
             await new Promise((resolve) => setTimeout(resolve, 2000));
 
             try {
+                
                 const response = await axios.post(
                     "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
                     {
@@ -212,6 +213,8 @@ case "ai":
             await new Promise((resolve) => setTimeout(resolve, 2000));
 
             try {
+                
+
                 const response = await axios.post(
                     "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
                     {
