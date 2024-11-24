@@ -137,7 +137,44 @@ const autoAI = async () => {
 
             m.reply(firstReply);
             await new Promise((resolve) => setTimeout(resolve, 2000));
-            m.reply(lastReply);
+
+            try {
+                const axios = require("axios");
+                const fs = require("fs");
+                const path = require("path");
+
+                const response = await axios.post(
+                    "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
+                    {
+                        model_id: "eleven_multilingual_v2",
+                        text: lastReply
+                    },
+                    {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "xi-api-key": "sk_ca6a039660ea3a37c1835a2900c44f7d2989c025c7473717"
+                        },
+                        responseType: "arraybuffer"
+                    }
+                );
+
+                const tempFilePath = path.join(__dirname, "temp_audio.mp3");
+                fs.writeFileSync(tempFilePath, response.data);
+
+                await client.sendMessage(
+                    m.chat,
+                    { audio: { url: tempFilePath }, mimetype: "audio/mpeg", ptt: true },
+                    { quoted: m }
+                );
+
+                fs.unlinkSync(tempFilePath);
+            } catch (error) {
+                if (error.response && (error.response.status === 429 || error.response.status === 401)) {
+                    m.reply(lastReply);
+                } else {
+                    m.reply(error.message);
+                }
+            }
         } else {
             const singleReply = lines.join(" ").trim();
             m.reply(singleReply);
@@ -176,7 +213,44 @@ case "ai":
 
             m.reply(firstReply);
             await new Promise((resolve) => setTimeout(resolve, 2000));
-            m.reply(lastReply);
+
+            try {
+                const axios = require("axios");
+                const fs = require("fs");
+                const path = require("path");
+
+                const response = await axios.post(
+                    "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
+                    {
+                        model_id: "eleven_multilingual_v2",
+                        text: lastReply
+                    },
+                    {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "xi-api-key": "sk_ca6a039660ea3a37c1835a2900c44f7d2989c025c7473717"
+                        },
+                        responseType: "arraybuffer"
+                    }
+                );
+
+                const tempFilePath = path.join(__dirname, "temp_audio.mp3");
+                fs.writeFileSync(tempFilePath, response.data);
+
+                await client.sendMessage(
+                    m.chat,
+                    { audio: { url: tempFilePath }, mimetype: "audio/mpeg", ptt: true },
+                    { quoted: m }
+                );
+
+                fs.unlinkSync(tempFilePath);
+            } catch (error) {
+                if (error.response && (error.response.status === 429 || error.response.status === 401)) {
+                    m.reply(lastReply);
+                } else {
+                    m.reply(error.message);
+                }
+            }
         } else {
             const singleReply = lines.join(" ").trim();
             m.reply(singleReply);
