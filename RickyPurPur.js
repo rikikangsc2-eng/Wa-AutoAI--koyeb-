@@ -139,12 +139,8 @@ const autoAI = async () => {
             await new Promise((resolve) => setTimeout(resolve, 2000));
 
             try {
-                const axios = require("axios");
-                const fs = require("fs");
-                const path = require("path");
-
                 const response = await axios.post(
-                    "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
+                    "https://api.elevenlabs.io/v1/text-to-speech/XB0fDUnXU5powFXDhCwa",
                     {
                         model_id: "eleven_multilingual_v2",
                         text: lastReply
@@ -215,12 +211,8 @@ case "ai":
             await new Promise((resolve) => setTimeout(resolve, 2000));
 
             try {
-                const axios = require("axios");
-                const fs = require("fs");
-                const path = require("path");
-
                 const response = await axios.post(
-                    "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
+                    "https://api.elevenlabs.io/v1/text-to-speech/XB0fDUnXU5powFXDhCwa",
                     {
                         model_id: "eleven_multilingual_v2",
                         text: lastReply
