@@ -141,7 +141,7 @@ const autoAI = async () => {
 
             try {
                 const response = await axios.post(
-                    "https://api.elevenlabs.io/v1/text-to-speech/XB0fDUnXU5powFXDhCwa",
+                    "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
                     {
                         model_id: "eleven_multilingual_v2",
                         text: lastReply
@@ -213,7 +213,7 @@ case "ai":
 
             try {
                 const response = await axios.post(
-                    "https://api.elevenlabs.io/v1/text-to-speech/XB0fDUnXU5powFXDhCwa",
+                    "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
                     {
                         model_id: "eleven_multilingual_v2",
                         text: lastReply
