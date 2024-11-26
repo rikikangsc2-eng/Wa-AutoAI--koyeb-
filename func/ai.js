@@ -7,8 +7,8 @@ const API_KEY = "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";
 const API_KEY2 = "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";
 const GEMINI_API_KEY = "AIzaSyCHDNKFSjqXd5J_ruHNE7XmbY1k5_-sGzQ";
 const generationConfig = {
-  temperature: 0.9,
-  max_tokens: 500,
+  temperature: 0.85,
+  max_tokens: 512,
   top_p: 0.95,
   stream: false,
   stop: null,
