@@ -16,7 +16,7 @@ const generationConfig = {
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-const BASE_URL = "https://nue-db.vercel.app";
+const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
 const fetchHistory = async (user) => {
   const res = await axios.get(`${BASE_URL}/history/${user}`);
