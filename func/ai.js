@@ -47,7 +47,7 @@ const manageTokenCount = (history) => {
 
 const handleTextQuery = async (text, user) => {
   try {
-    const dafPrompt = require('fs').readFileSync('../prompt.txt', 'utf8');
+    const dafPrompt = require('fs').readFileSync('./prompt.txt', 'utf8');
     let history = await fetchHistory(user);
     let modelConfig = await fetchModelConfig(user);
 
