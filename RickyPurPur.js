@@ -113,6 +113,9 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
 
+const bug = async (err) => {
+  m.reply("> "+err.message+"\nLapor ke *.owner* biar cepet di perbaiki");
+}
 const autoAI = async () => {
   try {
     if (gambar[m.sender]) {
@@ -178,8 +181,7 @@ const autoAI = async () => {
       m.reply(singleReply);
     }
   } catch (error) {
-    console.error(error);
-    m.reply("Coba lagi dalam beberapa detik!");
+    bug(error);
   } finally {
     delete gambar[m.sender];
   }
@@ -256,8 +258,7 @@ case "ai":
       m.reply(singleReply);
     }
   } catch (error) {
-    console.error(error);
-    m.reply("Maaf, terjadi kesalahan saat memproses permintaan Anda.");
+    bug(error);
   }
   break;
 
@@ -273,7 +274,7 @@ case "ai":
             const audioUrl = response.data.audio;
             client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg" }, { quoted: m });
           } catch (e) {
-            m.reply(e.message);
+            bug(e);
           }
           break;
 
@@ -298,32 +299,33 @@ case "ai":
             const video = response.data.data;
             client.sendMessage(m.chat, { video: { url: video.high || video.low }, mimetype: "video/mp4" }, { quoted: m });
           } catch (e) {
-            m.reply(e.message);
+        bug(e);
           }
           break;
-
           case "tiktok":
-          if (!msg) return m.reply("*Ex:* .tiktok https://vm.tiktok.com/ZSjBQ6t9g/\n*Ex:* .tiktok JJ naruto");
-          try {
-            m.reply("*Mengirim media..*");
-            if (msg.startsWith("http")) {
-              const response = await axios.get("https://rikiapi.vercel.app/aio", { params: { url: msg } });
-              const video = response.data.data;
-              client.sendMessage(m.chat, { video: { url: video.high || video.low }, mimetype: "video/mp4" }, { quoted: m });
-            } else {
-              const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: msg } });
-              const result = searchResponse.data.data;
-              client.sendMessage(m.chat, { 
-                video: { url: result.no_watermark }, 
-                caption: `*Title:* ${result.title}\n*Author:* ${searchResponse.data.author}`, 
+    if (!msg) return m.reply("*Ex:* .tiktok https://vm.tiktok.com/ZSjBQ6t9g/\n*Ex:* .tiktok JJ naruto");
+    try {
+        m.reply("*Mengirim media..*");
+        if (msg.startsWith("http")) {
+            const response = await axios.get("https://itzpire.com/download/tiktok", { params: { url: msg } });
+            const video = response.data.data;
+            client.sendMessage(m.chat, { 
+                video: { url: video.video }, 
                 mimetype: "video/mp4" 
-              }, { quoted: m });
-            }
-          } catch (e) {
-            m.reply(e.message);
-          }
-          break;
-
+            }, { quoted: m });
+        } else {
+            const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: msg } });
+            const result = searchResponse.data.data;
+            client.sendMessage(m.chat, { 
+                video: { url: result.no_watermark }, 
+                caption: `*Title:* ${result.title}\n*Author:* ${searchResponse.data.author.nickname}`, 
+                mimetype: "video/mp4" 
+            }, { quoted: m });
+        }
+    } catch (e) {
+       bug(e);
+    }
+    break;
         case "set":
           if (!msg) return m.reply("*Contoh:* .set Kamu adalah Alicia gadis 17 tahun...");
           const hasil = await ai.handleTextQuery("setPrompt:" + msg, m.chat);
