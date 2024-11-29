@@ -16,6 +16,7 @@ const path = require("path");
 const axios = require("axios");
 const toUrl = require("./func/tools-toUrl.js");
 const ai = require("./func/ai.js");
+const {alldown} = require("aio");
 
 const botOwner = "6283894391287";
 const noBot = "6283873321433";
@@ -295,8 +296,8 @@ case "ai":
           if (!msg) return m.reply("*ex:* .ig https://www.instagram.com/p/ByxKbUSnubS/?utm_source=ig_web_copy_link");
           try {
             m.reply("*Mengirim media..*");
-            const response = await axios.get("https://rikiapi.vercel.app/aio", { params: { url: msg } });
-            const video = response.data.data;
+            const response = await alldown(msg);
+            const video = response.data;
             client.sendMessage(m.chat, { video: { url: video.high || video.low }, mimetype: "video/mp4" }, { quoted: m });
           } catch (e) {
         bug(e);
