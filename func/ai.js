@@ -3,8 +3,8 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GEMMA_MODEL_NAME = "gemma2-9b-it";
-const API_KEY = "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";
-const API_KEY2 = "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";
+const API_KEY = "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";
+const API_KEY2 = "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";
 const GEMINI_API_KEY = "AIzaSyCHDNKFSjqXd5J_ruHNE7XmbY1k5_-sGzQ";
 const generationConfig = {
   temperature: 0.7,
