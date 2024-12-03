@@ -308,12 +308,9 @@ case "ai":
     try {
         m.reply("*Mengirim media..*");
         if (msg.startsWith("http")) {
-            const response = await axios.get("https://itzpire.com/download/tiktok", { params: { url: msg } });
-            const video = response.data.data;
-            client.sendMessage(m.chat, { 
-                video: { url: video.video }, 
-                mimetype: "video/mp4" 
-            }, { quoted: m });
+          const response = await alldown(msg);
+          const video = response.data;
+          client.sendMessage(m.chat, { video: { url: video.high || video.low }, mimetype: "video/mp4" }, { quoted: m });
         } else {
             const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: msg } });
             const result = searchResponse.data.data;
