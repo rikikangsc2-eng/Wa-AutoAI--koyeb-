@@ -4,7 +4,6 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GEMMA_MODEL_NAME = "gemma2-9b-it";
 const API_KEY = "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";
-const API_KEY2 = "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";
 const GEMINI_API_KEY = "AIzaSyCHDNKFSjqXd5J_ruHNE7XmbY1k5_-sGzQ";
 const generationConfig = {
   temperature: 0.7,
@@ -98,21 +97,13 @@ const handleTextQuery = async (text, user) => {
     };
 
     let responseGemma;
-    let attempts = 0;
-
-    while (attempts < 2) {
-      try {
-        responseGemma = await sendRequest(attempts === 0 ? API_KEY : API_KEY2);
-        break;
-      } catch (error) {
-        attempts++;
-        if (error.response && error.response.status === 429 && attempts < 2) {
-          continue;
-        } else if (error.response && error.response.status !== 429) {
-          throw new Error(`Key ${attempts === 1 ? 1 : 2} Error\nError: ${error.message}`);
-        }
-        if (attempts === 2) throw new Error(`Key ${attempts} Error\nError: ${error.message}`);
+    try {
+      responseGemma = await sendRequest(API_KEY);
+    } catch (error) {
+      if (error.response && error.response.status === 429) {
+        return '> Terjadi masalah karena terlalu banyak permintaan. Coba lagi nanti.';
       }
+      throw new Error(`Error API Key 1: ${error.message}`);
     }
 
     const responseText = responseGemma.data.choices[0].message.content;
@@ -153,6 +144,9 @@ const handleImageQuery = async (url, text, user) => {
 
     return cleanedOutputText;
   } catch (error) {
+    if (error.response && error.response.status === 429){
+      return '> Terjadi masalah karena terlalu banyak permintaan. Coba lagi nanti.';
+    }
     return `> ${error.message}\n*Coba lagi lain waktu*`;
   }
 };
