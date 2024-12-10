@@ -6,9 +6,9 @@ const GEMMA_MODEL_NAME = "gemma2-9b-it";
 const API_KEY = "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";
 const GEMINI_API_KEY = "AIzaSyCHDNKFSjqXd5J_ruHNE7XmbY1k5_-sGzQ";
 const generationConfig = {
-  temperature: 0,
+  temperature: 0.65,
   max_tokens: 512,
-  top_p: 1,
+  top_p: 0.75,
   stream: false,
   stop: null,
 };
