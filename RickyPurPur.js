@@ -118,7 +118,7 @@ const bug = async (err) => {
   m.reply("> "+err.message+"\nLapor ke *.owner* biar cepet di perbaiki");
 }
 
-const user = `${m.chat.split("@")[0]}-${pushname}`
+const user = `${m.chat.split("@")[0]}@${pushname}`
 const autoAI = async () => {
   try {
     if (gambar[m.sender]) {
