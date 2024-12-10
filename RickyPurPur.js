@@ -117,6 +117,8 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
 const bug = async (err) => {
   m.reply("> "+err.message+"\nLapor ke *.owner* biar cepet di perbaiki");
 }
+
+const user = `${m.chat.split("@")[0]}-${pushname}`
 const autoAI = async () => {
   try {
     if (gambar[m.sender]) {
@@ -131,8 +133,8 @@ const autoAI = async () => {
     }
 
     const hasil = gambar[m.sender]
-      ? await ai.handleImageQuery(gambar[m.sender], m.body, m.chat)
-      : await ai.handleTextQuery(m.body, m.chat);
+      ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
+      : await ai.handleTextQuery(m.body, user);
 
     const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
@@ -209,7 +211,7 @@ case "ai":
   if (!msg) return m.reply("Apa yang ingin kamu tanyakan?");
 
   try {
-    const hasil = await ai.handleTextQuery(msg, m.chat);
+    const hasil = await ai.handleTextQuery(msg, user);
     const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
     if (lines.length > 3) {
