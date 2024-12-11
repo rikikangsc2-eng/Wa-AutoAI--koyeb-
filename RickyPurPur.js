@@ -18,6 +18,7 @@ const toUrl = require("./func/tools-toUrl.js");
 const ai = require("./func/ai.js");
 const {alldown} = require("aio");
 const play = require("./func/play.js");
+const hd = require("./func/hd.js");
 
 const botOwner = "6283894391287";
 const noBot = "6283873321433";
@@ -28,20 +29,30 @@ let mkey = {};
 const arrMenuDownloader = ["tiktok", "ig", "play"];
 const arrMenuAI = ["bawaan", "reset", "set"];
 const arrMenuAnime = [];
-const arrMenuTools = ["brat","tourl"];
+const arrMenuTools = ["hd","tourl"];
 const arrMenuFun = [];
 const arrMenuMaker = [];
 const arrMenuOther = ["owner","sewa"];
 
-const generateMenuOptions = (options) =>
-  options.map((option) => `║│─≽ .${option}\n`).join("");
+const generateMenuOptions = (options) => {
+  const symbols = ["❖", "✦", "✧", "✩", "✪", "✫", "✯"];
+  return options.map((option, i) => ` ${symbols[i % symbols.length]} ${option}  `).join("\n");
+};
 
-const generateMenuCategory = (category) =>
-  `╔════「 ${category.title} MENU 」═════\n` +
-  `║╭───────────────────────\n` +
-  generateMenuOptions(category.options) +
-  `║╰───────────────────────\n` +
-  `╚════════════════════════\n\n`;
+const generateMenuCategory = (category, i) => {
+  const title = i % 2 === 0 
+    ? `*${category.title.toUpperCase()}*` 
+    : `*${category.title.split('').map((char, j) => j % 2 === 0 ? char.toUpperCase() : char.toLowerCase()).join('')}*`;
+
+  const startSymbol = i % 2 === 0 ? "✦" : "✧";
+  const endSymbol = i % 2 === 0 ? "✧" : "✦";
+
+  return (
+    `\n  ${startSymbol} ${title} ${endSymbol}  \n` +
+    generateMenuOptions(category.options) +
+    "\n"
+  );
+};
 
 const menuCategories = [
   { title: "AI", options: arrMenuAI },
@@ -201,13 +212,12 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) {
-        case "brat": {
-          if (msg) {
-            const response = await axios.get(`https://api.ryzendesu.vip/api/sticker/brat?text=${msg}`,{responseType: "arraybuffer"});
-            const buffer = Buffer.from(response.data);
-            client.sendMessage(m.chat, {image:{url:buffer}, mimetype:"image/jpeg"},{quoted:m})
+        case "hd": {
+          if (m.mtype.includes("imageMessage")) {
+          const url = await toUrl.get(m, client);
+          return hd.get(m, client, url);
           } else {
-            m.reply("Masukkan teks untuk membuat brat");
+            m.reply("Kirim gambar dengan caption *.hd*");
           }
         }break;
         case "sewa": {
