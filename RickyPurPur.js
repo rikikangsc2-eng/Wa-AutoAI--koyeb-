@@ -205,7 +205,7 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
           if (msg) {
             const response = await axios.get(`https://api.ryzendesu.vip/api/sticker/brat?text=${msg}`,{responseType: "arraybuffer"});
             const buffer = Buffer.from(response.data);
-            client.sendMessage(m.chat, {image:{url:buffer}, mimetype:"image/png"},{quoted:m})
+            client.sendMessage(m.chat, {image:{url:buffer}, mimetype:"image/jpeg"},{quoted:m})
           } else {
             m.reply("Masukkan teks untuk membuat brat");
           }
