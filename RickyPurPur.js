@@ -17,6 +17,7 @@ const axios = require("axios");
 const toUrl = require("./func/tools-toUrl.js");
 const ai = require("./func/ai.js");
 const {alldown} = require("aio");
+const play = require("./func/play.js");
 
 const botOwner = "6283894391287";
 const noBot = "6283873321433";
@@ -269,18 +270,13 @@ case "ai":
           m.reply(JSON.stringify(m, null, 2));
           break;
 
-        case "play":
-          if (!msg) return m.reply("*ex:* .play dj ya odna");
-          try {
-            m.reply("*Mengirim audio...*");
-            const response = await axios.get("https://rikiapi.vercel.app/play", { params: { query: msg } });
-            const audioUrl = response.data.audio;
-            client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg" }, { quoted: m });
-          } catch (e) {
-            bug(e);
-          }
-          break;
-
+        case "play":{
+         if (msg) {
+           return play.get(m, client, msg)
+         } else {
+           m.reply("Masukkan judul lagu yang ingin diputar");
+         }
+        }break;
         case "owner":
           m.reply(`Pemilik AI ini adalah ${botOwner}`);
           break;
