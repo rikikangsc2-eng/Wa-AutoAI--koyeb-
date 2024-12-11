@@ -1,10 +1,10 @@
 const axios = require('axios');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GEMMA_MODEL_NAME = "gemma2-9b-it";
 const API_KEY = "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";
+const GEMINI_API_KEY = "AIzaSyAgZm62eZ4C4hZsldI52cka5XwNapGWPWw";
 const ALT_API_URL = "https://express-vercel-ytdl.vercel.app/llm";
-const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
-
 const generationConfig = {
   temperature: 0.65,
   max_tokens: 512,
@@ -12,6 +12,10 @@ const generationConfig = {
   stream: false,
   stop: null,
 };
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
 const fetchHistory = async (user) => {
   const res = await axios.get(`${BASE_URL}/history/${user}`);
@@ -121,23 +125,28 @@ const handleImageQuery = async (url, text, user) => {
   try {
     const history = await fetchHistory(user);
 
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    const imageData = Buffer.from(response.data).toString('base64');
+
     const prompt = [
-      ...history.map(item => `**${item.role === 'assistant' ? 'Assistant' : 'User'}**: ${item.content}`),
+      ...history.map(item => `**${item.role === 'assistant' ? 'Gemini' : 'User'}**: ${item.content}`),
       `**User**: ${text}`,
-      `**Assistant**: `,
+      `**Gemini**: `,
+      { inlineData: { data: imageData, mimeType: 'image/png' } }
     ];
 
-    const apiUrl = `https://api.ryzendesu.vip/api/ai/blackbox?chat=${encodeURIComponent(prompt.join('\n'))}&options=gemini-pro&imageurl=${encodeURIComponent(url)}`;
-    const response = await axios.get(apiUrl, { headers: { 'accept': 'application/json' } });
+    const result = await model.generateContent(prompt);
+    const groqOutputText = result.response.text();
 
-    const responseText = response.data.response;
+    const cleanedOutputText = groqOutputText.replace(/^(.*?)(user|gemini|$)/i, '$1').trim();
+
     history.push({ role: 'user', content: text });
-    history.push({ role: 'assistant', content: responseText });
+    history.push({ role: 'assistant', content: cleanedOutputText });
     await saveHistory(user, history);
 
-    return responseText;
+    return cleanedOutputText;
   } catch (error) {
-    if (error.response && error.response.status === 429) {
+    if (error.response && error.response.status === 429){
       return '> Terjadi masalah karena terlalu banyak permintaan. Coba lagi nanti.';
     }
     return `> ${error.message}\n*Coba lagi lain waktu*`;
