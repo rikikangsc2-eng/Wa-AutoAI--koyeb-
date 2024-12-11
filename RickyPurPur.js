@@ -28,7 +28,7 @@ let mkey = {};
 const arrMenuDownloader = ["tiktok", "ig", "play"];
 const arrMenuAI = ["bawaan", "reset", "set"];
 const arrMenuAnime = [];
-const arrMenuTools = ["tourl"];
+const arrMenuTools = ["brat","tourl"];
 const arrMenuFun = [];
 const arrMenuMaker = [];
 const arrMenuOther = ["owner","sewa"];
@@ -201,6 +201,15 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) {
+        case "brat": {
+          if (msg) {
+            const response = await axios.get(`https://api.ryzendesu.vip/api/sticker/brat?text=${msg}`,{responseType: "arraybuffer"});
+            const buffer = Buffer.from(response.data);
+            client.sendMessage(m.chat, {image:{url:buffer}, mimetype:"image/png"},{quoted:m})
+          } else {
+            m.reply("Masukkan teks untuk membuat brat");
+          }
+        }break;
         case "sewa": {
           m.reply("Sewa Bot ke Group\n\n*1 Bulan:* Rp. 5.000\n\nNote: Jika Bot Mati/perbaikan, waktu expired akan berhenti secara otomatis")
         }break
