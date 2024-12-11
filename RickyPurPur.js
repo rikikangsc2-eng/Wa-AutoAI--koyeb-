@@ -272,6 +272,7 @@ case "ai":
 
         case "play":{
          if (msg) {
+           m.reply("Mohon tunggu sebentar, bot sedang memproses permintaan Anda...");
            return play.get(m, client, msg)
          } else {
            m.reply("Masukkan judul lagu yang ingin diputar");
