@@ -6,7 +6,7 @@ async function get(m, client, msg) {
     const videos = searchResponse.data.videos;
 
     const video = videos.find(video => video.duration.seconds < 600);
-    if (!video) throw new Error("Tidak ada video dengan durasi di bawah 10 menit.");
+    if (!video) throw new Error("Tidak ada video yt dengan durasi di bawah 10 menit.");
 
     const downloadResponse = await axios.get(`https://api.ryzendesu.vip/api/downloader/ytmp3?url=${video.url}`);
     const downloadData = downloadResponse.data;
@@ -16,7 +16,7 @@ async function get(m, client, msg) {
     const audioUrl = downloadData.url;
     await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg" }, { quoted: m });
   } catch (error) {
-    m.reply(`>${error.message}\nReport ke .owner`);
+    m.reply(`> ${error.message}\nReport ke .owner`);
   }
 }
 
