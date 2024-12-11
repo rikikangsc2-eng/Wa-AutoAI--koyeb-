@@ -12,3 +12,5 @@ async function get(m, client, url) {
         m.reply(`> ${error.message}\nreport ke .owner`);
     }
 }
+
+module.exports = { get }

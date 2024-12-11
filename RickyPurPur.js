@@ -36,7 +36,7 @@ const arrMenuOther = ["owner","sewa"];
 
 const generateMenuOptions = (options) => {
   const symbols = ["❖", "✦", "✧", "✩", "✪", "✫", "✯"];
-  return options.map((option, i) => ` ${symbols[i % symbols.length]} ${option}  `).join("\n");
+  return options.map((option, i) => ` ${symbols[i % symbols.length]} .${option}  `).join("\n");
 };
 
 const generateMenuCategory = (category, i) => {
@@ -214,6 +214,7 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
       switch (command) {
         case "hd": {
           if (m.mtype.includes("imageMessage")) {
+          m.reply("Sedang di proses...");
           const url = await toUrl.get(m, client);
           return hd.get(m, client, url);
           } else {
