@@ -1,10 +1,10 @@
 const axios = require('axios');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-
 const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GEMMA_MODEL_NAME = "gemma2-9b-it";
 const API_KEY = "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";
 const GEMINI_API_KEY = "AIzaSyCHDNKFSjqXd5J_ruHNE7XmbY1k5_-sGzQ";
+const ALT_API_URL = "https://express-vercel-ytdl.vercel.app/llm";
 const generationConfig = {
   temperature: 0.65,
   max_tokens: 512,
@@ -79,31 +79,33 @@ const handleTextQuery = async (text, user) => {
       ? [{ role: 'system', content: modelConfig.systemPrompt }, ...history]
       : [{ role: 'system', content: dafPrompt }, ...history];
 
-    const sendRequest = async (apiKey) => {
-      return await axios.post(
-        GEMMA_API_URL,
-        {
-          model: GEMMA_MODEL_NAME,
-          messages,
-          ...generationConfig,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-        }
-      );
+    const sendRequest = async (apiUrl, apiKey, useKey = true) => {
+      const payload = {
+        model: GEMMA_MODEL_NAME,
+        messages,
+        ...generationConfig,
+      };
+      const headers = { 'Content-Type': 'application/json' };
+      if (useKey) headers.Authorization = `Bearer ${apiKey}`;
+      return await axios.post(apiUrl, payload, { headers });
     };
 
     let responseGemma;
     try {
-      responseGemma = await sendRequest(API_KEY);
+      responseGemma = await sendRequest(GEMMA_API_URL, API_KEY);
     } catch (error) {
       if (error.response && error.response.status === 429) {
-        return '> Terjadi masalah karena terlalu banyak permintaan. Coba lagi nanti.';
+        try {
+          responseGemma = await sendRequest(ALT_API_URL, null, false);
+        } catch (altError) {
+          if (altError.response && altError.response.status === 429) {
+            return 'Terjadi kesalahan karena tingginya permintaan';
+          }
+          throw new Error(`Error status code ${altError.response?.status || 'unknown'} for alt API`);
+        }
+      } else {
+        throw new Error(`Error status code ${error.response?.status || 'unknown'} for API 1`);
       }
-      throw new Error(`Error API Key 1: ${error.message}`);
     }
 
     const responseText = responseGemma.data.choices[0].message.content;
