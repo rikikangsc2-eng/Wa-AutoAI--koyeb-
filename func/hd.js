@@ -7,7 +7,7 @@ async function get(m, client, url) {
             headers: { 'accept': 'image/png' }
         });
         const buffer = Buffer.from(response.data);
-        await client.sendMessage(m.chat, { image: { url: buffer }, mimetype: 'image/jpeg' }, { quoted: m });
+        await client.sendMessage(m.chat, { image: buffer, mimetype: 'image/jpeg' }, { quoted: m });
     } catch (error) {
         m.reply(`> ${error.message}\nreport ke .owner`);
     }
