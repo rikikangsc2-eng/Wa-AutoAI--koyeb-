@@ -28,7 +28,7 @@ const saveHistory = async (user, history) => {
 
 const fetchModelConfig = async (user) => {
   const res = await axios.get(`${BASE_URL}/model/${user}`);
-  return res.data || { lastTokenCount: 0, systemPrompt: "" };
+  return res.data || { lastTokenCount: 0, systemPrompt: "", isPremium: false };
 };
 
 const saveModelConfig = async (user, config) => {
@@ -50,13 +50,27 @@ const handleTextQuery = async (text, user) => {
     let history = await fetchHistory(user);
     let modelConfig = await fetchModelConfig(user);
 
+    if (text.startsWith('setPrem:')) {
+      if (user !== "6283894391287") {
+        return "Anda tidak memiliki izin untuk melakukan perintah ini.";
+      }
+      const targetUser = text.replace('setPrem:', '').trim();
+      const targetConfig = await fetchModelConfig(targetUser);
+      targetConfig.isPremium = true;
+      await saveModelConfig(targetUser, targetConfig);
+      return `Pengguna ${targetUser} sekarang telah menjadi pengguna premium.`;
+    }
+
     if (text.startsWith('setPrompt:')) {
+      if (!modelConfig.isPremium) {
+        return "Anda belum menjadi pengguna premium. Untuk mendapatkan akses premium, silakan hubungi kami melalui wa.me/6283894391287. Biaya Rp5.000 untuk akses permanen melalui Dana, atau Rp10.000 untuk akses permanen melalui pulsa.";
+      }
       const newPrompt = text.replace('setPrompt:', '').trim();
       modelConfig.systemPrompt = newPrompt;
       modelConfig.lastTokenCount = 0;
       await saveModelConfig(user, modelConfig);
       await saveHistory(user, []);
-      return 'System prompt telah diperbarui dan riwayat percakapan direset.';
+      return "System prompt telah diperbarui dan riwayat percakapan direset.";
     }
 
     if (text === 'resetprompt') {
@@ -64,12 +78,12 @@ const handleTextQuery = async (text, user) => {
       modelConfig.lastTokenCount = 0;
       await saveModelConfig(user, modelConfig);
       await saveHistory(user, []);
-      return 'Prompt telah direset ke default dan riwayat percakapan dihapus.';
+      return "Prompt telah direset ke default dan riwayat percakapan dihapus.";
     }
 
     if (text === 'reset') {
       await saveHistory(user, []);
-      return 'Riwayat percakapan telah direset.';
+      return "Riwayat percakapan telah direset.";
     }
 
     history.push({ role: 'user', content: text });
@@ -99,7 +113,7 @@ const handleTextQuery = async (text, user) => {
           responseGemma = await sendRequest(ALT_API_URL, null, false);
         } catch (altError) {
           if (altError.response && altError.response.status === 429) {
-            return 'Terjadi kesalahan karena tingginya permintaan';
+            return "Terjadi kesalahan karena tingginya permintaan.";
           }
           throw new Error(`Error status code ${altError.response?.status || 'unknown'} for alt API`);
         }
@@ -123,6 +137,12 @@ const handleTextQuery = async (text, user) => {
 
 const handleImageQuery = async (url, text, user) => {
   try {
+    const modelConfig = await fetchModelConfig(user);
+
+    if (!modelConfig.isPremium) {
+      return "Fitur ini hanya tersedia untuk pengguna premium. Untuk menjadi premium, silakan hubungi wa.me/6283894391287. Biaya Rp5.000 untuk akses permanen melalui Dana, atau Rp10.000 untuk akses permanen melalui pulsa.";
+    }
+
     const history = await fetchHistory(user);
 
     const response = await axios.get(url, { responseType: 'arraybuffer' });
@@ -146,8 +166,8 @@ const handleImageQuery = async (url, text, user) => {
 
     return cleanedOutputText;
   } catch (error) {
-    if (error.response && error.response.status === 429){
-      return '> Terjadi masalah karena terlalu banyak permintaan. Coba lagi nanti.';
+    if (error.response && error.response.status === 429) {
+      return "> Terjadi masalah karena terlalu banyak permintaan. Coba lagi nanti.";
     }
     return `> ${error.message}\n*Coba lagi lain waktu*`;
   }

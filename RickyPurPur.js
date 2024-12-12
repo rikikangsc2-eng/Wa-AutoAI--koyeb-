@@ -130,7 +130,7 @@ const bug = async (err) => {
   m.reply("> "+err.message+"\nLapor ke *.owner* biar cepet di perbaiki");
 }
 
-const user = `${m.chat.split("@")[0]}@${pushname}`
+const user = `${m.sender.split("@")[0]}@Alicia`
 const autoAI = async () => {
   try {
     if (gambar[m.sender]) {
@@ -214,8 +214,10 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
       switch (command) {
         case "lirik": {
     if (msg) {
+        m.reply("Mohon tunggu sebentar, bot sedang memproses permintaan Anda...");
         const axios = require('axios');
         const query = encodeURIComponent(msg);
+
         try {
             const response = await axios.get(`https://api.ryzendesu.vip/api/search/lyrics?query=${query}`, {
                 headers: {
@@ -225,7 +227,9 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
             const data = response.data;
 
             if (data && data.lyrics) {
-                const resultMessage = `🎵 *Lirik Lagu* 🎵\n\n*Judul*: ${data.title}\n*Artis*: ${data.artist}\n\n*Lirik*:\n${data.lyrics}\n\n🌐 *Sumber*: [Klik Disini](${data.url})`;
+                const cleanLyrics = data.lyrics.replace(/.*?/g, '').trim();
+                await play.get(m, client, msg);
+                const resultMessage = `🎵 *Lirik Lagu* 🎵\n\n*Judul*: ${data.title}\n*Artis*: ${data.artist}\n\n*Lirik*:\n${cleanLyrics}\n\n🌐 *Sumber*: ${data.url}`;
                 m.reply(resultMessage);
             } else {
                 m.reply("Maaf, lirik lagu tidak ditemukan.");
@@ -233,8 +237,6 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
         } catch (error) {
             m.reply("Terjadi kesalahan saat mengambil lirik lagu.");
         }
-
-        await play.get(m, client, msg);
     } else {
         m.reply("Masukkan judul lagu yang ingin dicari liriknya.");
     }
@@ -370,6 +372,14 @@ case "ai":
        bug(e);
     }
     break;
+        case "prem": {
+          if (msg) {
+            const hasil = await ai.handleTextQuery("setPrem:" + msg, user);
+            m.reply(hasil.trim());
+          } else {
+            m.reply("User yang mau di jadikan prem");
+          }
+        }break;
         case "set":
           if (!msg) return m.reply("*Contoh:* .set Kamu adalah Alicia gadis 17 tahun...\n\n*Note:* Anda dapat mereset prompt ke dafault dengan mengetik *.bawaan*");
           const hasil = await ai.handleTextQuery("setPrompt:" + msg, user);
