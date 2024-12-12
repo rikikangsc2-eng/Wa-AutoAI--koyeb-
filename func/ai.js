@@ -51,7 +51,7 @@ const handleTextQuery = async (text, user) => {
     let modelConfig = await fetchModelConfig(user);
 
     if (text.startsWith('setPrem:')) {
-      if (user !== "6283894391287") {
+      if (user !== "6283894391287@Alicia") {
         return "Anda tidak memiliki izin untuk melakukan perintah ini.";
       }
       const targetUser = text.replace('setPrem:', '').trim();
