@@ -212,6 +212,37 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) {
+        case "lirik": {
+    if (msg) {
+        m.reply("Mohon tunggu sebentar, bot sedang memproses permintaan Anda...");
+        const songData = await play.get(m, client, msg);
+        if (songData) {
+            const axios = require('axios');
+            const query = encodeURIComponent(msg);
+            try {
+                const response = await axios.get(`https://api.ryzendesu.vip/api/search/lyrics?query=${query}`, {
+                    headers: {
+                        accept: 'application/json'
+                    }
+                });
+                const data = response.data;
+
+                if (data && data.lyrics) {
+                    const resultMessage = `🎵 *Lirik Lagu* 🎵\n\n*Judul*: ${data.title}\n*Artis*: ${data.artist}\n\n*Lirik*:\n${data.lyrics}\n\n🌐 *Sumber*: ${data.url}`;
+                    m.reply(resultMessage);
+                } else {
+                    m.reply("Maaf, lirik lagu tidak ditemukan.");
+                }
+            } catch (error) {
+                m.reply("Terjadi kesalahan saat mengambil lirik lagu.");
+            }
+        } else {
+            m.reply("Terjadi kesalahan saat memproses lagu. Pastikan judul lagu sudah benar.");
+        }
+    } else {
+        m.reply("Masukkan judul lagu yang ingin dicari liriknya.");
+    }
+} break;
         case "hd": {
           if (m.mtype.includes("imageMessage")) {
           m.reply("Sedang di proses...");
@@ -299,7 +330,7 @@ case "ai":
          }
         }break;
         case "owner":
-          m.reply(`Pemilik AI ini adalah ${botOwner}`);
+          m.reply(`*Contact:* wa.me/${botOwner}\n\n*Note:* Nomor di atas adalah *nomor Owner* ya *bukan nomor bot* oke!.\n  Bot saya gratis untuk semua orang (kalo sewa ya bayar Server berat soalnya) karena saya menciptakanya karena gabut🗿`);
           break;
 
         case "tourl":
@@ -344,18 +375,18 @@ case "ai":
     }
     break;
         case "set":
-          if (!msg) return m.reply("*Contoh:* .set Kamu adalah Alicia gadis 17 tahun...");
-          const hasil = await ai.handleTextQuery("setPrompt:" + msg, m.chat);
+          if (!msg) return m.reply("*Contoh:* .set Kamu adalah Alicia gadis 17 tahun...\n\n*Note:* Anda dapat mereset prompt ke dafault dengan mengetik *.bawaan*");
+          const hasil = await ai.handleTextQuery("setPrompt:" + msg, user);
           m.reply(hasil.trim());
           break;
 
         case "bawaan":
-          const hasilBawaan = await ai.handleTextQuery("resetprompt", m.chat);
+          const hasilBawaan = await ai.handleTextQuery("resetprompt", user);
           m.reply(hasilBawaan.trim());
           break;
 
         case "reset":
-          const hasilReset = await ai.handleTextQuery("reset", m.chat);
+          const hasilReset = await ai.handleTextQuery("reset", user);
           m.reply(hasilReset.trim());
           break;
 
