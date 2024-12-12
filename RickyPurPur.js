@@ -26,7 +26,7 @@ const botGroup = "https://chat.whatsapp.com/DVSbBEUOE3PEctcarjkeQC";
 let gambar = {};
 let mkey = {};
 
-const arrMenuDownloader = ["tiktok", "ig", "play"];
+const arrMenuDownloader = ["lirik", "tiktok", "ig", "play"];
 const arrMenuAI = ["bawaan", "reset", "set"];
 const arrMenuAnime = [];
 const arrMenuTools = ["hd","tourl"];
