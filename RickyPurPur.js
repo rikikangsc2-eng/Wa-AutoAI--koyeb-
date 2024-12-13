@@ -158,7 +158,6 @@ const autoAI = async () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       try {
-        
         const response = await axios.post(
           "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
           {
@@ -174,19 +173,27 @@ const autoAI = async () => {
           }
         );
 
-        const tempFilePath = path.join(__dirname, "temp_audio.mp3");
-        fs.writeFileSync(tempFilePath, response.data);
-
         await client.sendMessage(
           m.chat,
-          { audio: { url: tempFilePath }, mimetype: "audio/mpeg", ptt: true },
+          { audio: Buffer.from(response.data), mimetype: "audio/mpeg", ptt: true },
           { quoted: m }
         );
-
-        fs.unlinkSync(tempFilePath);
       } catch (error) {
         if (error.response && (error.response.status === 429 || error.response.status === 401)) {
-          m.reply(lastReply);
+          try {
+            const fallbackResponse = await axios.get(
+              `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
+              { responseType: "arraybuffer" }
+            );
+
+            await client.sendMessage(
+              m.chat,
+              { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
+              { quoted: m }
+            );
+          } catch {
+            m.reply(lastReply);
+          }
         } else {
           m.reply(error.message);
         }
@@ -272,8 +279,6 @@ case "ai":
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       try {
-        
-
         const response = await axios.post(
           "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
           {
@@ -289,19 +294,27 @@ case "ai":
           }
         );
 
-        const tempFilePath = path.join(__dirname, "temp_audio.mp3");
-        fs.writeFileSync(tempFilePath, response.data);
-
         await client.sendMessage(
           m.chat,
-          { audio: { url: tempFilePath }, mimetype: "audio/mpeg", ptt: true },
+          { audio: Buffer.from(response.data), mimetype: "audio/mpeg", ptt: true },
           { quoted: m }
         );
-
-        fs.unlinkSync(tempFilePath);
       } catch (error) {
         if (error.response && (error.response.status === 429 || error.response.status === 401)) {
-          m.reply(lastReply);
+          try {
+            const fallbackResponse = await axios.get(
+              `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
+              { responseType: "arraybuffer" }
+            );
+
+            await client.sendMessage(
+              m.chat,
+              { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
+              { quoted: m }
+            );
+          } catch {
+            m.reply(lastReply);
+          }
         } else {
           m.reply(error.message);
         }
