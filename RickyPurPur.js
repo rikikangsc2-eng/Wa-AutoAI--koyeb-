@@ -151,8 +151,13 @@ const autoAI = async () => {
     const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
     if (lines.length > 3) {
-      const firstReply = lines.slice(0, lines.length - 1).join("\n").trim();
-      const lastReply = lines[lines.length - 1].trim();
+      const firstReply = lines
+        .slice(0, lines.length - 1)
+        .join("\n")
+        .trim()
+        .replace(/\*\*(.*?)\*\*/g, "*$1*");
+      let lastReply = lines[lines.length - 1].trim();
+      lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
 
       m.reply(firstReply);
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -199,7 +204,7 @@ const autoAI = async () => {
         }
       }
     } else {
-      const singleReply = lines.join(" ").trim();
+      const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
       m.reply(singleReply);
     }
   } catch (error) {
@@ -272,8 +277,13 @@ case "ai":
     const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
     if (lines.length > 3) {
-      const firstReply = lines.slice(0, lines.length - 1).join("\n").trim();
-      const lastReply = lines[lines.length - 1].trim();
+      const firstReply = lines
+        .slice(0, lines.length - 1)
+        .join("\n")
+        .trim()
+        .replace(/\*\*(.*?)\*\*/g, "*$1*");
+      let lastReply = lines[lines.length - 1].trim();
+      lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
 
       m.reply(firstReply);
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -320,7 +330,7 @@ case "ai":
         }
       }
     } else {
-      const singleReply = lines.join(" ").trim();
+      const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
       m.reply(singleReply);
     }
   } catch (error) {
