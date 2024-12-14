@@ -109,6 +109,9 @@ const handleTextQuery = async (text, user) => {
       responseGemma = await sendRequest(GEMMA_API_URL, API_KEY);
     } catch (error) {
       if (error.response && error.response.status === 429) {
+        if (!modelConfig.isPremium) {
+          return "Anda telah mencapai batas penggunaan. Silakan tunggu beberapa menit untuk mencoba lagi, atau upgrade ke premium untuk mendapatkan akses tanpa batas melalui wa.me/6283894391287.";
+        }
         try {
           responseGemma = await sendRequest(ALT_API_URL, null, false);
         } catch (altError) {
