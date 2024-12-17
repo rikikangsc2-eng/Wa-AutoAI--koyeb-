@@ -151,61 +151,34 @@ const autoAI = async () => {
     const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
     if (lines.length > 3) {
-      const firstReply = lines
-        .slice(0, lines.length - 1)
-        .join("\n")
-        .trim()
-        .replace(/\*\*(.*?)\*\*/g, "*$1*");
-      let lastReply = lines[lines.length - 1].trim();
-      lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
+  const firstReply = lines
+    .slice(0, lines.length - 1)
+    .join("\n")
+    .trim()
+    .replace(/\*\*(.*?)\*\*/g, "*$1*");
+  let lastReply = lines[lines.length - 1].trim();
+  lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
 
-      m.reply(firstReply);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+  m.reply(firstReply);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      try {
-        const response = await axios.post(
-          "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
-          {
-            model_id: "eleven_multilingual_v2",
-            text: lastReply
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "xi-api-key": "sk_ca6a039660ea3a37c1835a2900c44f7d2989c025c7473717"
-            },
-            responseType: "arraybuffer"
-          }
-        );
+  try {
+    const fallbackResponse = await axios.get(
+      `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
+      { responseType: "arraybuffer" }
+    );
 
-        await client.sendMessage(
-          m.chat,
-          { audio: Buffer.from(response.data), mimetype: "audio/mpeg", ptt: true },
-          { quoted: m }
-        );
-      } catch (error) {
-        if (error.response && (error.response.status === 429 || error.response.status === 401)) {
-          try {
-            const fallbackResponse = await axios.get(
-              `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
-              { responseType: "arraybuffer" }
-            );
-
-            await client.sendMessage(
-              m.chat,
-              { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
-              { quoted: m }
-            );
-          } catch {
-            m.reply(lastReply);
-          }
-        } else {
-          m.reply(error.message);
-        }
-      }
-    } else {
-      const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
-      m.reply(singleReply);
+    await client.sendMessage(
+      m.chat,
+      { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
+      { quoted: m }
+    );
+  } catch {
+    m.reply(lastReply);
+  }
+} else {
+  const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
+  m.reply(singleReply);
     }
   } catch (error) {
     bug(error);
@@ -289,45 +262,18 @@ case "ai":
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       try {
-        const response = await axios.post(
-          "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
-          {
-            model_id: "eleven_multilingual_v2",
-            text: lastReply
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "xi-api-key": "sk_ca6a039660ea3a37c1835a2900c44f7d2989c025c7473717"
-            },
-            responseType: "arraybuffer"
-          }
+        const fallbackResponse = await axios.get(
+          `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
+          { responseType: "arraybuffer" }
         );
 
         await client.sendMessage(
           m.chat,
-          { audio: Buffer.from(response.data), mimetype: "audio/mpeg", ptt: true },
+          { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
           { quoted: m }
         );
-      } catch (error) {
-        if (error.response && (error.response.status === 429 || error.response.status === 401)) {
-          try {
-            const fallbackResponse = await axios.get(
-              `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
-              { responseType: "arraybuffer" }
-            );
-
-            await client.sendMessage(
-              m.chat,
-              { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
-              { quoted: m }
-            );
-          } catch {
-            m.reply(lastReply);
-          }
-        } else {
-          m.reply(error.message);
-        }
+      } catch {
+        m.reply(lastReply);
       }
     } else {
       const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
