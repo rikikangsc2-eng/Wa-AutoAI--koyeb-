@@ -50,6 +50,12 @@ const handleTextQuery = async (text, user) => {
     let history = await fetchHistory(user);
     let modelConfig = await fetchModelConfig(user);
 
+    if (!modelConfig.isPremium && modelConfig.systemPrompt !== dafPrompt) {
+      modelConfig.systemPrompt = dafPrompt;
+      modelConfig.lastTokenCount = 0;
+      await saveModelConfig(user, modelConfig);
+    }
+
     if (text.startsWith('setPrem:')) {
       if (user !== "6283894391287@Alicia") {
         return "Anda tidak memiliki izin untuk melakukan perintah ini.";
@@ -110,7 +116,7 @@ const handleTextQuery = async (text, user) => {
     } catch (error) {
       if (error.response && error.response.status === 429) {
         if (!modelConfig.isPremium) {
-          return "Anda telah mencapai batas penggunaan. Silakan tunggu beberapa menit untuk mencoba lagi, atau upgrade ke premium untuk mendapatkan akses tanpa batas melalui wa.me/6283894391287.";
+          return "Sistem mengalami beban yang tinggi. Silakan tunggu beberapa saat atau upgrade ke premium untuk mendapatkan akses server alternatif tanpa batas melalui wa.me/6283894391287.";
         }
         try {
           responseGemma = await sendRequest(ALT_API_URL, null, false);
@@ -143,7 +149,7 @@ const handleImageQuery = async (url, text, user) => {
     const modelConfig = await fetchModelConfig(user);
 
     if (!modelConfig.isPremium) {
-      return "Fitur ini hanya tersedia untuk pengguna premium. Untuk menjadi premium, silakan hubungi wa.me/6283894391287. Biaya Rp5.000 untuk akses permanen melalui Dana, atau Rp10.000 untuk akses permanen melalui pulsa.";
+      return "Fitur ini memerlukan akses premium. Untuk menjadi pengguna premium, silakan hubungi wa.me/6283894391287. Biaya Rp5.000 untuk akses permanen melalui Dana, atau Rp10.000 untuk akses permanen melalui pulsa.";
     }
 
     const history = await fetchHistory(user);
