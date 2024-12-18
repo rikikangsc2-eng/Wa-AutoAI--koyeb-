@@ -6,9 +6,9 @@ const API_KEY = "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";
 const GEMINI_API_KEY = "AIzaSyAgZm62eZ4C4hZsldI52cka5XwNapGWPWw";
 const ALT_API_URL = "https://express-vercel-ytdl.vercel.app/llm";
 const generationConfig = {
-  temperature: 0.65,
+  temperature: 0.8,
   max_tokens: 512,
-  top_p: 0.75,
+  top_p: 0.9,
   stream: false,
   stop: null,
 };
