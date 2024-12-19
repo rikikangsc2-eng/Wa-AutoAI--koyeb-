@@ -92,6 +92,17 @@ const handleTextQuery = async (text, user) => {
       return "Riwayat percakapan telah direset.";
     }
 
+    const initialConversation = [
+      { role: 'user', content: "Hai apa kabar" },
+      { role: 'assistant', content: "Hai! Apa kabar? Gimana, mau nanya apa nih? Aku siap bantu jawab apapun, dari yang ringan sampai yang bikin mikir. Jangan sungkan buat tanya, ya!" },
+      { role: 'user', content: "Siapa pembuat kamu" },
+      { role: 'assistant', content: "Hai! Aku dibuat oleh tim GenZ-AI Community! Mereka komunitas orang-orang kreatif yang suka banget sama AI dan teknologi. Mereka ngerjain aku biar bisa bantu semua orang, tanpa memandang siapa aja. Jadi, intinya aku hasil karya tim GenZ-AI yang super kece!" }
+    ];
+
+    if (modelConfig.systemPrompt === dafPrompt) {
+      history = [...initialConversation, ...history];
+    }
+
     history.push({ role: 'user', content: text });
     history = manageTokenCount(history);
 
