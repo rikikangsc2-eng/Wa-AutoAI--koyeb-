@@ -1,21 +1,24 @@
 const axios = require('axios');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+
 const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GEMMA_MODEL_NAME = "gemma2-9b-it";
 const API_KEY = "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";
-const GEMINI_API_KEY = "AIzaSyAgZm62eZ4C4hZsldI52cka5XwNapGWPWw";
-const ALT_API_URL = "https://express-vercel-ytdl.vercel.app/llm";
-const generationConfig = {
-  temperature: 0.8,
+const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
+
+const RESPONSE_SETTINGS = {
+  "Kreatif": { temperature: 0.7, top_p: 0.9 },
+  "Seimbang": { temperature: 0.5, top_p: 0.8 },
+  "Standar": { temperature: 0.3, top_p: 0.7 },
+};
+
+const DEFAULT_GENERATION_CONFIG = {
   max_tokens: 512,
-  top_p: 0.9,
   stream: false,
   stop: null,
 };
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
+const genAI = new GoogleGenerativeAI(API_KEY);
 
 const fetchHistory = async (user) => {
   const res = await axios.get(`${BASE_URL}/history/${user}`);
@@ -28,7 +31,7 @@ const saveHistory = async (user, history) => {
 
 const fetchModelConfig = async (user) => {
   const res = await axios.get(`${BASE_URL}/model/${user}`);
-  return res.data || { lastTokenCount: 0, systemPrompt: "", isPremium: false };
+  return res.data || { lastTokenCount: 0, systemPrompt: "", isPremium: false, responseType: null };
 };
 
 const saveModelConfig = async (user, config) => {
@@ -44,153 +47,103 @@ const manageTokenCount = (history) => {
   return history;
 };
 
-const handleTextQuery = async (text, user) => {
-  try {
-    const dafPrompt = require('fs').readFileSync('./prompt.txt', 'utf8');
-    let history = await fetchHistory(user);
-    let modelConfig = await fetchModelConfig(user);
+const getResponseSettings = (responseType) => {
+  return RESPONSE_SETTINGS[responseType] || RESPONSE_SETTINGS["Standar"];
+};
 
-    if (!modelConfig.isPremium && modelConfig.systemPrompt !== dafPrompt) {
-      modelConfig.systemPrompt = dafPrompt;
-      modelConfig.lastTokenCount = 0;
-      await saveModelConfig(user, modelConfig);
+const promptUserForResponseType = () => {
+  return "Silakan pilih tipe respons dengan menuliskan angka:\n1. Kreatif\n2. Seimbang\n3. Standar";
+};
+
+const handleUserResponseTypeSelection = async (user, input) => {
+  const options = { "1": "Kreatif", "2": "Seimbang", "3": "Standar" };
+  const responseType = options[input];
+  if (!responseType) return "Harap masukkan angka 1, 2, atau 3.";
+  const modelConfig = await fetchModelConfig(user);
+  modelConfig.responseType = responseType;
+  await saveModelConfig(user, modelConfig);
+  return `Tipe respons telah disetel ke: ${responseType}. Anda dapat mulai bertanya sekarang.`;
+};
+
+const resetUserPreferences = async (user) => {
+  const modelConfig = await fetchModelConfig(user);
+  modelConfig.responseType = null;
+  modelConfig.lastTokenCount = 0;
+  await saveModelConfig(user, modelConfig);
+  await saveHistory(user, []);
+};
+
+const processTextQuery = async (text, user) => {
+  let modelConfig = await fetchModelConfig(user);
+
+  if (!modelConfig.responseType) {
+    if (/^\d$/.test(text)) {
+      return handleUserResponseTypeSelection(user, text);
     }
-
-    if (text.startsWith('setPrem:')) {
-      if (user !== "6283894391287@Alicia") {
-        return "Anda tidak memiliki izin untuk melakukan perintah ini.";
-      }
-      const targetUser = text.replace('setPrem:', '').trim();
-      const targetConfig = await fetchModelConfig(targetUser);
-      targetConfig.isPremium = true;
-      await saveModelConfig(targetUser, targetConfig);
-      return `Pengguna ${targetUser} sekarang telah menjadi pengguna premium.`;
-    }
-
-    if (text.startsWith('setPrompt:')) {
-      if (!modelConfig.isPremium) {
-        return "Anda belum menjadi pengguna premium. Untuk mendapatkan akses premium, silakan hubungi kami melalui wa.me/6283894391287. Biaya Rp5.000 untuk akses permanen melalui Dana, atau Rp10.000 untuk akses permanen melalui pulsa.";
-      }
-      const newPrompt = text.replace('setPrompt:', '').trim();
-      modelConfig.systemPrompt = newPrompt;
-      modelConfig.lastTokenCount = 0;
-      await saveModelConfig(user, modelConfig);
-      await saveHistory(user, []);
-      return "System prompt telah diperbarui dan riwayat percakapan direset.";
-    }
-
-    if (text === 'resetprompt') {
-      modelConfig.systemPrompt = dafPrompt;
-      modelConfig.lastTokenCount = 0;
-      await saveModelConfig(user, modelConfig);
-      await saveHistory(user, []);
-      return "Prompt telah direset ke default dan riwayat percakapan dihapus.";
-    }
-
-    if (text === 'reset') {
-      await saveHistory(user, []);
-      return "Riwayat percakapan telah direset.";
-    }
-
-    const initialConversation = [
-      { role: 'user', content: "Hai apa kabar" },
-      { role: 'assistant', content: "Hai! Apa kabar? Gimana, mau nanya apa nih? Aku siap bantu jawab apapun, dari yang ringan sampai yang bikin mikir. Jangan sungkan buat tanya, ya!" },
-      { role: 'user', content: "Siapa pembuat kamu" },
-      { role: 'assistant', content: "Hai! Aku dibuat oleh tim GenZ-AI Community! Mereka komunitas orang-orang kreatif yang suka banget sama AI dan teknologi. Mereka ngerjain aku biar bisa bantu semua orang, tanpa memandang siapa aja. Jadi, intinya aku hasil karya tim GenZ-AI yang super kece!" }
-    ];
-
-    if (modelConfig.systemPrompt === dafPrompt) {
-      history = [...initialConversation, ...history];
-    }
-
-    history.push({ role: 'user', content: text });
-    history = manageTokenCount(history);
-
-    const messages = modelConfig.systemPrompt
-      ? [{ role: 'system', content: modelConfig.systemPrompt }, ...history]
-      : [{ role: 'system', content: dafPrompt }, ...history];
-
-    const sendRequest = async (apiUrl, apiKey, useKey = true) => {
-      const payload = {
-        model: GEMMA_MODEL_NAME,
-        messages,
-        ...generationConfig,
-      };
-      const headers = { 'Content-Type': 'application/json' };
-      if (useKey) headers.Authorization = `Bearer ${apiKey}`;
-      return await axios.post(apiUrl, payload, { headers });
-    };
-
-    let responseGemma;
-    try {
-      responseGemma = await sendRequest(GEMMA_API_URL, API_KEY);
-    } catch (error) {
-      if (error.response && error.response.status === 429) {
-        if (!modelConfig.isPremium) {
-          return "Sistem mengalami beban yang tinggi. Silakan tunggu beberapa saat atau upgrade ke premium untuk mendapatkan akses server alternatif tanpa batas melalui wa.me/6283894391287.";
-        }
-        try {
-          responseGemma = await sendRequest(ALT_API_URL, null, false);
-        } catch (altError) {
-          if (altError.response && altError.response.status === 429) {
-            return "Terjadi kesalahan karena tingginya permintaan.";
-          }
-          throw new Error(`Error status code ${altError.response?.status || 'unknown'} for alt API`);
-        }
-      } else {
-        throw new Error(`Error status code ${error.response?.status || 'unknown'} for API 1`);
-      }
-    }
-
-    const responseText = responseGemma.data.choices[0].message.content;
-    history.push({ role: 'assistant', content: responseText });
-    await saveHistory(user, history);
-
-    modelConfig.lastTokenCount = history.reduce((acc, msg) => acc + msg.content.length, 0);
-    await saveModelConfig(user, modelConfig);
-
-    return responseText;
-  } catch (error) {
-    return `> ${error.message}\n*Coba lagi lain waktu*`;
+    return promptUserForResponseType();
   }
+
+  const responseSettings = getResponseSettings(modelConfig.responseType);
+  const generationConfig = { ...DEFAULT_GENERATION_CONFIG, ...responseSettings };
+
+  const history = await fetchHistory(user);
+  history.push({ role: "user", content: text });
+  const updatedHistory = manageTokenCount(history);
+
+  const messages = [{ role: "system", content: modelConfig.systemPrompt || "" }, ...updatedHistory];
+
+  const response = await axios.post(
+    GEMMA_API_URL,
+    { model: GEMMA_MODEL_NAME, messages, ...generationConfig },
+    { headers: { Authorization: `Bearer ${API_KEY}` } }
+  );
+
+  const responseText = response.data.choices[0].message.content;
+  updatedHistory.push({ role: "assistant", content: responseText });
+  await saveHistory(user, updatedHistory);
+
+  modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
+  await saveModelConfig(user, modelConfig);
+
+  return responseText;
+};
+
+const handleTextQuery = async (text, user) => {
+  if (text.toLowerCase() === "reset") {
+    await resetUserPreferences(user);
+    return "Riwayat percakapan dan preferensi telah direset. Silakan pilih tipe respons lagi:\n" + promptUserForResponseType();
+  }
+
+  return processTextQuery(text, user);
 };
 
 const handleImageQuery = async (url, text, user) => {
-  try {
-    const modelConfig = await fetchModelConfig(user);
+  const modelConfig = await fetchModelConfig(user);
 
-    if (!modelConfig.isPremium) {
-      return "Fitur ini memerlukan akses premium. Untuk menjadi pengguna premium, silakan hubungi wa.me/6283894391287. Biaya Rp5.000 untuk akses permanen melalui Dana, atau Rp10.000 untuk akses permanen melalui pulsa.";
-    }
-
-    const history = await fetchHistory(user);
-
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    const imageData = Buffer.from(response.data).toString('base64');
-
-    const prompt = [
-      ...history.map(item => `**${item.role === 'assistant' ? 'Gemini' : 'User'}**: ${item.content}`),
-      `**User**: ${text}`,
-      `**Gemini**: `,
-      { inlineData: { data: imageData, mimeType: 'image/png' } }
-    ];
-
-    const result = await model.generateContent(prompt);
-    const groqOutputText = result.response.text();
-
-    const cleanedOutputText = groqOutputText.replace(/^(.*?)(user|gemini|$)/i, '$1').trim();
-
-    history.push({ role: 'user', content: text });
-    history.push({ role: 'assistant', content: cleanedOutputText });
-    await saveHistory(user, history);
-
-    return cleanedOutputText;
-  } catch (error) {
-    if (error.response && error.response.status === 429) {
-      return "> Terjadi masalah karena terlalu banyak permintaan. Coba lagi nanti.";
-    }
-    return `> ${error.message}\n*Coba lagi lain waktu*`;
+  if (!modelConfig.responseType) {
+    return promptUserForResponseType();
   }
+
+  const responseSettings = getResponseSettings(modelConfig.responseType);
+  const history = await fetchHistory(user);
+
+  const response = await axios.get(url, { responseType: "arraybuffer" });
+  const imageData = Buffer.from(response.data).toString("base64");
+
+  const prompt = [
+    ...history.map(item => `**${item.role === "assistant" ? "Gemini" : "User"}**: ${item.content}`),
+    `**User**: ${text}`,
+    { inlineData: { data: imageData, mimeType: "image/png" } },
+  ];
+
+  const result = await genAI.generateContent(prompt, responseSettings);
+  const responseText = result.response.text();
+
+  history.push({ role: "user", content: text });
+  history.push({ role: "assistant", content: responseText });
+  await saveHistory(user, history);
+
+  return responseText;
 };
 
 module.exports = {
