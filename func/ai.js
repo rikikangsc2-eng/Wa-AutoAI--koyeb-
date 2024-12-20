@@ -6,11 +6,38 @@ const GEMMA_MODEL_NAME = "gemma2-9b-it";
 const API_KEY = "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";
 const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
-const RESPONSE_SETTINGS = {
-  "Kreatif": { temperature: 0.7, top_p: 0.9 },
-  "Seimbang": { temperature: 0.5, top_p: 0.8 },
-  "Standar": { temperature: 0.3, top_p: 0.7 },
-};
+const RESPONSE_SETTINGS = [
+  {
+    name: "Creative",
+    description: "Mode ini menghasilkan respons yang sangat kreatif, penuh dengan ide-ide unik dan imajinatif.",
+    temperature: 0.9,
+    top_p: 0.95
+  },
+  {
+    name: "Balanced",
+    description: "Mode ini memberikan respons yang seimbang antara kreatif dan logis, cocok untuk percakapan umum.",
+    temperature: 0.7,
+    top_p: 0.8
+  },
+  {
+    name: "Logical",
+    description: "Mode ini memberikan respons yang fokus pada logika dan fakta, cocok untuk penyelesaian masalah.",
+    temperature: 0.4,
+    top_p: 0.6
+  },
+  {
+    name: "Explorative",
+    description: "Mode ini mengeksplorasi kemungkinan respons dengan keluasan ide, sering cocok untuk brainstorming.",
+    temperature: 1.0,
+    top_p: 0.9
+  },
+  {
+    name: "Precise",
+    description: "Mode ini menghasilkan respons yang fokus dan langsung, cocok untuk jawaban spesifik dan to the point.",
+    temperature: 0.3,
+    top_p: 0.5
+  }
+];
 
 const DEFAULT_GENERATION_CONFIG = {
   max_tokens: 512,
@@ -47,22 +74,29 @@ const manageTokenCount = (history) => {
   return history;
 };
 
-const getResponseSettings = (responseType) => {
-  return RESPONSE_SETTINGS[responseType] || RESPONSE_SETTINGS["Standar"];
+const promptUserForResponseType = () => {
+  const options = RESPONSE_SETTINGS.map((setting, index) => 
+    `${index + 1}. ${setting.name}: ${setting.description}`).join('\n');
+  return `Sebelum lanjut chat dengan Alicia, ayok sesuaikan gaya respon yang kamu inginkan agar Alicia merespon dengan keinginan kamu\n\n${options}\n\nKamu bisa pilih ulang di *.reset* jadi tenang aja\n\nPilihlah dengan gaya kesukaan mu yaa!`;
 };
 
-const promptUserForResponseType = () => {
-  return "Silakan pilih tipe respons dengan menuliskan angka:\n1. Kreatif\n2. Seimbang\n3. Standar";
+const getResponseSettings = (responseType) => {
+  const setting = RESPONSE_SETTINGS.find((s) => s.name === responseType);
+  return setting ? { temperature: setting.temperature, top_p: setting.top_p } : null;
 };
 
 const handleUserResponseTypeSelection = async (user, input) => {
-  const options = { "1": "Kreatif", "2": "Seimbang", "3": "Standar" };
-  const responseType = options[input];
-  if (!responseType) return "Harap masukkan angka 1, 2, atau 3.";
+  const index = parseInt(input, 10) - 1;
+  const selectedSetting = RESPONSE_SETTINGS[index];
+
+  if (!selectedSetting) {
+    return `Pilihan tidak valid. Silakan coba lagi.\n\n${promptUserForResponseType()}`;
+  }
+
   const modelConfig = await fetchModelConfig(user);
-  modelConfig.responseType = responseType;
+  modelConfig.responseType = selectedSetting.name;
   await saveModelConfig(user, modelConfig);
-  return `Tipe respons telah disetel ke: ${responseType}. Anda dapat mulai bertanya sekarang.`;
+  return `Tipe respons telah disetel ke: ${selectedSetting.name}. Anda dapat mulai bertanya sekarang.`;
 };
 
 const resetUserPreferences = async (user) => {
@@ -76,7 +110,7 @@ const resetUserPreferences = async (user) => {
 const processTextQuery = async (text, user) => {
   let modelConfig = await fetchModelConfig(user);
 
-  if (!modelConfig.responseType) {
+  if (!modelConfig.responseType || !getResponseSettings(modelConfig.responseType)) {
     if (/^\d$/.test(text)) {
       return handleUserResponseTypeSelection(user, text);
     }
