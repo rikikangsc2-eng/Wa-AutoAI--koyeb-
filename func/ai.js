@@ -4,6 +4,8 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GEMMA_MODEL_NAME = "gemma2-9b-it";
 const API_KEY = "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";
+const API_KEY_2 = "AIzaSyAgZm62eZ4C4hZsldI52cka5XwNapGWPWw"
+const model_gemini = `gemini-2.0-flash-exp`
 const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
 const RESPONSE_SETTINGS = [
@@ -45,7 +47,7 @@ const DEFAULT_GENERATION_CONFIG = {
   stop: null,
 };
 
-const genAI = new GoogleGenerativeAI(API_KEY);
+const genAI = new GoogleGenerativeAI(API_KEY_2);
 
 const fetchHistory = async (user) => {
   const res = await axios.get(`${BASE_URL}/history/${user}`);
@@ -171,7 +173,7 @@ const handleImageQuery = async (url, text, user) => {
     { inlineData: { data: imageData, mimeType: "image/png" } },
   ];
 
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: model_gemini });
   const result = await model.generateContent([prompt]);
   const responseText = result.response.text();
 
