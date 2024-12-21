@@ -90,7 +90,7 @@ const handleUserResponseTypeSelection = async (user, input) => {
   const selectedSetting = RESPONSE_SETTINGS[index];
 
   if (!selectedSetting) {
-    return `Pilihan tidak valid. Silakan coba lagi.\n\n${promptUserForResponseType()}`;
+    return `Pilihan tidak valid. Harus memilih angka antara 1 sampai ${RESPONSE_SETTINGS.length}.\n\n${promptUserForResponseType()}`;
   }
 
   const modelConfig = await fetchModelConfig(user);
@@ -111,7 +111,8 @@ const processTextQuery = async (text, user) => {
   let modelConfig = await fetchModelConfig(user);
 
   if (!modelConfig.responseType || !getResponseSettings(modelConfig.responseType)) {
-    if (/^\d$/.test(text)) {
+    const numericMatch = text.match(/^\d$/);
+    if (numericMatch) {
       return handleUserResponseTypeSelection(user, text);
     }
     return promptUserForResponseType();
@@ -170,7 +171,8 @@ const handleImageQuery = async (url, text, user) => {
     { inlineData: { data: imageData, mimeType: "image/png" } },
   ];
 
-  const result = await genAI.generateContent(prompt, responseSettings);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const result = await model.generateContent([prompt]);
   const responseText = result.response.text();
 
   history.push({ role: "user", content: text });
