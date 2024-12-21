@@ -24,13 +24,34 @@ Welcome to GenZ-AI, your ultimate solution for WhatsApp automation and file mana
 * **Simplify File Management:**  Download and organize files directly from WhatsApp, eliminating the need for manual transfers.
 * **Expand Your Capabilities:**  Leverage the power of AI and a robust downloader to create a customized WhatsApp experience that meets your specific needs.
 
-**How to Use GenZ-AI:**
+**Getting Started:**
 
-1. **Clone the repository:**  `git clone https://github.com/your-username/genz-ai.git`
-2. **Install dependencies:** `pip install -r requirements.txt`
-3. **Configure your settings:** Update the configuration file with your desired settings, including your WhatsApp account information and any custom bot behavior you want to implement.
-4. **Run the bot:**  `python main.py`
+1. **Prerequisites:**
+   * Node.js and npm installed on your system.
+   * A WhatsApp account (preferably with a business profile).
 
+2. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/your-username/GenZ-AI.git
+   ```
+
+3. **Navigate to the Project Directory:**
+   ```bash
+   cd GenZ-AI
+   ```
+
+4. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
+
+5. **Start the Bot:**
+   ```bash
+   npm start
+   ```
+
+   The bot will now start running in the background.  You can access its functionality through WhatsApp.
+   
 **Troubleshooting:**
 
 Encounter any issues during setup or operation?  Don't worry!  Report them on GitHub or contact us directly at s.id/genz-ai for prompt assistance.
