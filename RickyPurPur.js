@@ -109,9 +109,10 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
     const cekCmd = (pesan) => pesan.toLowerCase().startsWith(prefix) && !pesan.toLowerCase().startsWith(prefix + " ");
 
     if (
-      (m.mtype.includes("imageMessage") ||
-        (m.mtype.includes("stickerMessage") && m.msg.mimetype.includes("image"))) && !m.isGroup && !cekCmd(m.body)
-    ) {
+    m.mtype.includes("imageMessage") && 
+    !m.isGroup && 
+    !cekCmd(m.body)
+){
       await client.sendMessage(m.chat, {
         react: { text: "🆙", key: m.key }
       });

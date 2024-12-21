@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
+    "start": "bash rikiRun.bash",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
