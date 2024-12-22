@@ -241,8 +241,13 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
         }break
 case "ai":
   if (!m.isGroup) return m.reply("Fitur AI hanya untuk di group chat.");
-  if (m.mtype.includes("imageMessage") || (m.mtype.includes("stickerMessage") && m.msg.mimetype.includes("image"))) {
-    return m.reply("AI tidak bisa memproses gambar di dalam grup!");
+  if (
+    m.mtype.includes("imageMessage") 
+){
+    const linkImage = await toUrl.get(m, client);
+    m.reply("*Memproses gambar...*");
+    const result = await ai.handleImageQuery(linkImage, m.body, user);
+    m.reply(result);
   }
   if (!msg) return m.reply("Apa yang ingin kamu tanyakan?");
 

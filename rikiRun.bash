@@ -6,5 +6,6 @@ start_node_app() {
     sleep 60
   done
 }
-node app.js &
-start_node_app 
+
+start_node_app &
+node app.js

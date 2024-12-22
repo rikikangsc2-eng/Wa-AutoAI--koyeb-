@@ -5,7 +5,7 @@ const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GEMMA_MODEL_NAME = "gemma2-9b-it";
 const API_KEY = "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";
 const API_KEY_2 = "AIzaSyAgZm62eZ4C4hZsldI52cka5XwNapGWPWw"
-const model_gemini = `gemini-1.5-flash`
+const model_gemini = `gemini-2.0-flash-exp`
 const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
 const RESPONSE_SETTINGS = [
