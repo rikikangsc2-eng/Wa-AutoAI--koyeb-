@@ -247,7 +247,7 @@ case "ai":
     const linkImage = await toUrl.get(m, client);
     m.reply("*Memproses gambar...*");
     const result = await ai.handleImageQuery(linkImage, m.body, user);
-    m.reply(result);
+   return m.reply(result);
   }
   if (!msg) return m.reply("Apa yang ingin kamu tanyakan?");
 
