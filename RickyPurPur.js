@@ -151,35 +151,39 @@ const autoAI = async () => {
 
     const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
-    if (lines.length > 3) {
-  const firstReply = lines
-    .slice(0, lines.length - 1)
-    .join("\n")
-    .trim()
-    .replace(/\*\*(.*?)\*\*/g, "*$1*");
-  let lastReply = lines[lines.length - 1].trim();
-  lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
+    if (lines.length > 5 || hasil.length > 50) {
+      const firstReply = lines
+        .slice(0, 4)
+        .join("\n")
+        .trim()
+        .replace(/\*\*(.*?)\*\*/g, "*$1*");
 
-  m.reply(firstReply);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+      let secondReply = lines.slice(4).join("\n").trim();
+      secondReply = secondReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
 
-  try {
-    const fallbackResponse = await axios.get(
-      `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
-      { responseType: "arraybuffer" }
-    );
+      m.reply(firstReply);
 
-    await client.sendMessage(
-      m.chat,
-      { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
-      { quoted: m }
-    );
-  } catch {
-    m.reply(lastReply);
-  }
-} else {
-  const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
-  m.reply(singleReply);
+      if (secondReply) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        try {
+          const fallbackResponse = await axios.get(
+            `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(secondReply)}`,
+            { responseType: "arraybuffer" }
+          );
+
+          await client.sendMessage(
+            m.chat,
+            { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
+            { quoted: m }
+          );
+        } catch {
+          m.reply(secondReply);
+        }
+      }
+    } else {
+      const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
+      m.reply(singleReply);
     }
   } catch (error) {
     bug(error);
@@ -276,31 +280,35 @@ case "ai":
 
     const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
-    if (lines.length > 3) {
+    if (lines.length > 5 || hasil.length > 50) {
       const firstReply = lines
-        .slice(0, lines.length - 1)
+        .slice(0, 4)
         .join("\n")
         .trim()
         .replace(/\*\*(.*?)\*\*/g, "*$1*");
-      let lastReply = lines[lines.length - 1].trim();
-      lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
+
+      let secondReply = lines.slice(4).join("\n").trim();
+      secondReply = secondReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
 
       m.reply(firstReply);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      try {
-        const fallbackResponse = await axios.get(
-          `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
-          { responseType: "arraybuffer" }
-        );
+      if (secondReply) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        await client.sendMessage(
-          m.chat,
-          { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
-          { quoted: m }
-        );
-      } catch {
-        m.reply(lastReply);
+        try {
+          const fallbackResponse = await axios.get(
+            `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(secondReply)}`,
+            { responseType: "arraybuffer" }
+          );
+
+          await client.sendMessage(
+            m.chat,
+            { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
+            { quoted: m }
+          );
+        } catch {
+          m.reply(secondReply);
+        }
       }
     } else {
       const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
