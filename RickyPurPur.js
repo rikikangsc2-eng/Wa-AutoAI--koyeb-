@@ -241,18 +241,39 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
         }break
 case "ai":
   if (!m.isGroup) return m.reply("Fitur AI hanya untuk di group chat.");
-  if (
-    m.mtype.includes("imageMessage") 
-){
-    const linkImage = await toUrl.get(m, client);
-    m.reply("*Memproses gambar...*");
-    const result = await ai.handleImageQuery(linkImage, m.body, user);
-   return m.reply(result);
+  if (m.mtype.includes("imageMessage")) {
+    await client.sendMessage(m.chat, {
+      react: { text: "🆙", key: m.key }
+    });
+
+    mkey[m.sender] = m.key;
+    gambar[m.sender] = await toUrl.get(m, client);
+
+    await client.sendMessage(m.chat, {
+      react: { text: "☁️", key: mkey[m.sender] }
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
-  if (!msg) return m.reply("Apa yang ingin kamu tanyakan?");
+
+  if (!msg && !gambar[m.sender]) return m.reply("Apa yang ingin kamu tanyakan?");
 
   try {
-    const hasil = await ai.handleTextQuery(msg, user);
+    if (gambar[m.sender]) {
+      await client.sendMessage(m.chat, {
+        react: { text: "✅", key: mkey[m.sender] }
+      });
+      mkey[m.sender] = null;
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      await m.reply("*Memproses Gambar...*");
+    }
+
+    const hasil = gambar[m.sender]
+      ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
+      : await ai.handleTextQuery(m.body, user);
+
     const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
     if (lines.length > 3) {
@@ -287,9 +308,10 @@ case "ai":
     }
   } catch (error) {
     bug(error);
+  } finally {
+    delete gambar[m.sender];
   }
   break;
-
         case "m":
           m.reply(JSON.stringify(m, null, 2));
           break;
