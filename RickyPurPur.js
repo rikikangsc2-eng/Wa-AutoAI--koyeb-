@@ -26,7 +26,7 @@ const botGroup = "https://chat.whatsapp.com/DVSbBEUOE3PEctcarjkeQC";
 let gambar = {};
 let mkey = {};
 
-const arrMenuDownloader = ["lirik", "tiktok", "ig", "play"];
+const arrMenuDownloader = ["lirik", "tiktok", "ig", "play", "videy"];
 const arrMenuAI = ["bawaan", "reset", "set"];
 const arrMenuAnime = [];
 const arrMenuTools = ["hd","tourl"];
@@ -198,6 +198,17 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) {
+        case "videy":{
+  if (!msg) return m.reply("*Ex:* .videy https://videy.co/v?id=6eWSwq2t");
+  try {
+    m.reply("*Mengirim media..*");
+    const response = await axios.get(`https://api.agatz.xyz/api/videydl?url=${msg}`);
+    const videoUrl = response.data.data;
+    client.sendMessage(m.chat, { video: { url: videoUrl }, mimetype: "video/mp4" }, { quoted: m });
+  } catch (e) {
+    bug(e);
+  }
+        } break;
         case "lirik": {
     if (msg) {
         m.reply("Mohon tunggu sebentar, bot sedang memproses permintaan Anda...");
