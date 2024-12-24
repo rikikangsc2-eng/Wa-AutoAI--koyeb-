@@ -152,34 +152,36 @@ const autoAI = async () => {
     const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
     if (lines.length > 3) {
-  const firstReply = lines
-    .slice(0, lines.length - 1)
-    .join("\n")
-    .trim()
-    .replace(/\*\*(.*?)\*\*/g, "*$1*");
-  let lastReply = lines[lines.length - 1].trim();
-  lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
+      const firstReply = lines
+        .slice(0, lines.length - 1)
+        .join("\n")
+        .trim()
+        .replace(/\*\*(.*?)\*\*/g, "*$1*");
+      let lastReply = lines[lines.length - 1].trim();
+      lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
 
-  m.reply(firstReply);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (firstReply) m.reply(firstReply);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-  try {
-    const fallbackResponse = await axios.get(
-      `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
-      { responseType: "arraybuffer" }
-    );
+      try {
+        const fallbackResponse = await axios.get(
+          `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
+          { responseType: "arraybuffer" }
+        );
 
-    await client.sendMessage(
-      m.chat,
-      { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
-      { quoted: m }
-    );
-  } catch {
-    m.reply(lastReply);
-  }
-} else {
-  const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
-  m.reply(singleReply);
+        if (lastReply) {
+          await client.sendMessage(
+            m.chat,
+            { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
+            { quoted: m }
+          );
+        }
+      } catch {
+        if (lastReply) m.reply(lastReply);
+      }
+    } else {
+      const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
+      if (singleReply) m.reply(singleReply);
     }
   } catch (error) {
     bug(error);
@@ -296,7 +298,7 @@ case "ai":
       let lastReply = lines[lines.length - 1].trim();
       lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
 
-      m.reply(firstReply);
+      if (firstReply) m.reply(firstReply);
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       try {
@@ -305,17 +307,19 @@ case "ai":
           { responseType: "arraybuffer" }
         );
 
-        await client.sendMessage(
-          m.chat,
-          { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
-          { quoted: m }
-        );
+        if (lastReply) {
+          await client.sendMessage(
+            m.chat,
+            { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
+            { quoted: m }
+          );
+        }
       } catch {
-        m.reply(lastReply);
+        if (lastReply) m.reply(lastReply);
       }
     } else {
       const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
-      m.reply(singleReply);
+      if (singleReply) m.reply(singleReply);
     }
   } catch (error) {
     bug(error);
