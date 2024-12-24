@@ -200,150 +200,164 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) {
-        case "videy":{
-  if (!msg) return m.reply("*Ex:* .videy https://videy.co/v?id=6eWSwq2t");
-  try {
-    m.reply("*Mengirim media..*");
-    const response = await axios.get(`https://api.agatz.xyz/api/videydl?url=${msg}`);
-    const videoUrl = response.data.data;
-    client.sendMessage(m.chat, { video: { url: videoUrl }, mimetype: "video/mp4" }, { quoted: m });
-  } catch (e) {
-    bug(e);
-  }
-        } break;
+        case "videy": {
+          if (!msg) return m.reply("*Ex:* .videy https://videy.co/v?id=6eWSwq2t");
+          try {
+            m.reply("*Mengirim media..*");
+            const response = await axios.get(`https://api.agatz.xyz/api/videydl?url=${msg}`);
+            const videoUrl = response.data.data;
+            client.sendMessage(m.chat, { video: { url: videoUrl }, mimetype: "video/mp4" }, { quoted: m });
+          } catch (e) {
+            bug(e);
+          }
+          break;
+        };
+
         case "lirik": {
-    if (msg) {
-        m.reply("Mohon tunggu sebentar, bot sedang memproses permintaan Anda...");
-        const axios = require('axios');
-        const query = encodeURIComponent(msg);
+          if (msg) {
+            m.reply("Mohon tunggu sebentar, bot sedang memproses permintaan Anda...");
+            const axios = require('axios');
+            const query = encodeURIComponent(msg);
 
-        try {
-            const response = await axios.get(`https://api.ryzendesu.vip/api/search/lyrics?query=${query}`, {
+            try {
+              const response = await axios.get(`https://api.ryzendesu.vip/api/search/lyrics?query=${query}`, {
                 headers: {
-                    accept: 'application/json'
+                  accept: 'application/json'
                 }
-            });
-            const data = response.data;
+              });
+              const data = response.data;
 
-            if (data && data.lyrics) {
+              if (data && data.lyrics) {
                 const cleanLyrics = data.lyrics.replace(/.*?/g, '').trim();
                 await play.get(m, client, msg);
                 const resultMessage = `🎵 *Lirik Lagu* 🎵\n\n*Judul*: ${data.title}\n*Artis*: ${data.artist}\n\n*Lirik*:\n${cleanLyrics}\n\n🌐 *Sumber*: ${data.url}`;
                 m.reply(resultMessage);
-            } else {
+              } else {
                 m.reply("Maaf, lirik lagu tidak ditemukan.");
+              }
+            } catch (error) {
+              m.reply("Terjadi kesalahan saat mengambil lirik lagu.");
             }
-        } catch (error) {
-            m.reply("Terjadi kesalahan saat mengambil lirik lagu.");
-        }
-    } else {
-        m.reply("Masukkan judul lagu yang ingin dicari liriknya.");
-    }
-} break;
+          } else {
+            m.reply("Masukkan judul lagu yang ingin dicari liriknya.");
+          }
+          break;
+        };
+
         case "hd": {
           if (m.mtype.includes("imageMessage")) {
-          m.reply("Sedang di proses...");
-          const url = await toUrl.get(m, client);
-          return hd.get(m, client, url);
+            m.reply("Sedang di proses...");
+            const url = await toUrl.get(m, client);
+            return hd.get(m, client, url);
           } else {
             m.reply("Kirim gambar dengan caption *.hd*");
           }
-        }break;
+          break;
+        };
+
         case "sewa": {
-          m.reply("Sewa Bot ke Group\n\n*1 Bulan:* Rp. 5.000\n\nNote: Jika Bot Mati/perbaikan, waktu expired akan berhenti secara otomatis")
-        }break
-case "ai":
-  if (!m.isGroup) return m.reply("Fitur AI hanya untuk di group chat.");
-  if (m.mtype.includes("imageMessage")) {
-    await client.sendMessage(m.chat, {
-      react: { text: "🆙", key: m.key }
-    });
+          m.reply("Sewa Bot ke Group\n\n*1 Bulan:* Rp. 5.000\n\nNote: Jika Bot Mati/perbaikan, waktu expired akan berhenti secara otomatis");
+          break;
+        };
 
-    mkey[m.sender] = m.key;
-    gambar[m.sender] = await toUrl.get(m, client);
+        case "ai": {
+          if (!m.isGroup) return m.reply("Fitur AI hanya untuk di group chat.");
+          if (m.mtype.includes("imageMessage")) {
+            await client.sendMessage(m.chat, {
+              react: { text: "🆙", key: m.key }
+            });
 
-    await client.sendMessage(m.chat, {
-      react: { text: "☁️", key: mkey[m.sender] }
-    });
+            mkey[m.sender] = m.key;
+            gambar[m.sender] = await toUrl.get(m, client);
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-  }
+            await client.sendMessage(m.chat, {
+              react: { text: "☁️", key: mkey[m.sender] }
+            });
 
-  if (!msg && !gambar[m.sender]) return m.reply("Apa yang ingin kamu tanyakan?");
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          }
 
-  try {
-    if (gambar[m.sender]) {
-      await client.sendMessage(m.chat, {
-        react: { text: "✅", key: mkey[m.sender] }
-      });
-      mkey[m.sender] = null;
+          if (!msg && !gambar[m.sender]) return m.reply("Apa yang ingin kamu tanyakan?");
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+          try {
+            if (gambar[m.sender]) {
+              await client.sendMessage(m.chat, {
+                react: { text: "✅", key: mkey[m.sender] }
+              });
+              mkey[m.sender] = null;
 
-      await m.reply("*Memproses Gambar...*");
-    }
+              await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const hasil = gambar[m.sender]
-      ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
-      : await ai.handleTextQuery(m.body, user);
+              await m.reply("*Memproses Gambar...*");
+            }
 
-    const lines = hasil.trim().split("\n").filter((line) => line.trim());
+            const hasil = gambar[m.sender]
+              ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
+              : await ai.handleTextQuery(m.body, user);
 
-    if (lines.length > 3) {
-      const firstReply = lines
-        .slice(0, lines.length - 1)
-        .join("\n")
-        .trim()
-        .replace(/\*\*(.*?)\*\*/g, "*$1*");
-      let lastReply = lines[lines.length - 1].trim();
-      lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
+            const lines = hasil.trim().split("\n").filter((line) => line.trim());
 
-      if (firstReply) m.reply(firstReply);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+            if (lines.length > 3) {
+              const firstReply = lines
+                .slice(0, lines.length - 1)
+                .join("\n")
+                .trim()
+                .replace(/\*\*(.*?)\*\*/g, "*$1*");
+              let lastReply = lines[lines.length - 1].trim();
+              lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
 
-      try {
-        const fallbackResponse = await axios.get(
-          `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
-          { responseType: "arraybuffer" }
-        );
+              if (firstReply) m.reply(firstReply);
+              await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        if (lastReply) {
-          await client.sendMessage(
-            m.chat,
-            { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
-            { quoted: m }
-          );
-        }
-      } catch {
-        if (lastReply) m.reply(lastReply);
-      }
-    } else {
-      const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
-      if (singleReply) m.reply(singleReply);
-    }
-  } catch (error) {
-    bug(error);
-  } finally {
-    delete gambar[m.sender];
-  }
-  break;
-        case "m":
+              try {
+                const fallbackResponse = await axios.get(
+                  `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
+                  { responseType: "arraybuffer" }
+                );
+
+                if (lastReply) {
+                  await client.sendMessage(
+                    m.chat,
+                    { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
+                    { quoted: m }
+                  );
+                }
+              } catch {
+                if (lastReply) m.reply(lastReply);
+              }
+            } else {
+              const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
+              if (singleReply) m.reply(singleReply);
+            }
+          } catch (error) {
+            bug(error);
+          } finally {
+            delete gambar[m.sender];
+          }
+          break;
+        };
+
+        case "m": {
           m.reply(JSON.stringify(m, null, 2));
           break;
+        };
 
-        case "play":{
-         if (msg) {
-           m.reply("Mohon tunggu sebentar, bot sedang memproses permintaan Anda...");
-           return play.get(m, client, msg)
-         } else {
-           m.reply("Masukkan judul lagu yang ingin diputar");
-         }
-        }break;
-        case "owner":
-          m.reply(`*Contact:* wa.me/${botOwner}\n\n*Note:* Nomor di atas adalah *nomor Owner* ya *bukan nomor bot* oke!.\n  Bot saya gratis untuk semua orang (kalo sewa ya bayar Server berat soalnya) karena saya menciptakanya karena gabut🗿`);
+        case "play": {
+          if (msg) {
+            m.reply("Mohon tunggu sebentar, bot sedang memproses permintaan Anda...");
+            return play.get(m, client, msg)
+          } else {
+            m.reply("Masukkan judul lagu yang ingin diputar");
+          }
           break;
+        };
 
-        case "tourl":
+        case "owner": {
+          m.reply(`*Contact:* wa.me/${botOwner}\n\n*Note:* Nomor di atas adalah *nomor Owner* ya *bukan nomor bot* oke!.\n  Bot saya gratis untuk semua orang (kalo sewa ya bayar Server berat soalnya) [...]`);
+          break;
+        };
+
+        case "tourl": {
           if (m.mtype.includes("imageMessage") || m.mtype.includes("videoMessage")) {
             const hasil = await toUrl.get(m, client, true);
             m.reply(`${hasil}\n*note:* media is public with no expiration date, please be careful!.`);
@@ -351,8 +365,9 @@ case "ai":
             m.reply("*Ex:* Upload gambar atau video dengan caption .tourl pastikan ukuran tidak melebihi 30 MB");
           }
           break;
+        };
 
-        case "ig":
+        case "ig": {
           if (!msg) return m.reply("*ex:* .ig https://www.instagram.com/p/ByxKbUSnubS/?utm_source=ig_web_copy_link");
           try {
             m.reply("*Mengirim media..*");
@@ -360,30 +375,34 @@ case "ai":
             const video = response.data;
             client.sendMessage(m.chat, { video: { url: video.high || video.low }, mimetype: "video/mp4" }, { quoted: m });
           } catch (e) {
-        bug(e);
+            bug(e);
           }
           break;
-          case "tiktok":
-    if (!msg) return m.reply("*Ex:* .tiktok https://vm.tiktok.com/ZSjBQ6t9g/\n*Ex:* .tiktok JJ naruto");
-    try {
-        m.reply("*Mengirim media..*");
-        if (msg.startsWith("http")) {
-          const response = await alldown(msg);
-          const video = response.data;
-          client.sendMessage(m.chat, { video: { url: video.high || video.low }, mimetype: "video/mp4" }, { quoted: m });
-        } else {
-            const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: msg } });
-            const result = searchResponse.data.data;
-            client.sendMessage(m.chat, { 
+        };
+
+        case "tiktok": {
+          if (!msg) return m.reply("*Ex:* .tiktok https://vm.tiktok.com/ZSjBQ6t9g/\n*Ex:* .tiktok JJ naruto");
+          try {
+            m.reply("*Mengirim media..*");
+            if (msg.startsWith("http")) {
+              const response = await alldown(msg);
+              const video = response.data;
+              client.sendMessage(m.chat, { video: { url: video.high || video.low }, mimetype: "video/mp4" }, { quoted: m });
+            } else {
+              const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: msg } });
+              const result = searchResponse.data.data;
+              client.sendMessage(m.chat, { 
                 video: { url: result.no_watermark }, 
                 caption: `*Title:* ${result.title}\n*Author:* ${searchResponse.data.author.nickname}`, 
                 mimetype: "video/mp4" 
-            }, { quoted: m });
-        }
-    } catch (e) {
-       bug(e);
-    }
-    break;
+              }, { quoted: m });
+            }
+          } catch (e) {
+            bug(e);
+          }
+          break;
+        };
+
         case "prem": {
           if (msg) {
             const hasil = await ai.handleTextQuery("setPrem:" + msg, user);
@@ -391,26 +410,32 @@ case "ai":
           } else {
             m.reply("User yang mau di jadikan prem");
           }
-        }break;
-        case "set":
+          break;
+        };
+
+        case "set": {
           if (!msg) return m.reply("*Contoh:* .set Kamu adalah Alicia gadis 17 tahun...\n\n*Note:* Anda dapat mereset prompt ke dafault dengan mengetik *.bawaan*");
           const hasil = await ai.handleTextQuery("setPrompt:" + msg, user);
           m.reply(hasil.trim());
           break;
+        };
 
-        case "bawaan":
+        case "bawaan": {
           const hasilBawaan = await ai.handleTextQuery("resetprompt", user);
           m.reply(hasilBawaan.trim());
           break;
+        };
 
-        case "reset":
+        case "reset": {
           const hasilReset = await ai.handleTextQuery("reset", user);
           m.reply(hasilReset.trim());
           break;
+        };
 
-        case "menu":
+        case "menu": {
           m.reply(menu);
           break;
+        };
       }
     }
   } catch (err) {
