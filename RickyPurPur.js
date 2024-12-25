@@ -29,7 +29,7 @@ let mkey = {};
 const arrMenuDownloader = ["lirik", "tiktok", "ig", "play", "videy"];
 const arrMenuAI = ["bawaan", "reset", "set"];
 const arrMenuAnime = [];
-const arrMenuTools = ["hd","tourl"];
+const arrMenuTools = ["hd","tourl", "img"];
 const arrMenuFun = [];
 const arrMenuMaker = [];
 const arrMenuOther = ["owner","sewa"];
@@ -200,6 +200,18 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) {
+        case "img": {
+          if (!msg) return m.reply("Masukkan kata kunci untuk pencarian gambar");
+          try {
+            m.reply("Sedang mencari gambar...");
+            const response = await axios.get(`https://api.agatz.xyz/api/pinsearch?message=${encodeURIComponent(msg)}`);
+            const imageUrl = response.data.data[0].images_url;
+            client.sendMessage(m.chat, { image: { url: imageUrl } }, { quoted: m });
+          } catch (e) {
+            bug(e);
+          }
+          break;
+        };
         case "videy": {
           if (!msg) return m.reply("*Ex:* .videy https://videy.co/v?id=6eWSwq2t");
           try {
