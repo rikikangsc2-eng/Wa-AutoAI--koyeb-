@@ -17,9 +17,9 @@ async function get(m, client, msg) {
       }
     }
 
-    const track = tracks.find(track => track.duration < 600);
+    const track = tracks[0]; // Ambil track pertama dari hasil pencarian
     if (!track) {
-      throw new Error("[Search API] Tidak ada lagu dengan durasi di bawah 10 menit.");
+      throw new Error("[Search API] Tidak ada lagu yang ditemukan.");
     }
 
     try {
