@@ -132,63 +132,79 @@ const bug = async (err) => {
 }
 
 const user = `${m.sender.split("@")[0]}@Alicia`
-const autoAI = async () => {
-  try {
-    if (gambar[m.sender]) {
-      await client.sendMessage(m.chat, {
-        react: { text: "✅", key: mkey[m.sender] }
-      });
-      mkey[m.sender] = null;
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      await m.reply("*Memproses Gambar...*");
-    }
-
-    const hasil = gambar[m.sender]
-      ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
-      : await ai.handleTextQuery(m.body, user);
-
-    const lines = hasil.trim().split("\n").filter((line) => line.trim());
-
-    if (lines.length > 3) {
-      const firstReply = lines
-        .slice(0, lines.length - 1)
-        .join("\n")
-        .trim()
-        .replace(/\*\*(.*?)\*\*/g, "*$1*");
-      let lastReply = lines[lines.length - 1].trim();
-      lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
-
-      if (firstReply) m.reply(firstReply);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
+    const autoAI = async () => {
       try {
-        const fallbackResponse = await axios.get(
-          `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
-          { responseType: "arraybuffer" }
-        );
+        if (gambar[m.sender]) {
+          await client.sendMessage(m.chat, {
+            react: { text: "✅", key: mkey[m.sender] }
+          });
+          mkey[m.sender] = null;
 
-        if (lastReply) {
-          await client.sendMessage(
-            m.chat,
-            { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
-            { quoted: m }
-          );
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          await m.reply("*Memproses Gambar...*");
         }
-      } catch {
-        if (lastReply) m.reply(lastReply);
+
+        const hasil = gambar[m.sender]
+          ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
+          : await ai.handleTextQuery(m.body, user);
+
+        const lines = hasil.trim().split("\n").filter((line) => line.trim());
+
+        if (lines.length > 3) {
+          const firstReply = lines
+            .slice(0, lines.length - 1)
+            .join("\n")
+            .trim()
+            .replace(/\*\*(.*?)\*\*/g, "*$1*");
+          let lastReply = lines[lines.length - 1].trim();
+          lastReply = lastReply.replace(/[^a-zA-Z0-9,!? ]/g, "");
+
+          if (firstReply) m.reply(firstReply);
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+
+          try {
+            const response = await axios.get(
+              `https://api.agatz.xyz/api/voiceover?text=${encodeURIComponent(lastReply)}&model=miku`
+            );
+
+            const audioUrl = response.data.data.oss_url;
+
+            if (lastReply) {
+              await client.sendMessage(
+                m.chat,
+                { audio: { url: audioUrl }, mimetype: "audio/mpeg", ptt: true },
+                { quoted: m }
+              );
+            }
+          } catch {
+            try {
+              const fallbackResponse = await axios.get(
+                `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
+                { responseType: "arraybuffer" }
+              );
+
+              if (lastReply) {
+                await client.sendMessage(
+                  m.chat,
+                  { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
+                  { quoted: m }
+                );
+              }
+            } catch {
+              if (lastReply) m.reply(lastReply);
+            }
+          }
+        } else {
+          const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
+          if (singleReply) m.reply(singleReply);
+        }
+      } catch (error) {
+        bug(error);
+      } finally {
+        delete gambar[m.sender];
       }
-    } else {
-      const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
-      if (singleReply) m.reply(singleReply);
-    }
-  } catch (error) {
-    bug(error);
-  } finally {
-    delete gambar[m.sender];
-  }
-};
+    };
 
     if (!m.isGroup && !cekCmd(m.body) && m.body) {
       return autoAI();
@@ -274,7 +290,7 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
           break;
         };
 
-        case "ai": {
+        case "ai" {
           if (!m.isGroup) return m.reply("Fitur AI hanya untuk di group chat.");
           if (m.mtype.includes("imageMessage")) {
             await client.sendMessage(m.chat, {
@@ -324,20 +340,36 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
               await new Promise((resolve) => setTimeout(resolve, 2000));
 
               try {
-                const fallbackResponse = await axios.get(
-                  `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
-                  { responseType: "arraybuffer" }
+                const response = await axios.get(
+                  `https://api.agatz.xyz/api/voiceover?text=${encodeURIComponent(lastReply)}&model=miku`
                 );
+
+                const audioUrl = response.data.data.oss_url;
 
                 if (lastReply) {
                   await client.sendMessage(
                     m.chat,
-                    { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
+                    { audio: { url: audioUrl }, mimetype: "audio/mpeg", ptt: true },
                     { quoted: m }
                   );
                 }
               } catch {
-                if (lastReply) m.reply(lastReply);
+                try {
+                  const fallbackResponse = await axios.get(
+                    `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`,
+                    { responseType: "arraybuffer" }
+                  );
+
+                  if (lastReply) {
+                    await client.sendMessage(
+                      m.chat,
+                      { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true },
+                      { quoted: m }
+                    );
+                  }
+                } catch {
+                  if (lastReply) m.reply(lastReply);
+                }
               }
             } else {
               const singleReply = lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
