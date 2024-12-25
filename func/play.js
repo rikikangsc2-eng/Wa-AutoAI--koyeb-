@@ -2,11 +2,11 @@ const axios = require('axios');
 
 async function get(m, client, msg) {
   try {
-    let videos;
+    let tracks;
     try {
-      const searchResponse = await axios.get(`https://api.agatz.xyz/api/ytsearch?message=${msg}`);
-      videos = searchResponse.data.data;
-      if (!videos || videos.length === 0) {
+      const searchResponse = await axios.get(`https://api.agatz.xyz/api/spotify?message=${msg}`);
+      tracks = searchResponse.data.data;
+      if (!tracks || tracks.length === 0) {
         throw new Error("Tidak ada hasil pencarian.");
       }
     } catch (searchError) {
@@ -17,24 +17,19 @@ async function get(m, client, msg) {
       }
     }
 
-    const video = videos.find(video => video.duration.seconds < 600);
-    if (!video) {
-      throw new Error("[Search API] Tidak ada video yt dengan durasi di bawah 10 menit.");
+    const track = tracks.find(track => track.duration < 600);
+    if (!track) {
+      throw new Error("[Search API] Tidak ada lagu dengan durasi di bawah 10 menit.");
     }
 
     try {
-      const downloadResponse = await axios.get(`https://api.ryzendesu.vip/api/downloader/aiodown?url=https://youtube.com/watch?v=${video.videoId}`);
+      const downloadResponse = await axios.get(`https://api.agatz.xyz/api/spotifydl?url=${track.externalUrl}`);
       const downloadData = downloadResponse.data;
-      if (!downloadData || !downloadData.success) {
+      if (!downloadData || !downloadData.data.url_audio_v1) {
         throw new Error("Gagal mengunduh audio.");
       }
 
-      const audioQuality = downloadData.quality.find(q => q.quality === '128kbps');
-      if (!audioQuality) {
-        throw new Error("Audio dengan kualitas 128kbps tidak ditemukan.");
-      }
-
-      const audioUrl = audioQuality.url;
+      const audioUrl = downloadData.data.url_audio_v1;
       await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg" }, { quoted: m });
     } catch (downloadError) {
       if (downloadError.response) {
