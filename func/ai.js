@@ -1,4 +1,5 @@
 const axios = require('axios');
+const fs = require('fs');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -80,7 +81,7 @@ const manageTokenCount = (history) => {
 const promptUserForResponseType = () => {
   const options = RESPONSE_SETTINGS.map((setting, index) => 
     `${index + 1}. ${setting.name}: ${setting.description}`).join('\n');
-  return `Sebelum lanjut chat dengan Alicia, ayok sesuaikan gaya respon yang kamu inginkan agar Alicia merespon dengan keinginan kamu\n\n${options}\n\nKamu bisa pilih ulang di *.reset* jadi tenang aja.\nPilih 1 sampai 5`;
+  return `Sebelum lanjut chat dengan Alicia, ayok sesuaikan gaya respon yang kamu inginkan agar Alicia merespon dengan keinginan kamu\n\n${options}\n\nKamu bisa pilih ulang di *.reset* jadi tenang aja\n *Pilih antara 1 sampai 5*`
 };
 
 const getResponseSettings = (responseType) => {
@@ -106,6 +107,7 @@ const resetUserPreferences = async (user) => {
   const modelConfig = await fetchModelConfig(user);
   modelConfig.responseType = null;
   modelConfig.lastTokenCount = 0;
+  modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
   await saveModelConfig(user, modelConfig);
   await saveHistory(user, []);
 };
@@ -128,7 +130,7 @@ const processTextQuery = async (text, user) => {
   history.push({ role: "user", content: text });
   const updatedHistory = manageTokenCount(history);
 
-  const messages = [{ role: "system", content: modelConfig.systemPrompt || "" }, ...updatedHistory];
+  const messages = [{ role: "system", content: modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8') }, ...updatedHistory];
 
   try {
     const response = await axios.post(
@@ -198,7 +200,7 @@ const handleTextQuery = async (text, user) => {
 
   if (text.toLowerCase() === "resetprompt") {
     const modelConfig = await fetchModelConfig(user);
-    modelConfig.systemPrompt = "";
+    modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
     await saveModelConfig(user, modelConfig);
     return "Prompt telah direset.";
   }
