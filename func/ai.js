@@ -211,6 +211,10 @@ const handleTextQuery = async (text, user) => {
 const handleImageQuery = async (url, text, user) => {
   const modelConfig = await fetchModelConfig(user);
 
+  if (!modelConfig.isPremium) {
+    return "Anda harus premium untuk menggunakan fitur ini.";
+  }
+
   if (!modelConfig.responseType) {
     return promptUserForResponseType();
   }
