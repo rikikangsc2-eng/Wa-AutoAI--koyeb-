@@ -2,10 +2,11 @@ const axios = require('axios');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const ALTERNATIVE_API_URL = "https://express-vercel-ytdl.vercel.app/llm";
 const GEMMA_MODEL_NAME = "gemma2-9b-it";
 const API_KEY = "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";
-const API_KEY_2 = "AIzaSyAgZm62eZ4C4hZsldI52cka5XwNapGWPWw"
-const model_gemini = `gemini-2.0-flash-exp`
+const API_KEY_2 = "AIzaSyAgZm62eZ4C4hZsldI52cka5XwNapGWPWw";
+const model_gemini = `gemini-2.0-flash-exp`;
 const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
 const RESPONSE_SETTINGS = [
@@ -79,7 +80,7 @@ const manageTokenCount = (history) => {
 const promptUserForResponseType = () => {
   const options = RESPONSE_SETTINGS.map((setting, index) => 
     `${index + 1}. ${setting.name}: ${setting.description}`).join('\n');
-  return `Sebelum lanjut chat dengan Alicia, ayok sesuaikan gaya respon yang kamu inginkan agar Alicia merespon dengan keinginan kamu\n\n${options}\n\nKamu bisa pilih ulang di *.reset* jadi tenang aja\n\nPilihlah dengan gaya kesukaan mu yaa!`;
+  return `Sebelum lanjut chat dengan Alicia, ayok sesuaikan gaya respon yang kamu inginkan agar Alicia merespon dengan keinginan kamu\n\n${options}\n\nKamu bisa pilih ulang di *.reset* jadi tenang aja[...]`;
 };
 
 const getResponseSettings = (responseType) => {
@@ -129,26 +130,77 @@ const processTextQuery = async (text, user) => {
 
   const messages = [{ role: "system", content: modelConfig.systemPrompt || "" }, ...updatedHistory];
 
-  const response = await axios.post(
-    GEMMA_API_URL,
-    { model: GEMMA_MODEL_NAME, messages, ...generationConfig },
-    { headers: { Authorization: `Bearer ${API_KEY}` } }
-  );
+  try {
+    const response = await axios.post(
+      GEMMA_API_URL,
+      { model: GEMMA_MODEL_NAME, messages, ...generationConfig },
+      { headers: { Authorization: `Bearer ${API_KEY}` } }
+    );
+    const responseText = response.data.choices[0].message.content;
+    updatedHistory.push({ role: "assistant", content: responseText });
+    await saveHistory(user, updatedHistory);
 
-  const responseText = response.data.choices[0].message.content;
-  updatedHistory.push({ role: "assistant", content: responseText });
-  await saveHistory(user, updatedHistory);
+    modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
+    await saveModelConfig(user, modelConfig);
 
-  modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
-  await saveModelConfig(user, modelConfig);
+    return responseText;
+  } catch (error) {
+    if (error.response && error.response.status === 429) {
+      try {
+        const response = await axios.post(ALTERNATIVE_API_URL, { model: GEMMA_MODEL_NAME, messages, ...generationConfig });
+        const responseText = response.data.choices[0].message.content;
+        updatedHistory.push({ role: "assistant", content: responseText });
+        await saveHistory(user, updatedHistory);
 
-  return responseText;
+        modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
+        await saveModelConfig(user, modelConfig);
+
+        return responseText;
+      } catch (altError) {
+        if (altError.response && altError.response.status === 429) {
+          return "Server sedang kewalahan!";
+        }
+        return `API 2: ${altError.message}`;
+      }
+    }
+    return `API 1: ${error.message}`;
+  }
 };
 
 const handleTextQuery = async (text, user) => {
   if (text.toLowerCase() === "reset") {
     await resetUserPreferences(user);
     return "Riwayat percakapan dan preferensi telah direset. Silakan pilih tipe respons lagi:\n" + promptUserForResponseType();
+  }
+
+  if (text.toLowerCase().startsWith("setprompt:")) {
+    const modelConfig = await fetchModelConfig(user);
+    if (!modelConfig.isPremium) {
+      return "Anda harus premium, beli *.owner* hanya 5k kok";
+    }
+    modelConfig.systemPrompt = text.replace("setprompt:", "").trim();
+    await saveModelConfig(user, modelConfig);
+    return "Prompt telah diubah.";
+  }
+
+  if (text.toLowerCase().startsWith("setprem:")) {
+    const adminNumber = "94391287";
+    if (user.includes(adminNumber)) {
+      const targetUser = text.replace("setprem:", "").trim();
+      const targetConfig = await fetchModelConfig(targetUser);
+      targetConfig.isPremium = true;
+      await saveModelConfig(targetUser, targetConfig);
+      return `${targetUser} sekarang adalah pengguna premium.`;
+    } else {
+      return "Anda tidak memiliki izin untuk mengubah pengguna menjadi premium.";
+    }
+  }
+
+  if (text.toLowerCase() === "resetprompt") {
+    const modelConfig = await fetchModelConfig(user);
+    modelConfig.systemPrompt = "";
+    await saveModelConfig(user, modelConfig);
+    return "Prompt telah direset.";
   }
 
   return processTextQuery(text, user);
