@@ -81,7 +81,7 @@ const manageTokenCount = (history) => {
 const promptUserForResponseType = () => {
   const options = RESPONSE_SETTINGS.map((setting, index) => 
     `${index + 1}. ${setting.name}: ${setting.description}`).join('\n');
-  return `Sebelum lanjut chat dengan Alicia, ayok sesuaikan gaya respon yang kamu inginkan agar Alicia merespon dengan keinginan kamu\n\n${options}\n\n*Pilih antara 1 sampai 5`;
+  return `Sebelum lanjut chat dengan Alicia, ayok sesuaikan gaya respon yang kamu inginkan agar Alicia merespon dengan keinginan kamu\n\n${options}\n\n*Pilih antara 1 sampai 5*`;
 };
 
 const getResponseSettings = (responseType) => {
