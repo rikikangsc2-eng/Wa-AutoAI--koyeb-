@@ -80,7 +80,7 @@ const manageTokenCount = (history) => {
 const promptUserForResponseType = () => {
   const options = RESPONSE_SETTINGS.map((setting, index) => 
     `${index + 1}. ${setting.name}: ${setting.description}`).join('\n');
-  return `Sebelum lanjut chat dengan Alicia, ayok sesuaikan gaya respon yang kamu inginkan agar Alicia merespon dengan keinginan kamu\n\n${options}\n\nKamu bisa pilih ulang di *.reset* jadi tenang aja[...]`;
+  return `Sebelum lanjut chat dengan Alicia, ayok sesuaikan gaya respon yang kamu inginkan agar Alicia merespon dengan keinginan kamu\n\n${options}\n\nKamu bisa pilih ulang di *.reset* jadi tenang aja.\nPilih 1 sampai 5`;
 };
 
 const getResponseSettings = (responseType) => {
@@ -176,7 +176,7 @@ const handleTextQuery = async (text, user) => {
   if (text.toLowerCase().startsWith("setprompt:")) {
     const modelConfig = await fetchModelConfig(user);
     if (!modelConfig.isPremium) {
-      return "Anda harus premium, beli *.owner* hanya 5k kok";
+      return "Anda harus premium, beli di *.owner* hanya 5k kok";
     }
     modelConfig.systemPrompt = text.replace("setprompt:", "").trim();
     await saveModelConfig(user, modelConfig);
