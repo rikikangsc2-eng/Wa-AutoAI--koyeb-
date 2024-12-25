@@ -29,7 +29,7 @@ let mkey = {};
 const arrMenuDownloader = ["lirik", "tiktok", "ig", "play", "videy"];
 const arrMenuAI = ["bawaan", "reset", "set"];
 const arrMenuAnime = [];
-const arrMenuTools = ["hd","tourl", "img"];
+const arrMenuTools = ["hd","tourl", "img", "gempa"];
 const arrMenuFun = [];
 const arrMenuMaker = [];
 const arrMenuOther = ["owner","sewa"];
@@ -216,6 +216,29 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) {
+          case "gempa": {
+    const response = await axios.get('https://cuaca-gempa-rest-api.vercel.app/quake');
+    const data = response.data;
+    if (data.success) {
+        const gempaData = data.data;
+        const gempaInfo = `
+Tanggal: ${gempaData.tanggal}
+Jam: ${gempaData.jam}
+Magnitudo: ${gempaData.magnitude}
+Kedalaman: ${gempaData.kedalaman}
+Wilayah: ${gempaData.wilayah}
+Potensi: ${gempaData.potensi}
+Dirasakan: ${gempaData.dirasakan}
+        `;
+        const imageUrl = gempaData.shakemap;
+        const caption = gempaInfo.trim();
+        const media = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+        const imageBuffer = Buffer.from(media.data, 'binary');
+        await client.sendMessage(m.chat, { image: imageBuffer, mimetype: "image/jpeg", caption: caption }, { quoted: m });
+    } else {
+        m.reply('Tidak ada data gempa terkini');
+    }
+} break;
           case "img": {
             if (!msg) return m.reply("Masukkan kata kunci untuk pencarian gambar");
             try {
