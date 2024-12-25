@@ -23,17 +23,18 @@ async function get(m, client, msg) {
     }
 
     try {
-      const downloadResponse = await axios.get(`https://api.ryzendesu.vip/api/downloader/y2mate?url=https://youtube.com/watch?v=${video.videoId}`);
+      const downloadResponse = await axios.get(`https://api.ryzendesu.vip/api/downloader/aiodown?url=https://youtube.com/watch?v=${video.videoId}`);
       const downloadData = downloadResponse.data;
-      if (!downloadData || downloadData.type !== 'download') {
+      if (!downloadData || !downloadData.success) {
         throw new Error("Gagal mengunduh audio.");
       }
 
-      const audioUrl = downloadData.download.dl.mp3['128kbps'].url;
-      if (!audioUrl) {
+      const audioQuality = downloadData.quality.find(q => q.quality === '128kbps');
+      if (!audioQuality) {
         throw new Error("Audio dengan kualitas 128kbps tidak ditemukan.");
       }
 
+      const audioUrl = audioQuality.url;
       await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg" }, { quoted: m });
     } catch (downloadError) {
       if (downloadError.response) {
