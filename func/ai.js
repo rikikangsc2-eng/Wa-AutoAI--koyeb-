@@ -81,7 +81,7 @@ const manageTokenCount = (history) => {
 const promptUserForResponseType = () => {
   const options = RESPONSE_SETTINGS.map((setting, index) => 
     `${index + 1}. ${setting.name}: ${setting.description}`).join('\n');
-  return `Sebelum lanjut chat dengan Alicia, ayok sesuaikan gaya respon yang kamu inginkan agar Alicia merespon dengan keinginan kamu\n\n${options}\n\nKamu bisa pilih ulang di *.reset* jadi tenang aja\n *Pilih antara 1 sampai 5*`
+  return `Sebelum lanjut chat dengan Alicia, ayok sesuaikan gaya respon yang kamu inginkan agar Alicia merespon dengan keinginan kamu\n\n${options}\n\n*Pilih antara 1 sampai 5`;
 };
 
 const getResponseSettings = (responseType) => {
@@ -107,7 +107,6 @@ const resetUserPreferences = async (user) => {
   const modelConfig = await fetchModelConfig(user);
   modelConfig.responseType = null;
   modelConfig.lastTokenCount = 0;
-  modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
   await saveModelConfig(user, modelConfig);
   await saveHistory(user, []);
 };
@@ -182,7 +181,8 @@ const handleTextQuery = async (text, user) => {
     }
     modelConfig.systemPrompt = text.replace("setprompt:", "").trim();
     await saveModelConfig(user, modelConfig);
-    return "Prompt telah diubah.";
+    await saveHistory(user, []);
+    return "Prompt telah diubah dan riwayat telah dihapus.";
   }
 
   if (text.toLowerCase().startsWith("setprem:")) {
