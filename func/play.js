@@ -2,45 +2,21 @@ const axios = require('axios');
 
 async function get(m, client, msg) {
   try {
-    let tracks;
-    try {
-      const searchResponse = await axios.get(`https://api.agatz.xyz/api/spotify?message=${msg}`);
-      tracks = searchResponse.data.data;
-      if (!tracks || tracks.length === 0) {
-        throw new Error("Tidak ada hasil pencarian.");
-      }
-    } catch (searchError) {
-      if (searchError.response) {
-        throw new Error(`[Search API] Error ${searchError.response.status}: ${searchError.response.statusText}`);
-      } else {
-        throw new Error(`[Search API] ${searchError.message}`);
-      }
-    }
+    const searchResponse = await axios.get(`https://api.ryzendesu.vip/api/search/yt?query=${msg}`);
+    const videos = searchResponse.data.videos;
 
-    const track = tracks[0]; // Ambil track pertama dari hasil pencarian
-    if (!track) {
-      throw new Error("[Search API] Tidak ada lagu yang ditemukan.");
-    }
+    const video = videos.find(video => video.duration.seconds < 600);
+    if (!video) throw new Error("Tidak ada video yt dengan durasi di bawah 10 menit.");
 
-    try {
-      const downloadResponse = await axios.get(`https://api.agatz.xyz/api/spotifydl?url=${track.externalUrl}`);
-      const downloadData = downloadResponse.data;
-      if (!downloadData || !downloadData.data.url_audio_v1) {
-        throw new Error("Gagal mengunduh audio.");
-      }
+    const downloadResponse = await axios.get(`https://api.ryzendesu.vip/api/downloader/ytmp3?url=${video.url}`);
+    const downloadData = downloadResponse.data;
 
-      const audioUrl = downloadData.data.url_audio_v1;
-      await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg" }, { quoted: m });
-    } catch (downloadError) {
-      if (downloadError.response) {
-        throw new Error(`[Download API] Error ${downloadError.response.status}: ${downloadError.response.statusText}`);
-      } else {
-        throw new Error(`[Download API] ${downloadError.message}`);
-      }
-    }
+    if (downloadData.status !== "tunnel") throw new Error("Gagal mengunduh audio.");
+
+    const audioUrl = downloadData.url;
+    await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg" }, { quoted: m });
   } catch (error) {
-    console.error(error);
-    m.reply(`Terjadi kesalahan: ${error.message}\nSilakan laporkan ke .owner`);
+    m.reply(`> ${error.message}\nReport ke .owner`);
   }
 }
 
