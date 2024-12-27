@@ -147,7 +147,7 @@ const user = `${m.sender.split("@")[0]}@Alicia`
 
     const lines = hasil.trim().split("\n").filter(line => line.trim());
 
-    if (lines.join(" ").length <= 200) {
+    if (lines.join(" ").length <= 300) {
       return m.reply(lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*"));
     }
 
@@ -313,7 +313,7 @@ Dirasakan: ${gempaData.dirasakan}
 
     const lines = hasil.trim().split("\n").filter(line => line.trim());
 
-    if (lines.join(" ").length <= 200) {
+    if (lines.join(" ").length <= 300) {
       return m.reply(lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*"));
     }
 
