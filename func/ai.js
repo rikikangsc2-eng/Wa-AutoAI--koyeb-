@@ -90,7 +90,8 @@ const getResponseSettings = (responseType) => {
 };
 
 const handleUserResponseTypeSelection = async (user, input) => {
-  const index = parseInt(input, 10) - 1;
+  const index = RESPONSE_SETTINGS.findIndex((setting, i) => 
+    input.includes((i + 1).toString()) || input.toLowerCase().includes(['satu', 'dua', 'tiga', 'empat', 'lima'][i]));
   const selectedSetting = RESPONSE_SETTINGS[index];
 
   if (!selectedSetting) {
@@ -115,7 +116,7 @@ const processTextQuery = async (text, user) => {
   let modelConfig = await fetchModelConfig(user);
 
   if (!modelConfig.responseType || !getResponseSettings(modelConfig.responseType)) {
-    const numericMatch = text.match(/^\d$/);
+    const numericMatch = text.match(/^\d$/) || text.toLowerCase().match(/satu|dua|tiga|empat|lima/);
     if (numericMatch) {
       return handleUserResponseTypeSelection(user, text);
     }
