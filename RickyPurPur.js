@@ -29,7 +29,7 @@ let mkey = {};
 const arrMenuDownloader = ["lirik", "tiktok", "ig", "play", "videy"];
 const arrMenuAI = ["bawaan", "reset", "set"];
 const arrMenuAnime = [];
-const arrMenuTools = ["hd","tourl", "img", "gempa"];
+const arrMenuTools = ["hd","tourl", "img", "gempa", "tts"];
 const arrMenuFun = [];
 const arrMenuMaker = [];
 const arrMenuOther = ["owner","sewa"];
@@ -190,6 +190,23 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) {
+          case "tts": {
+  if (!msg) return m.reply("Masukkan teks untuk diubah menjadi suara");
+  try {
+    m.reply("Sedang memproses teks...");
+    const response = await axios.get(`https://api.agatz.xyz/api/voiceover?text=${encodeURIComponent(msg)}&model=miku`);
+    const audioUrl = response.data.data.oss_url;
+    await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg", ptt: true }, { quoted: m });
+  } catch (e) {
+    try {
+      const fallbackResponse = await axios.get(`https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(msg)}`, { responseType: "arraybuffer" });
+      await client.sendMessage(m.chat, { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true }, { quoted: m });
+    } catch (e) {
+      m.reply("Terjadi kesalahan saat memproses teks");
+    }
+  }
+  break;
+};
           case "gempa": {
     const response = await axios.get('https://cuaca-gempa-rest-api.vercel.app/quake');
     const data = response.data;
