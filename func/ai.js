@@ -90,8 +90,9 @@ const getResponseSettings = (responseType) => {
 };
 
 const handleUserResponseTypeSelection = async (user, input) => {
-  const index = RESPONSE_SETTINGS.findIndex((setting, i) => 
-    input.includes((i + 1).toString()) || input.toLowerCase().includes(['satu', 'dua', 'tiga', 'empat', 'lima'][i]));
+  const index = RESPONSE_SETTINGS.findIndex((setting, i) =>
+    input.includes((i + 1).toString()) || input.toLowerCase().includes(['satu', 'dua', 'tiga', 'empat', 'lima'][i])
+  );
   const selectedSetting = RESPONSE_SETTINGS[index];
 
   if (!selectedSetting) {
