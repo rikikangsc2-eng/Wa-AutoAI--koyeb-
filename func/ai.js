@@ -117,7 +117,7 @@ const processTextQuery = async (text, user) => {
   let modelConfig = await fetchModelConfig(user);
 
   if (!modelConfig.responseType || !getResponseSettings(modelConfig.responseType)) {
-    const numericMatch = text.match(/^\d$/) || text.toLowerCase().match(/satu|dua|tiga|empat|lima/);
+    const numericMatch = text.match(/\b\d\b/) || text.toLowerCase().match(/satu|dua|tiga|empat|lima/);
     if (numericMatch) {
       return handleUserResponseTypeSelection(user, text);
     }
