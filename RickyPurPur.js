@@ -257,36 +257,35 @@ Dirasakan: ${gempaData.dirasakan}
           break;
         };
 
-        case "lirik": {
-          if (msg) {
-            m.reply("Mohon tunggu sebentar, bot sedang memproses permintaan Anda...");
-            const axios = require('axios');
-            const query = encodeURIComponent(msg);
+          case "lirik": {
+            if (msg) {
+              m.reply("Mohon tunggu sebentar, bot sedang memproses permintaan Anda...");
+              const query = encodeURIComponent(msg);
 
-            try {
-              const response = await axios.get(`https://api.ryzendesu.vip/api/search/lyrics?query=${query}`, {
-                headers: {
-                  accept: 'application/json'
+              try {
+                const response = await axios.get(`https://itzpire.com/search/lyrics?query=${query}`, {
+                  headers: {
+                    accept: 'application/json'
+                  }
+                });
+                const data = response.data;
+
+                if (data && data.data.lyrics) {
+                  const cleanLyrics = data.data.lyrics.replace(/&quot;/g, '"').replace(/\[.*?\]/g, '').trim();
+                  await play.get(m, client, data.data.title);
+                  const resultMessage = `🎵 *Lirik Lagu* 🎵\n\n*Judul*: ${data.data.title}\n*Album*: ${data.data.album}\n\n*Lirik*:\n${cleanLyrics}\n\n🌐 *Sumber*: ${response.config.url}`;
+                  m.reply(resultMessage);
+                } else {
+                  m.reply("Maaf, lirik lagu tidak ditemukan.");
                 }
-              });
-              const data = response.data;
-
-              if (data && data.lyrics) {
-                const cleanLyrics = data.lyrics.replace(/.*?/g, '').trim();
-                await play.get(m, client, msg);
-                const resultMessage = `🎵 *Lirik Lagu* 🎵\n\n*Judul*: ${data.title}\n*Artis*: ${data.artist}\n\n*Lirik*:\n${cleanLyrics}\n\n🌐 *Sumber*: ${data.url}`;
-                m.reply(resultMessage);
-              } else {
-                m.reply("Maaf, lirik lagu tidak ditemukan.");
+              } catch (error) {
+                m.reply("Terjadi kesalahan saat mengambil lirik lagu.");
               }
-            } catch (error) {
-              m.reply("Terjadi kesalahan saat mengambil lirik lagu.");
+            } else {
+              m.reply("Masukkan judul lagu yang ingin dicari liriknya.");
             }
-          } else {
-            m.reply("Masukkan judul lagu yang ingin dicari liriknya.");
+            break;
           }
-          break;
-        };
 
         case "hd": {
           if (m.mtype.includes("imageMessage")) {
