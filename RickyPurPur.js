@@ -133,52 +133,57 @@ const bug = async (err) => {
 
 const user = `${m.sender.split("@")[0]}@Alicia`
     const autoAI = async () => {
-  try {
-    if (gambar[m.sender]) {
-      await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
-      mkey[m.sender] = null;
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      await m.reply("*Memproses Gambar...*");
-    }
-
-    const hasil = gambar[m.sender]
-      ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
-      : await ai.handleTextQuery(m.body, user);
-
-    const lines = hasil.trim().split("\n").filter(line => line.trim());
-
-    if (lines.join(" ").length <= 500) {
-      return m.reply(lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*"));
-    }
-
-    const firstReply = lines.slice(0, lines.length - 1).join("\n").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
-    let lastReply = lines[lines.length - 1].trim().replace(/[^a-zA-Z0-9,!? ]/g, "");
-
-    if (firstReply) m.reply(firstReply);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    try {
-      const response = await axios.get(`https://api.agatz.xyz/api/voiceover?text=${encodeURIComponent(lastReply)}&model=miku`);
-      const audioUrl = response.data.data.oss_url;
-      if (lastReply) {
-        await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg", ptt: true }, { quoted: m });
-      }
-    } catch {
       try {
-        const fallbackResponse = await axios.get(`https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`, { responseType: "arraybuffer" });
-        if (lastReply) {
-          await client.sendMessage(m.chat, { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true }, { quoted: m });
+        if (gambar[m.sender]) {
+          await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
+          mkey[m.sender] = null;
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await m.reply("*Memproses Gambar...*");
         }
-      } catch {
+
+        const hasil = gambar[m.sender]
+          ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
+          : await ai.handleTextQuery(m.body, user);
+
+        const lines = hasil.trim().split("\n").filter(line => line.trim());
+        let remainingText = lines.join(" ").trim();
+        let firstReply = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\})/)[0].trim();
+        let mediaText = remainingText.match(/(\[\{.*?\}\]|\{\{.*?\}\})/);
+        let lastReply = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\})/).slice(2).join(" ").trim();
+
+        if (firstReply) m.reply(firstReply);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        if (mediaText) {
+          if (mediaText[0].startsWith("[{")) {
+            const query = mediaText[0].slice(2, -2).trim();
+            const response = await axios.get(`https://api.agatz.xyz/api/pinsearch?message=${encodeURIComponent(query)}`);
+            const images = response.data.data;
+            if (images.length > 0) {
+              const randomImage = images[Math.floor(Math.random() * images.length)].images_url;
+              await client.sendMessage(m.chat, { image: { url: randomImage } }, { quoted: m });
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+            }
+          } else if (mediaText[0].startsWith("{{")) {
+            const query = mediaText[0].slice(2, -2).trim();
+            const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
+            const result = searchResponse.data.data;
+            await client.sendMessage(m.chat, { 
+              video: { url: result.no_watermark }, 
+              caption: `*Title:* ${result.title}\n*Author:* ${searchResponse.data.author.nickname}`, 
+              mimetype: "video/mp4" 
+            }, { quoted: m });
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          }
+        }
+
         if (lastReply) m.reply(lastReply);
+      } catch (error) {
+        bug(error);
+      } finally {
+        delete gambar[m.sender];
       }
-    }
-  } catch (error) {
-    bug(error);
-  } finally {
-    delete gambar[m.sender];
-  }
-};
+    };
 
     if (!m.isGroup && !cekCmd(m.body) && m.body) {
       return autoAI();
@@ -305,61 +310,7 @@ Dirasakan: ${gempaData.dirasakan}
 
           case "ai": {
   if (!m.isGroup) return m.reply("Fitur AI hanya untuk di group chat.");
-  if (m.mtype.includes("imageMessage")) {
-    await client.sendMessage(m.chat, { react: { text: "🆙", key: m.key } });
-    mkey[m.sender] = m.key;
-    gambar[m.sender] = await toUrl.get(m, client);
-    await client.sendMessage(m.chat, { react: { text: "☁️", key: mkey[m.sender] } });
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-  }
-
-  if (!msg && !gambar[m.sender]) return m.reply("Apa yang ingin kamu tanyakan?");
-
-  try {
-    if (gambar[m.sender]) {
-      await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
-      mkey[m.sender] = null;
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      await m.reply("*Memproses Gambar...*");
-    }
-
-    const hasil = gambar[m.sender]
-      ? await ai.handleImageQuery(gambar[m.sender], msg, user)
-      : await ai.handleTextQuery(msg, user);
-
-    const lines = hasil.trim().split("\n").filter(line => line.trim());
-
-    if (lines.join(" ").length <= 500) {
-      return m.reply(lines.join(" ").trim().replace(/\*\*(.*?)\*\*/g, "*$1*"));
-    }
-
-    const firstReply = lines.slice(0, lines.length - 1).join("\n").trim().replace(/\*\*(.*?)\*\*/g, "*$1*");
-    let lastReply = lines[lines.length - 1].trim().replace(/[^a-zA-Z0-9,!? ]/g, "");
-
-    if (firstReply) m.reply(firstReply);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    try {
-      const response = await axios.get(`https://api.agatz.xyz/api/voiceover?text=${encodeURIComponent(lastReply)}&model=miku`);
-      const audioUrl = response.data.data.oss_url;
-      if (lastReply) {
-        await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg", ptt: true }, { quoted: m });
-      }
-    } catch {
-      try {
-        const fallbackResponse = await axios.get(`https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(lastReply)}`, { responseType: "arraybuffer" });
-        if (lastReply) {
-          await client.sendMessage(m.chat, { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true }, { quoted: m });
-        }
-      } catch {
-        if (lastReply) m.reply(lastReply);
-      }
-    }
-  } catch (error) {
-    bug(error);
-  } finally {
-    delete gambar[m.sender];
-  }
+  m.reply("Hmm apaaa sihh reply ajaaa cok")
   break;
 };
 
