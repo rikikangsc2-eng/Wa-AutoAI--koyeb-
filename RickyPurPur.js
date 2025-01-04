@@ -145,18 +145,13 @@ const user = `${m.sender.split("@")[0]}@V1.0.0`
           ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
           : await ai.handleTextQuery(m.body, user);
 
-        const lines = hasil.trim().split("\n").filter(line => line.trim());
-        let remainingText = lines.join(" ").trim();
-        let firstReply = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\})/)[0].trim();
-        let mediaText = remainingText.match(/(\[\{.*?\}\]|\{\{.*?\}\})/);
-        let lastReply = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\})/).slice(2).join(" ").trim();
+        let remainingText = hasil.trim();
+        remainingText = remainingText.replace(/\*\*(.*?)\*\*/g, '*$1*').replace(/```(.*?)```/g, '`$1`');
 
-        if (firstReply) m.reply(firstReply);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        if (mediaText) {
-          if (mediaText[0].startsWith("[{")) {
-            const query = mediaText[0].slice(2, -2).trim();
+        let parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\})/);
+        for (let i = 0; i < parts.length; i++) {
+          if (parts[i].startsWith("[{")) {
+            const query = parts[i].slice(2, -2).trim();
             const response = await axios.get(`https://api.agatz.xyz/api/pinsearch?message=${encodeURIComponent(query)}`);
             const images = response.data.data;
             if (images.length > 0) {
@@ -164,27 +159,28 @@ const user = `${m.sender.split("@")[0]}@V1.0.0`
               await client.sendMessage(m.chat, { image: { url: randomImage } }, { quoted: m });
               await new Promise((resolve) => setTimeout(resolve, 2000));
             }
-          } else if (mediaText[0].startsWith("{{")) {
-            const query = mediaText[0].slice(2, -2).trim();
+          } else if (parts[i].startsWith("{{")) {
+            const query = parts[i].slice(2, -2).trim();
             const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
             const result = searchResponse.data.data;
             await client.sendMessage(m.chat, { 
               video: { url: result.no_watermark }, 
-              caption: `*Title:* ${result.title}\n*Author:* ${searchResponse.data.author.nickname}`, 
               mimetype: "video/mp4" 
             }, { quoted: m });
             await new Promise((resolve) => setTimeout(resolve, 2000));
+          } else {
+            if (parts[i].trim()) {
+              m.reply(parts[i].trim());
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+            }
           }
         }
-
-        if (lastReply) m.reply(lastReply);
       } catch (error) {
         bug(error);
       } finally {
         delete gambar[m.sender];
       }
     };
-
     if (!m.isGroup && !cekCmd(m.body) && m.body) {
       return autoAI();
     }
