@@ -132,55 +132,54 @@ const bug = async (err) => {
 }
 
 const user = `${m.sender.split("@")[0]}@V1.0.0`
-    const autoAI = async () => {
-      try {
-        if (gambar[m.sender]) {
-          await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
-          mkey[m.sender] = null;
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          await m.reply("*Memproses Gambar...*");
+
+const autoAI = async () => {
+  try {
+    if (gambar[m.sender]) {
+      await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
+      mkey[m.sender] = null;
+      await m.reply("*Memproses Gambar...*");
+    }
+
+    const hasil = gambar[m.sender]
+      ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
+      : await ai.handleTextQuery(m.body, user);
+
+    let remainingText = hasil.trim();
+    remainingText = remainingText.replace(/\*\*(.*?)\*\*/g, '*$1*').replace(/```(.*?)```/g, '`$1`');
+
+    let parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\})/);
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i].startsWith("[{")) {
+        const query = parts[i].slice(2, -2).trim();
+        const response = await axios.get(`https://api.ryzendesu.vip/api/search/gimage?query=${encodeURIComponent(query)}`);
+        const images = response.data;
+        if (images.length > 0) {
+          const limitedImages = images.slice(0, 5); // Limit to first 5 images
+          const randomImage = limitedImages[Math.floor(Math.random() * limitedImages.length)].image;
+          await client.sendMessage(m.chat, { image: { url: randomImage } }, { quoted: m });
         }
-
-        const hasil = gambar[m.sender]
-          ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
-          : await ai.handleTextQuery(m.body, user);
-
-        let remainingText = hasil.trim();
-        remainingText = remainingText.replace(/\*\*(.*?)\*\*/g, '*$1*').replace(/```(.*?)```/g, '`$1`');
-
-        let parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\})/);
-        for (let i = 0; i < parts.length; i++) {
-          if (parts[i].startsWith("[{")) {
-            const query = parts[i].slice(2, -2).trim();
-            const response = await axios.get(`https://api.agatz.xyz/api/pinsearch?message=${encodeURIComponent(query)}`);
-            const images = response.data.data;
-            if (images.length > 0) {
-              const randomImage = images[Math.floor(Math.random() * images.length)].images_url;
-              await client.sendMessage(m.chat, { image: { url: randomImage } }, { quoted: m });
-              await new Promise((resolve) => setTimeout(resolve, 2000));
-            }
-          } else if (parts[i].startsWith("{{")) {
-            const query = parts[i].slice(2, -2).trim();
-            const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
-            const result = searchResponse.data.data;
-            await client.sendMessage(m.chat, { 
-              video: { url: result.no_watermark }, 
-              mimetype: "video/mp4" 
-            }, { quoted: m });
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-          } else {
-            if (parts[i].trim()) {
-              m.reply(parts[i].trim());
-              await new Promise((resolve) => setTimeout(resolve, 2000));
-            }
-          }
+      } else if (parts[i].startsWith("{{")) {
+        const query = parts[i].slice(2, -2).trim();
+        const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
+        const result = searchResponse.data.data;
+        await client.sendMessage(m.chat, { 
+          video: { url: result.no_watermark }, 
+          mimetype: "video/mp4" 
+        }, { quoted: m });
+      } else {
+        if (parts[i].trim()) {
+          m.reply(parts[i].trim());
         }
-      } catch (error) {
-        bug(error);
-      } finally {
-        delete gambar[m.sender];
       }
-    };
+    }
+  } catch (error) {
+    bug(error);
+  } finally {
+    delete gambar[m.sender];
+  }
+};
+    
     if (!m.isGroup && !cekCmd(m.body) && m.body) {
       return autoAI();
     }
