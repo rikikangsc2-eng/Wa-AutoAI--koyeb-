@@ -118,7 +118,18 @@ const processTextQuery = async (text, user) => {
   } catch (error) {
     if (error.response && error.response.status === 429) {
       try {
-        const response = await axios.post(ALTERNATIVE_API_URL, { model: GEMMA_MODEL_NAME, messages, ...generationConfig });
+        const response = await axios.post(
+          ALTERNATIVE_API_URL,
+          { 
+            model: GEMMA_MODEL_NAME, 
+            messages, 
+            temperature: generationConfig.temperature, 
+            max_tokens: generationConfig.max_tokens, 
+            top_p: generationConfig.top_p, 
+            stream: generationConfig.stream, 
+            stop: generationConfig.stop 
+          }
+        );
         const responseText = response.data.choices[0].message.content;
         updatedHistory.push({ role: "assistant", content: responseText });
         await saveHistory(user, updatedHistory);
