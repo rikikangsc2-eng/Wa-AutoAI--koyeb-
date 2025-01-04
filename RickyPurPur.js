@@ -324,8 +324,8 @@ Dirasakan: ${gempaData.dirasakan}
     }
 
     const hasil = gambar[m.sender]
-      ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
-      : await ai.handleTextQuery(m.body, user);
+      ? await ai.handleImageQuery(gambar[m.sender], msg, user)
+      : await ai.handleTextQuery(msg, user);
 
     const lines = hasil.trim().split("\n").filter(line => line.trim());
 

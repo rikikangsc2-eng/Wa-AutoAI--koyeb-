@@ -11,43 +11,14 @@ const model_gemini = `gemini-2.0-flash-exp`;
 const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
 const RESPONSE_SETTINGS = [
-  {
-    name: "Creative",
-    description: "Mode ini menghasilkan respons yang sangat kreatif, penuh dengan ide-ide unik dan imajinatif.",
-    temperature: 0.9,
-    top_p: 0.95
-  },
-  {
-    name: "Balanced",
-    description: "Mode ini memberikan respons yang seimbang antara kreatif dan logis, cocok untuk percakapan umum.",
-    temperature: 0.7,
-    top_p: 0.8
-  },
-  {
-    name: "Logical",
-    description: "Mode ini memberikan respons yang fokus pada logika dan fakta, cocok untuk penyelesaian masalah.",
-    temperature: 0.4,
-    top_p: 0.6
-  },
-  {
-    name: "Explorative",
-    description: "Mode ini mengeksplorasi kemungkinan respons dengan keluasan ide, sering cocok untuk brainstorming.",
-    temperature: 1.0,
-    top_p: 0.9
-  },
-  {
-    name: "Precise",
-    description: "Mode ini menghasilkan respons yang fokus dan langsung, cocok untuk jawaban spesifik dan to the point.",
-    temperature: 0.3,
-    top_p: 0.5
-  }
+  { name: "Creative", description: "Mode ini menghasilkan respons yang sangat kreatif, penuh dengan ide-ide unik dan imajinatif.", temperature: 0.9, top_p: 0.95 },
+  { name: "Balanced", description: "Mode ini memberikan respons yang seimbang antara kreatif dan logis, cocok untuk percakapan umum.", temperature: 0.7, top_p: 0.8 },
+  { name: "Logical", description: "Mode ini memberikan respons yang fokus pada logika dan fakta, cocok untuk penyelesaian masalah.", temperature: 0.4, top_p: 0.6 },
+  { name: "Explorative", description: "Mode ini mengeksplorasi kemungkinan respons dengan keluasan ide, sering cocok untuk brainstorming.", temperature: 1.0, top_p: 0.9 },
+  { name: "Precise", description: "Mode ini menghasilkan respons yang fokus dan langsung, cocok untuk jawaban spesifik dan to the point.", temperature: 0.3, top_p: 0.5 }
 ];
 
-const DEFAULT_GENERATION_CONFIG = {
-  max_tokens: 512,
-  stream: false,
-  stop: null,
-};
+const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null };
 
 const genAI = new GoogleGenerativeAI(API_KEY_2);
 
@@ -115,7 +86,10 @@ const resetUserPreferences = async (user) => {
 
 const processTextQuery = async (text, user) => {
   let modelConfig = await fetchModelConfig(user);
-
+  if (!modelConfig.isPremium && modelConfig.systemPrompt !== fs.readFileSync('./prompt.txt', 'utf8')) {
+    modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
+    await saveModelConfig(user, modelConfig);
+  }
   if (!modelConfig.responseType || !getResponseSettings(modelConfig.responseType)) {
     const numericMatch = text.match(/\b\d\b/) || text.toLowerCase().match(/satu|dua|tiga|empat|lima/);
     if (numericMatch) {
@@ -123,16 +97,12 @@ const processTextQuery = async (text, user) => {
     }
     return promptUserForResponseType();
   }
-
   const responseSettings = getResponseSettings(modelConfig.responseType);
   const generationConfig = { ...DEFAULT_GENERATION_CONFIG, ...responseSettings };
-
   const history = await fetchHistory(user);
   history.push({ role: "user", content: text });
   const updatedHistory = manageTokenCount(history);
-
   const messages = [{ role: "system", content: modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8') }, ...updatedHistory];
-
   try {
     const response = await axios.post(
       GEMMA_API_URL,
@@ -142,10 +112,8 @@ const processTextQuery = async (text, user) => {
     const responseText = response.data.choices[0].message.content;
     updatedHistory.push({ role: "assistant", content: responseText });
     await saveHistory(user, updatedHistory);
-
     modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
     await saveModelConfig(user, modelConfig);
-
     return responseText;
   } catch (error) {
     if (error.response && error.response.status === 429) {
@@ -154,10 +122,8 @@ const processTextQuery = async (text, user) => {
         const responseText = response.data.choices[0].message.content;
         updatedHistory.push({ role: "assistant", content: responseText });
         await saveHistory(user, updatedHistory);
-
         modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
         await saveModelConfig(user, modelConfig);
-
         return responseText;
       } catch (altError) {
         if (altError.response && altError.response.status === 429) {
@@ -175,7 +141,6 @@ const handleTextQuery = async (text, user) => {
     await resetUserPreferences(user);
     return "Riwayat percakapan dan preferensi telah direset. Silakan pilih tipe respons lagi:\n" + promptUserForResponseType();
   }
-
   if (text.toLowerCase().startsWith("setprompt:")) {
     const modelConfig = await fetchModelConfig(user);
     if (!modelConfig.isPremium) {
@@ -186,7 +151,6 @@ const handleTextQuery = async (text, user) => {
     await saveHistory(user, []);
     return "Prompt telah diubah dan riwayat telah dihapus.";
   }
-
   if (text.toLowerCase().startsWith("setprem:")) {
     const adminNumber = "94391287";
     if (user.includes(adminNumber)) {
@@ -199,48 +163,38 @@ const handleTextQuery = async (text, user) => {
       return "Anda tidak memiliki izin untuk mengubah pengguna menjadi premium.";
     }
   }
-
   if (text.toLowerCase() === "resetprompt") {
     const modelConfig = await fetchModelConfig(user);
     modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
     await saveModelConfig(user, modelConfig);
     return "Prompt telah direset.";
   }
-
   return processTextQuery(text, user);
 };
 
 const handleImageQuery = async (url, text, user) => {
   const modelConfig = await fetchModelConfig(user);
-
   if (!modelConfig.isPremium) {
     return "Anda harus premium untuk menggunakan fitur ini.";
   }
-
   if (!modelConfig.responseType) {
     return promptUserForResponseType();
   }
-
   const responseSettings = getResponseSettings(modelConfig.responseType);
   const history = await fetchHistory(user);
-
   const response = await axios.get(url, { responseType: "arraybuffer" });
   const imageData = Buffer.from(response.data).toString("base64");
-
   const prompt = [
     ...history.map(item => `**${item.role === "assistant" ? "Gemini" : "User"}**: ${item.content}`),
     `**User**: ${text}`,
     { inlineData: { data: imageData, mimeType: "image/png" } },
   ];
-
   const model = genAI.getGenerativeModel({ model: model_gemini });
   const result = await model.generateContent(prompt);
   const responseText = result.response.text();
-
   history.push({ role: "user", content: text });
   history.push({ role: "assistant", content: responseText });
   await saveHistory(user, history);
-
   return responseText;
 };
 
