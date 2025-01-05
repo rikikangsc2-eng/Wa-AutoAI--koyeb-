@@ -133,74 +133,84 @@ const bug = async (err) => {
 
 const user = `${m.sender.split("@")[0]}@V1.0.0`
 
-const autoAI = async () => {
-  try {
-    if (gambar[m.sender]) {
-      await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
-      mkey[m.sender] = null;
-      await m.reply("*Memproses Gambar...*");
-    }
+    const autoAI = async () => {
+      try {
+        if (gambar[m.sender]) {
+          await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
+          mkey[m.sender] = null;
+          await m.reply("*Memproses Gambar...*");
+        }
 
-    const hasil = gambar[m.sender]
-      ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
-      : await ai.handleTextQuery(m.body, user);
+        const hasil = gambar[m.sender]
+          ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
+          : await ai.handleTextQuery(m.body, user);
 
-    let remainingText = hasil.trim().replace(/\*\*(.*?)\*\*/g, '*$1*').replace(/```(.*?)```/g, '`$1`');
+        let remainingText = hasil.trim().replace(/\*\*(.*?)\*\*/g, '*$1*').replace(/```(.*?)```/g, '`$1`');
 
-    let parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\})/);
-    let mediaParts = [];
-    let textParts = [];
+        let parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\})/);
+        let mediaParts = [];
+        let textParts = [];
+        let currentText = '';
 
-    for (let i = 0; i < parts.length; i++) {
-      if (parts[i].startsWith("[{")) {
-        const query = parts[i].slice(2, -2).trim();
-        const response = await axios.get(`https://api.ryzendesu.vip/api/search/gimage?query=${encodeURIComponent(query)}`);
-        const images = response.data;
+        for (let i = 0; i < parts.length; i++) {
+          if (parts[i].startsWith("[{")) {
+            const query = parts[i].slice(2, -2).trim();
+            const response = await axios.get(`https://api.ryzendesu.vip/api/search/gimage?query=${encodeURIComponent(query)}`);
+            const images = response.data;
 
-        if (images.length > 0) {
-          let imageBuffer;
-          for (let j = 0; j < Math.min(images.length, 3); j++) {
-            try {
-              const imageResponse = await axios.get(images[j].image, { responseType: 'arraybuffer' });
-              imageBuffer = Buffer.from(imageResponse.data, 'binary');
-              mediaParts.push({ type: 'image', buffer: imageBuffer });
-              break;
-            } catch (error) {
-              if (j === 2) m.reply("gambar tidak di temukan");
+            if (images.length > 0) {
+              let imageBuffer;
+              for (let j = 0; j < Math.min(images.length, 3); j++) {
+                try {
+                  const imageResponse = await axios.get(images[j].image, { responseType: 'arraybuffer' });
+                  imageBuffer = Buffer.from(imageResponse.data, 'binary');
+                  mediaParts.push({ type: 'image', buffer: imageBuffer, caption: currentText });
+                  currentText = ''; // Reset currentText after using it as caption
+                  break;
+                } catch (error) {
+                  if (j === 2) m.reply("gambar tidak di temukan");
+                }
+              }
+            } else {
+              m.reply("gambar tidak di temukan");
+            }
+          } else if (parts[i].startsWith("{{")) {
+            const query = parts[i].slice(2, -2).trim();
+            const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
+            const result = searchResponse.data.data;
+            mediaParts.push({ type: 'video', url: result.no_watermark, caption: currentText });
+            currentText = ''; // Reset currentText after using it as caption
+          } else {
+            if (parts[i].trim()) {
+              if (currentText) {
+                textParts.push(currentText);
+              }
+              currentText = parts[i].trim();
             }
           }
-        } else {
-          m.reply("gambar tidak di temukan");
         }
-      } else if (parts[i].startsWith("{{")) {
-        const query = parts[i].slice(2, -2).trim();
-        const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
-        const result = searchResponse.data.data;
-        mediaParts.push({ type: 'video', url: result.no_watermark });
-      } else {
-        if (parts[i].trim()) {
-          textParts.push(parts[i].trim());
+
+        if (currentText) {
+          textParts.push(currentText);
         }
-      }
-    }
 
-    for (let media of mediaParts) {
-      if (media.type === 'image') {
-        await client.sendMessage(m.chat, { image: media.buffer, caption: textParts.join(' ') }, { quoted: m });
-      } else if (media.type === 'video') {
-        await client.sendMessage(m.chat, { video: { url: media.url }, caption: textParts.join(' '), mimetype: "video/mp4" }, { quoted: m });
-      }
-    }
+        for (let media of mediaParts) {
+          if (media.type === 'image') {
+            await client.sendMessage(m.chat, { image: media.buffer, caption: media.caption }, { quoted: m });
+          } else if (media.type === 'video') {
+            await client.sendMessage(m.chat, { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" }, { quoted: m });
+          }
+        }
 
-    if (textParts.length > 0) {
-      m.reply(textParts.join(' '));
-    }
-  } catch (error) {
-    bug(error);
-  } finally {
-    delete gambar[m.sender];
-  }
-};
+        if (textParts.length > 0) {
+          m.reply(textParts.join(' '));
+        }
+      } catch (error) {
+        bug(error);
+      } finally {
+        delete gambar[m.sender];
+      }
+    };
     
     if (!m.isGroup && !cekCmd(m.body) && m.body) {
       return autoAI();
