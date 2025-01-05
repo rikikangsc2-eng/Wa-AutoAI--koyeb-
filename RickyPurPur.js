@@ -145,33 +145,55 @@ const autoAI = async () => {
       ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
       : await ai.handleTextQuery(m.body, user);
 
-    let remainingText = hasil.trim();
-    remainingText = remainingText.replace(/\*\*(.*?)\*\*/g, '*$1*').replace(/```(.*?)```/g, '`$1`');
+    let remainingText = hasil.trim().replace(/\*\*(.*?)\*\*/g, '*$1*').replace(/```(.*?)```/g, '`$1`');
 
     let parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\})/);
+    let mediaParts = [];
+    let textParts = [];
+
     for (let i = 0; i < parts.length; i++) {
       if (parts[i].startsWith("[{")) {
         const query = parts[i].slice(2, -2).trim();
         const response = await axios.get(`https://api.ryzendesu.vip/api/search/gimage?query=${encodeURIComponent(query)}`);
         const images = response.data;
+
         if (images.length > 0) {
-          const limitedImages = images.slice(0, 5); // Limit to first 5 images
-          const randomImage = limitedImages[Math.floor(Math.random() * limitedImages.length)].image;
-          await client.sendMessage(m.chat, { image: { url: randomImage } }, { quoted: m });
+          let imageBuffer;
+          for (let j = 0; j < Math.min(images.length, 3); j++) {
+            try {
+              const imageResponse = await axios.get(images[j].image, { responseType: 'arraybuffer' });
+              imageBuffer = Buffer.from(imageResponse.data, 'binary');
+              mediaParts.push({ type: 'image', buffer: imageBuffer });
+              break;
+            } catch (error) {
+              if (j === 2) m.reply("gambar tidak di temukan");
+            }
+          }
+        } else {
+          m.reply("gambar tidak di temukan");
         }
       } else if (parts[i].startsWith("{{")) {
         const query = parts[i].slice(2, -2).trim();
         const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
         const result = searchResponse.data.data;
-        await client.sendMessage(m.chat, { 
-          video: { url: result.no_watermark }, 
-          mimetype: "video/mp4" 
-        }, { quoted: m });
+        mediaParts.push({ type: 'video', url: result.no_watermark });
       } else {
         if (parts[i].trim()) {
-          m.reply(parts[i].trim());
+          textParts.push(parts[i].trim());
         }
       }
+    }
+
+    for (let media of mediaParts) {
+      if (media.type === 'image') {
+        await client.sendMessage(m.chat, { image: media.buffer, caption: textParts.join(' ') }, { quoted: m });
+      } else if (media.type === 'video') {
+        await client.sendMessage(m.chat, { video: { url: media.url }, caption: textParts.join(' '), mimetype: "video/mp4" }, { quoted: m });
+      }
+    }
+
+    if (textParts.length > 0) {
+      m.reply(textParts.join(' '));
     }
   } catch (error) {
     bug(error);
