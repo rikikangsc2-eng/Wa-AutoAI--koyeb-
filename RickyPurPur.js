@@ -131,7 +131,7 @@ const bug = async (err) => {
   m.reply("> "+err.message+"\nLapor ke *.owner* biar cepet di perbaiki");
 }
 
-const user = `${m.sender.split("@")[0]}@V1.0.3`
+const user = `${m.sender.split("@")[0]}@V1.0.4`
 
     const autoAI = async () => {
       try {
