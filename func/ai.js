@@ -10,15 +10,7 @@ const API_KEY_2 = "AIzaSyAgZm62eZ4C4hZsldI52cka5XwNapGWPWw";
 const model_gemini = `gemini-2.0-flash-exp`;
 const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
-const RESPONSE_SETTINGS = [
-  { name: "Creative", description: "Mode ini menghasilkan respons yang sangat kreatif, penuh dengan ide-ide unik dan imajinatif.", temperature: 0.9, top_p: 0.95 },
-  { name: "Balanced", description: "Mode ini memberikan respons yang seimbang antara kreatif dan logis, cocok untuk percakapan umum.", temperature: 0.7, top_p: 0.8 },
-  { name: "Logical", description: "Mode ini memberikan respons yang fokus pada logika dan fakta, cocok untuk penyelesaian masalah.", temperature: 0.4, top_p: 0.6 },
-  { name: "Explorative", description: "Mode ini mengeksplorasi kemungkinan respons dengan keluasan ide, sering cocok untuk brainstorming.", temperature: 1.0, top_p: 0.9 },
-  { name: "Precise", description: "Mode ini menghasilkan respons yang fokus dan langsung, cocok untuk jawaban spesifik dan to the point.", temperature: 0.3, top_p: 0.5 }
-];
-
-const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null };
+const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.6, top_p: 0.8 };
 
 const genAI = new GoogleGenerativeAI(API_KEY_2);
 
@@ -33,7 +25,7 @@ const saveHistory = async (user, history) => {
 
 const fetchModelConfig = async (user) => {
   const res = await axios.get(`${BASE_URL}/model/${user}`);
-  return res.data || { lastTokenCount: 0, systemPrompt: "", isPremium: false, responseType: null };
+  return res.data || { lastTokenCount: 0, systemPrompt: "", isPremium: false };
 };
 
 const saveModelConfig = async (user, config) => {
@@ -49,41 +41,6 @@ const manageTokenCount = (history) => {
   return history;
 };
 
-const promptUserForResponseType = () => {
-  const options = RESPONSE_SETTINGS.map((setting, index) => 
-    `${index + 1}. ${setting.name}: ${setting.description}`).join('\n');
-  return `Sebelum lanjut chat dengan Alicia, ayok sesuaikan gaya respon yang kamu inginkan agar Alicia merespon dengan keinginan kamu\n\n${options}\n\n*Pilih antara 1 sampai 5*`;
-};
-
-const getResponseSettings = (responseType) => {
-  const setting = RESPONSE_SETTINGS.find((s) => s.name === responseType);
-  return setting ? { temperature: setting.temperature, top_p: setting.top_p } : null;
-};
-
-const handleUserResponseTypeSelection = async (user, input) => {
-  const index = RESPONSE_SETTINGS.findIndex((setting, i) =>
-    input.includes((i + 1).toString()) || input.toLowerCase().includes(['satu', 'dua', 'tiga', 'empat', 'lima'][i]) || input.toLowerCase().includes(setting.name.toLowerCase())
-  );
-  const selectedSetting = RESPONSE_SETTINGS[index];
-
-  if (!selectedSetting) {
-    return `Pilihan tidak valid. Harus memilih angka antara 1 sampai ${RESPONSE_SETTINGS.length}.\n\n${promptUserForResponseType()}`;
-  }
-
-  const modelConfig = await fetchModelConfig(user);
-  modelConfig.responseType = selectedSetting.name;
-  await saveModelConfig(user, modelConfig);
-  return `Tipe respons telah disetel ke: ${selectedSetting.name}. Anda dapat mulai bertanya sekarang.`;
-};
-
-const resetUserPreferences = async (user) => {
-  const modelConfig = await fetchModelConfig(user);
-  modelConfig.responseType = null;
-  modelConfig.lastTokenCount = 0;
-  await saveModelConfig(user, modelConfig);
-  await saveHistory(user, []);
-};
-
 const processTextQuery = async (text, user) => {
   let modelConfig = await fetchModelConfig(user);
 
@@ -92,16 +49,7 @@ const processTextQuery = async (text, user) => {
     await saveModelConfig(user, modelConfig);
   }
 
-  if (!modelConfig.responseType || !getResponseSettings(modelConfig.responseType)) {
-    const numericMatch = text.match(/\b\d\b/) || text.toLowerCase().match(/satu|dua|tiga|empat|lima/);
-    if (numericMatch) {
-      return handleUserResponseTypeSelection(user, text);
-    }
-    return promptUserForResponseType();
-  }
-
-  const responseSettings = getResponseSettings(modelConfig.responseType);
-  const generationConfig = { ...DEFAULT_GENERATION_CONFIG, ...responseSettings };
+  const generationConfig = { ...DEFAULT_GENERATION_CONFIG };
   const history = await fetchHistory(user);
 
   history.push({ role: "user", content: text });
@@ -173,7 +121,7 @@ const processTextQuery = async (text, user) => {
 const handleTextQuery = async (text, user) => {
   if (text.toLowerCase() === "reset") {
     await resetUserPreferences(user);
-    return "Riwayat percakapan dan preferensi telah direset. Silakan pilih tipe respons lagi:\n" + promptUserForResponseType();
+    return "Riwayat percakapan dan preferensi telah direset. Silakan mulai bertanya.";
   }
   if (text.toLowerCase().startsWith("setprompt:")) {
     const modelConfig = await fetchModelConfig(user);
@@ -211,10 +159,7 @@ const handleImageQuery = async (url, text, user) => {
   if (!modelConfig.isPremium) {
     return "Anda harus premium untuk menggunakan fitur ini.";
   }
-  if (!modelConfig.responseType) {
-    return promptUserForResponseType();
-  }
-  const responseSettings = getResponseSettings(modelConfig.responseType);
+  const responseSettings = { temperature: 0.6, top_p: 0.8 };
   const history = await fetchHistory(user);
   const response = await axios.get(url, { responseType: "arraybuffer" });
   const imageData = Buffer.from(response.data).toString("base64");

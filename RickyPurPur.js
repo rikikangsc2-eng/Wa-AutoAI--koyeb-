@@ -131,7 +131,7 @@ const bug = async (err) => {
   m.reply("> "+err.message+"\nLapor ke *.owner* biar cepet di perbaiki");
 }
 
-const user = `${m.sender.split("@")[0]}@V1.0.0`
+const user = `${m.sender.split("@")[0]}@V1.0.1`
 
     const autoAI = async () => {
       try {
@@ -147,7 +147,7 @@ const user = `${m.sender.split("@")[0]}@V1.0.0`
 
         let remainingText = hasil.trim().replace(/\*\*(.*?)\*\*/g, '*$1*').replace(/```(.*?)```/g, '`$1`');
 
-        let parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\})/);
+        let parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\}|\[\[.*?\]\])/);
         let mediaParts = [];
         let textParts = [];
         let currentText = '';
@@ -165,7 +165,7 @@ const user = `${m.sender.split("@")[0]}@V1.0.0`
                   const imageResponse = await axios.get(images[j].image, { responseType: 'arraybuffer' });
                   imageBuffer = Buffer.from(imageResponse.data, 'binary');
                   mediaParts.push({ type: 'image', buffer: imageBuffer, caption: currentText });
-                  currentText = ''; // Reset currentText after using it as caption
+                  currentText = '';
                   break;
                 } catch (error) {
                   if (j === 2) m.reply("gambar tidak di temukan");
@@ -179,7 +179,14 @@ const user = `${m.sender.split("@")[0]}@V1.0.0`
             const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
             const result = searchResponse.data.data;
             mediaParts.push({ type: 'video', url: result.no_watermark, caption: currentText });
-            currentText = ''; // Reset currentText after using it as caption
+            currentText = '';
+          } else if (parts[i].startsWith("[[")) {
+            const query = parts[i].slice(2, -2).trim();
+            await play.get(m, client, query);
+            if (currentText.trim()) {
+              m.reply(currentText);
+            }
+            currentText = '';
           } else {
             if (parts[i].trim()) {
               if (currentText) {
