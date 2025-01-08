@@ -10,7 +10,7 @@ const API_KEY_2 = "AIzaSyAgZm62eZ4C4hZsldI52cka5XwNapGWPWw";
 const model_gemini = `gemini-2.0-flash-exp`;
 const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
-const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.1, top_p: 0.5 };
+const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0, top_p: 1 };
 
 const genAI = new GoogleGenerativeAI(API_KEY_2);
 
