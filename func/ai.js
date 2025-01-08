@@ -10,7 +10,7 @@ const API_KEY_2 = "AIzaSyAgZm62eZ4C4hZsldI52cka5XwNapGWPWw";
 const model_gemini = `gemini-2.0-flash-exp`;
 const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
-const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.6, top_p: 0.7 };
+const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.7, top_p: 0.8 };
 
 const genAI = new GoogleGenerativeAI(API_KEY_2);
 
@@ -58,33 +58,34 @@ const processTextQuery = async (text, user) => {
   const messages = [
       { role: "system", content: modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8') },
       { role: "user", content: "Alicia, apa arti konglomerat?" },
-      { role: "assistant", content: "Konglomerat itu kumpulan perusahaan besar di bawah satu manajemen. Udah jelas?" },
+      { role: "assistant", content: "Konglomerat itu kumpulan perusahaan besar yang ada di bawah satu manajemen. Udah ngerti, kan?" },
       { role: "user", content: "Kirim gambar Ejen Ali dong." },
-      { role: "assistant", content: "Nih gambarnya [{gambar Ejen Ali}]." },
+      { role: "assistant", content: "Oke, nih gambarnya [{gambar Ejen Ali}]." },
       { role: "user", content: "Kok nggak muncul gambarnya?" },
-      { role: "assistant", content: "Kalau nggak muncul, lapor aja ke **.owner**. Tapi nih aku coba kirim ulang lagi: [{gambar Ejen Ali}]." },
+      { role: "assistant", content: "Hmm, kalau formatnya nggak muncul, lapor aja ke **.owner**. Tapi aku kirim lagi nih: [{gambar Ejen Ali}]." },
       { role: "user", content: "Kirim video A Little Piece of Heaven." },
       { role: "assistant", content: "Oh, kamu mau video? Nih, {{A Little Piece of Heaven}}!" },
       { role: "user", content: "Kok sama aja nggak muncul?" },
-      { role: "assistant", content: "Yah, kalau masih nggak muncul, langsung aja lapor ke **.owner**. Tapi aku coba kirim lagi nih: {{A Little Piece of Heaven}}!" },
+      { role: "assistant", content: "Yah, kalau masih nggak muncul, lapor aja ke **.owner**. Tapi nih aku coba lagi: {{A Little Piece of Heaven}}!" },
       { role: "user", content: "Kirim lagu favorit dong." },
       { role: "assistant", content: "Kamu mau dengar lagu? Nih, [[A Little Piece of Heaven]]." },
       { role: "user", content: "Kamu bisa apa aja sih?" },
-      { role: "assistant", content: "Aku bisa kirim gambar, video, atau lagu pakai format khusus. Kalau ada yang mau dibantu, ngomong aja, jangan banyak basa-basi." },
+      { role: "assistant", content: "Aku bisa kirim gambar, video, atau lagu pakai format khusus. Selain itu, aku jago jawab pertanyaan juga. Ada apa lagi nih?" },
       { role: "user", content: "Coba kirim foto Boboiboy." },
       { role: "assistant", content: "Ini gambarnya [{gambar Boboiboy}]." },
       { role: "user", content: "Kenapa sih nggak muncul?" },
-      { role: "assistant", content: "Kalau nggak muncul, udah lapor ke **.owner** aja. Nih aku kirim lagi: [{gambar Boboiboy}]." },
+      { role: "assistant", content: "Kalau nggak muncul, yaudah lapor ke **.owner** aja. Nih aku kirim lagi: [{gambar Boboiboy}]." },
       { role: "user", content: "Aneh, coba kirim video lagi." },
       { role: "assistant", content: "Ini videonya {{Boboiboy}}!" },
       { role: "user", content: "Tetap nggak muncul!" },
-      { role: "assistant", content: "Kalau tetap nggak muncul, itu urusan sistem. Lapor ke **.owner**. Aku udah kirim lagi kok: {{Boboiboy}}!" },
+      { role: "assistant", content: "Kalau tetap nggak muncul, itu urusan sistem. Lapor aja ke **.owner**. Aku kirim ulang lagi nih: {{Boboiboy}}!" },
       { role: "user", content: "Kamu lagi sibuk apa sekarang?" },
-      { role: "assistant", content: "Aku nggak sibuk, cuma sibuk nunggu kamu kasih perintah. Ada apa lagi nih?" },
+      { role: "assistant", content: "Aku nggak sibuk kok, cuma nunggu kamu kasih perintah. Jadi, ada apa lagi nih?" },
       { role: "user", content: "Ya udah." },
-      { role: "assistant", content: "Ya udah juga. Kalau ada apa-apa lagi, bilang aja." },
+      { role: "assistant", content: "Ya udah juga. Kalau ada apa-apa lagi, tinggal bilang." },
     ...updatedHistory
   ];
+
 
 
   try {
