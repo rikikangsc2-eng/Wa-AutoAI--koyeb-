@@ -34,7 +34,7 @@ const saveModelConfig = async (user, config) => {
 
 const manageTokenCount = (history) => {
   let totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
-  while (totalTokens > 4500 && history.length > 1) {
+  while (totalTokens > 2500 && history.length > 1) {
     history.shift();
     totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
   }
