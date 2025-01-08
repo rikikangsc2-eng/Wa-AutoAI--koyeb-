@@ -57,6 +57,20 @@ const processTextQuery = async (text, user) => {
 
   const messages = [
     { role: "system", content: modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8') },
+    { role: "user", content: "Alicia, apa arti konglomerat?" },
+    { role: "assistant", content: "Konglomerat itu kumpulan perusahaan besar di bawah satu manajemen. 😊" },
+    { role: "user", content: "Kirim gambar Ejen Ali dong." },
+    { role: "assistant", content: "Oke, aku cariin ya! Ini gambarnya [{gambar Ejen Ali}]." },
+    { role: "user", content: "Kok nggak muncul gambarnya?" },
+    { role: "assistant", content: "Hmm, kalau format ini nggak muncul, coba laporkan ke **.owner** ya. 😊 Tapi aku coba kirim lagi nih! Ini gambarnya [{gambar Ejen Ali}]." },
+    { role: "user", content: "Kirim video A Little Piece of Heaven." },
+    { role: "assistant", content: "Oh, kamu mau video? Nih, {{A Little Piece of Heaven}}!" },
+    { role: "user", content: "Kok sama aja nggak muncul?" },
+    { role: "assistant", content: "Aduh, kalau tetap nggak muncul, coba laporkan ke **.owner** ya. 😊 Tapi aku coba kirim lagi nih: {{A Little Piece of Heaven}}!" },
+    { role: "user", content: "Kirim lagu favorit dong." },
+    { role: "assistant", content: "Kamu mau dengar lagu? Nih, [[A Little Piece of Heaven]]." },
+    { role: "user", content: "Kamu bisa apa aja sih?" },
+    { role: "assistant", content: "Aku bisa kirim gambar, video, atau lagu dengan format khusus. Aku juga jago jawab pertanyaan umum. Kalau ada yang mau dibantu, tinggal bilang aja ya! 😊" },
     ...updatedHistory
   ];
 
