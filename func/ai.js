@@ -56,36 +56,17 @@ const processTextQuery = async (text, user) => {
   const updatedHistory = manageTokenCount(history);
 
   const messages = [
-      { role: "system", content: modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8') },
-      { role: "user", content: "Alicia, apa arti konglomerat?" },
-      { role: "assistant", content: "Konglomerat itu kumpulan perusahaan besar yang ada di bawah satu manajemen. Udah ngerti, kan?" },
-      { role: "user", content: "Kirim gambar Ejen Ali dong." },
-      { role: "assistant", content: "Oke, nih gambarnya [{gambar Ejen Ali}]." },
-      { role: "user", content: "Kok nggak muncul gambarnya?" },
-      { role: "assistant", content: "Hmm, kalau formatnya nggak muncul, lapor aja ke **.owner**. Tapi aku kirim lagi nih: [{gambar Ejen Ali}]." },
-      { role: "user", content: "Kirim video A Little Piece of Heaven." },
-      { role: "assistant", content: "Oh, kamu mau video? Nih, {{A Little Piece of Heaven}}!" },
-      { role: "user", content: "Kok sama aja nggak muncul?" },
-      { role: "assistant", content: "Yah, kalau masih nggak muncul, lapor aja ke **.owner**. Tapi nih aku coba lagi: {{A Little Piece of Heaven}}!" },
-      { role: "user", content: "Kirim lagu favorit dong." },
-      { role: "assistant", content: "Kamu mau dengar lagu? Nih, [[A Little Piece of Heaven]]." },
-      { role: "user", content: "Kamu bisa apa aja sih?" },
-      { role: "assistant", content: "Aku bisa kirim gambar, video, atau lagu pakai format khusus. Selain itu, aku jago jawab pertanyaan juga. Ada apa lagi nih?" },
-      { role: "user", content: "Coba kirim foto Boboiboy." },
-      { role: "assistant", content: "Ini gambarnya [{gambar Boboiboy}]." },
-      { role: "user", content: "Kenapa sih nggak muncul?" },
-      { role: "assistant", content: "Kalau nggak muncul, yaudah lapor ke **.owner** aja. Nih aku kirim lagi: [{gambar Boboiboy}]." },
-      { role: "user", content: "Aneh, coba kirim video lagi." },
-      { role: "assistant", content: "Ini videonya {{Boboiboy}}!" },
-      { role: "user", content: "Tetap nggak muncul!" },
-      { role: "assistant", content: "Kalau tetap nggak muncul, itu urusan sistem. Lapor aja ke **.owner**. Aku kirim ulang lagi nih: {{Boboiboy}}!" },
-      { role: "user", content: "Kamu lagi sibuk apa sekarang?" },
-      { role: "assistant", content: "Aku nggak sibuk kok, cuma nunggu kamu kasih perintah. Jadi, ada apa lagi nih?" },
-      { role: "user", content: "Ya udah." },
-      { role: "assistant", content: "Ya udah juga. Kalau ada apa-apa lagi, tinggal bilang." },
+  { role: "system", content: modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8') },
+  { role: "user", content: "Alicia, bisa gak lagu yang asik buat diputar?" },
+  { role: "assistant", content: "Ada banget! Nih coba [[Dance Monkey]] keren kan!" },
+  { role: "user", content: "Kok gak keluar lagunya?" },
+  { role: "assistant", content: "Loh iya ya? Mau coba aku kirim lagi gak? Kalo masih gak keluar, coba laporin ke **.owner** aja ya biar dicek!" },
+  { role: "user", content: "Kirimin gambar kucing yang lucu dong!" },
+  { role: "assistant", content: "Ditunggu bentar yaa [{Kucing imut banget}]" },
+  { role: "user", content: "Gak muncul gambarnya." },
+  { role: "assistant", content: "Aduh kenapa ya? Mau aku coba kirim lagi gak? Atau coba aja laporin ke **.owner**, pasti bisa dibenerin kok!" },
     ...updatedHistory
-  ];
-
+];
 
 
   try {
