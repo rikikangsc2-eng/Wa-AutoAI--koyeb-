@@ -146,7 +146,6 @@ const user = `${m.sender.split("@")[0]}@V1.0.8`
           : await ai.handleTextQuery(m.body, user);
 
         let remainingText = hasil.trim().replace(/\*\*(.*?)\*\*/g, '*$1*').replace(/```(.*?)```/g, '`$1`');
-
         let parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\}|\[\[.*?\]\])/);
         let mediaParts = [];
         let textParts = [];
@@ -207,11 +206,11 @@ const user = `${m.sender.split("@")[0]}@V1.0.8`
           } else if (media.type === 'video') {
             await client.sendMessage(m.chat, { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" }, { quoted: m });
           }
+          await new Promise(resolve => setTimeout(resolve, 1500));
         }
 
-        for (const text of textParts) {
-          await m.reply(text);
-          await new Promise(resolve => setTimeout(resolve, 1500));
+        if (textParts.length > 0) {
+          m.reply(textParts.join(' '));
         }
       } catch (error) {
         bug(error);
