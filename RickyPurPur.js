@@ -148,7 +148,6 @@ const user = `${m.sender.split("@")[0]}@V1.0.8`
         let remainingText = hasil.trim().replace(/\*\*(.*?)\*\*/g, '*$1*').replace(/```(.*?)```/g, '`$1`');
         let parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\}|\[\[.*?\]\])/);
         let mediaParts = [];
-        let textParts = [];
         let currentText = '';
 
         for (let i = 0; i < parts.length; i++) {
@@ -163,8 +162,7 @@ const user = `${m.sender.split("@")[0]}@V1.0.8`
                 try {
                   const imageResponse = await axios.get(images[j].image, { responseType: 'arraybuffer' });
                   imageBuffer = Buffer.from(imageResponse.data, 'binary');
-                  mediaParts.push({ type: 'image', buffer: imageBuffer, caption: currentText });
-                  currentText = '';
+                  mediaParts.push({ type: 'image', buffer: imageBuffer });
                   break;
                 } catch (error) {
                   if (j === 2) m.reply("gambar tidak di temukan");
@@ -177,40 +175,28 @@ const user = `${m.sender.split("@")[0]}@V1.0.8`
             const query = parts[i].slice(2, -2).trim();
             const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
             const result = searchResponse.data.data;
-            mediaParts.push({ type: 'video', url: result.no_watermark, caption: currentText });
-            currentText = '';
+            mediaParts.push({ type: 'video', url: result.no_watermark });
           } else if (parts[i].startsWith("[[")) {
             const query = parts[i].slice(2, -2).trim();
             await play.get(m, client, query);
-            if (currentText.trim()) {
-              m.reply(currentText);
-            }
-            currentText = '';
           } else {
             if (parts[i].trim()) {
-              if (currentText) {
-                textParts.push(currentText);
-              }
-              currentText = parts[i].trim();
+              currentText += parts[i].trim() + ' ';
             }
           }
-        }
-
-        if (currentText) {
-          textParts.push(currentText);
         }
 
         for (let media of mediaParts) {
           if (media.type === 'image') {
-            await client.sendMessage(m.chat, { image: media.buffer, caption: media.caption }, { quoted: m });
+            await client.sendMessage(m.chat, { image: media.buffer, caption: currentText.trim() }, { quoted: m });
           } else if (media.type === 'video') {
-            await client.sendMessage(m.chat, { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" }, { quoted: m });
+            await client.sendMessage(m.chat, { video: { url: media.url }, caption: currentText.trim(), mimetype: "video/mp4" }, { quoted: m });
           }
           await new Promise(resolve => setTimeout(resolve, 1500));
         }
 
-        if (textParts.length > 0) {
-          m.reply(textParts.join(' '));
+        if (mediaParts.length === 0 && currentText.trim()) {
+          m.reply(currentText.trim());
         }
       } catch (error) {
         bug(error);
