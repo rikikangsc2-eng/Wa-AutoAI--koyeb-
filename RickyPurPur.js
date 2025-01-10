@@ -209,8 +209,9 @@ const user = `${m.sender.split("@")[0]}@V1.0.8`
           }
         }
 
-        if (textParts.length > 0) {
-          m.reply(textParts.join(' '));
+        for (const text of textParts) {
+          await m.reply(text);
+          await new Promise(resolve => setTimeout(resolve, 1500));
         }
       } catch (error) {
         bug(error);
