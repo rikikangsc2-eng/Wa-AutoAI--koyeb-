@@ -145,11 +145,14 @@ const user = `${m.sender.split("@")[0]}@V1.0.8`
           ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
           : await ai.handleTextQuery(m.body, user);
 
-        let remainingText = hasil.trim().replace(/\*\*(.*?)\*\*/g, '*$1*').replace(/```(.*?)```/g, '`$1`');
+        const remainingText = hasil
+          .trim()
+          .replace(/\*\*(.*?)\*\*/g, '*$1*')
+          .replace(/```(.*?)```/g, '`$1`');
 
-        let parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\}|\[\[.*?\]\])/);
-        let mediaParts = [];
-        let textQueue = [];
+        const parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\}|\[\[.*?\]\])/);
+        const mediaQueue = [];
+        const textQueue = [];
         let currentText = '';
 
         for (let i = 0; i < parts.length; i++) {
@@ -159,13 +162,11 @@ const user = `${m.sender.split("@")[0]}@V1.0.8`
             const images = response.data;
 
             if (images.length > 0) {
-              let imageBuffer;
               for (let j = 0; j < Math.min(images.length, 3); j++) {
                 try {
                   const imageResponse = await axios.get(images[j].image, { responseType: 'arraybuffer' });
-                  imageBuffer = Buffer.from(imageResponse.data, 'binary');
-                  mediaParts.push({ type: 'image', buffer: imageBuffer, caption: currentText.trim() });
-                  currentText = ''; // Clear caption after assigning it
+                  mediaQueue.push({ type: 'image', buffer: Buffer.from(imageResponse.data, 'binary'), caption: currentText.trim() });
+                  currentText = '';
                   break;
                 } catch (error) {
                   if (j === 2) m.reply("Gambar tidak ditemukan");
@@ -178,27 +179,26 @@ const user = `${m.sender.split("@")[0]}@V1.0.8`
             const query = parts[i].slice(2, -2).trim();
             const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
             const result = searchResponse.data.data;
-            mediaParts.push({ type: 'video', url: result.no_watermark, caption: currentText.trim() });
-            currentText = ''; // Clear caption after assigning it
+            mediaQueue.push({ type: 'video', url: result.no_watermark, caption: currentText.trim() });
+            currentText = '';
           } else if (parts[i].startsWith("[[")) {
             const query = parts[i].slice(2, -2).trim();
             await play.get(m, client, query);
             if (currentText.trim()) {
-              m.reply(currentText);
+              textQueue.push(currentText.trim());
             }
-            currentText = ''; // Clear caption
+            currentText = '';
           } else {
-            if (parts[i].trim()) {
-              currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`; // Append text
-            }
+            currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
           }
         }
 
-        if (currentText) {
-          textQueue.push(currentText.trim()); // Push any remaining text to queue
+        if (currentText.trim()) {
+          textQueue.push(currentText.trim());
         }
 
-        for (let media of mediaParts) {
+        for (const media of mediaQueue) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
           if (media.type === 'image') {
             await client.sendMessage(m.chat, { image: media.buffer, caption: media.caption }, { quoted: m });
           } else if (media.type === 'video') {
@@ -207,8 +207,8 @@ const user = `${m.sender.split("@")[0]}@V1.0.8`
         }
 
         for (const text of textQueue) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
           await m.reply(text);
-          await new Promise(resolve => setTimeout(resolve, 1500)); // Delay for better UX
         }
       } catch (error) {
         bug(error);
