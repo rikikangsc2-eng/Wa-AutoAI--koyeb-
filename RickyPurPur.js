@@ -153,7 +153,7 @@ const user = `${m.sender.split("@")[0]}@V1.0.9`
 
         const parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\}|\[\[.*?\]\])/);
         const mediaQueue = [];
-        let initialText = '';
+        const textQueue = [];
         let currentText = '';
 
         for (let i = 0; i < parts.length; i++) {
@@ -182,24 +182,34 @@ const user = `${m.sender.split("@")[0]}@V1.0.9`
             const result = searchResponse.data.data;
             mediaQueue.push({ type: 'video', url: result.no_watermark, caption: currentText.trim() });
             currentText = '';
-          } else if (parts[i].trim()) {
-            if (!initialText) {
-              initialText = parts[i].trim();
-            } else {
-              currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
+          } else if (parts[i].startsWith("[[")) {
+            const query = parts[i].slice(2, -2).trim();
+            await play.get(m, client, query);
+            if (currentText.trim()) {
+              textQueue.push(currentText.trim());
             }
+            currentText = '';
+          } else {
+            currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
           }
         }
 
-        await m.reply(initialText);
+        if (currentText.trim()) {
+          textQueue.push(currentText.trim());
+        }
 
         for (const media of mediaQueue) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise(resolve => setTimeout(resolve, 1000));
           if (media.type === 'image') {
             await client.sendMessage(m.chat, { image: media.buffer, caption: media.caption }, { quoted: m });
           } else if (media.type === 'video') {
             await client.sendMessage(m.chat, { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" }, { quoted: m });
           }
+        }
+
+        for (const text of textQueue) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await m.reply(text);
         }
       } catch (error) {
         bug(error);
