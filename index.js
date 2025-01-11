@@ -1,4 +1,5 @@
-const sessionName = "rickyCreds";
+const { global } = require('./config.js');
+const sessionName = global.sessions;
 const {
   default: makeWASocket,
   useMultiFileAuthState,
@@ -80,7 +81,7 @@ async function startSession() {
       const m = smsg(client, mek, store);
       await client.readMessages([m.key]);
       if (!client.public && !m.key.fromMe && chatUpdate.type === 'notify') return;
-      if (m.sender.includes('6283873321433')) return;
+      if (m.sender.includes(global.nobot)) return;
       if (m.key.id.startsWith('BAE5') && m.key.id.length === 16) return;
       require("./RickyPurPur.js")(client, m, chatUpdate, store);
     } catch (err) {

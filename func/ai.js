@@ -1,13 +1,14 @@
 const axios = require('axios');
 const fs = require('fs');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { global } = require('../config.js');
 
 const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const ALTERNATIVE_API_URL = "https://express-vercel-ytdl.vercel.app/llm";
-const GEMMA_MODEL_NAME = "gemma2-9b-it";
-const API_KEY = "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";
-const API_KEY_2 = "AIzaSyAgZm62eZ4C4hZsldI52cka5XwNapGWPWw";
-const model_gemini = `gemini-2.0-flash-exp`;
+const GEMMA_MODEL_NAME = global.model_groq;
+const API_KEY = global.apikey;
+const API_KEY_2 = global.apikey2;
+const model_gemini = global.model_gemini;
 const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
 const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.7, top_p: 0.8 };
@@ -143,7 +144,7 @@ const handleTextQuery = async (text, user) => {
     return "Prompt telah diubah dan riwayat telah dihapus.";
   }
   if (text.toLowerCase().startsWith("setprem:")) {
-    const adminNumber = "94391287";
+    const adminNumber = global.owner;
     if (user.includes(adminNumber)) {
       const targetUser = text.replace("setprem:", "").trim();
       const targetConfig = await fetchModelConfig(targetUser);

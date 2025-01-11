@@ -1,3 +1,4 @@
+const { global } = require('./config.js');
 const {
   BufferJSON,
   WA_DEFAULT_EPHEMERAL,
@@ -20,19 +21,19 @@ const {alldown} = require("aio");
 const play = require("./func/play.js");
 const hd = require("./func/hd.js");
 
-const botOwner = "6283894391287";
-const noBot = "6283873321433";
-const botGroup = "https://chat.whatsapp.com/DVSbBEUOE3PEctcarjkeQC";
+const botOwner = global.owner;
+const noBot = global.nobot;
+const botGroup = global.gcbot;
 let gambar = {};
 let mkey = {};
 
-const arrMenuDownloader = ["lirik", "tiktok", "ig", "play", "videy"];
-const arrMenuAI = ["bawaan", "reset", "set"];
-const arrMenuAnime = [];
-const arrMenuTools = ["hd","tourl", "img", "gempa", "tts"];
-const arrMenuFun = [];
-const arrMenuMaker = [];
-const arrMenuOther = ["owner","sewa"];
+const arrMenuDownloader = global.downloader
+const arrMenuAI = global.menuAI
+const arrMenuAnime = global.anime
+const arrMenuTools = global.tools
+const arrMenuFun = global.fun
+const arrMenuMaker = global.maker
+const arrMenuOther = global.other
 
 const generateMenuOptions = (options) => {
   const symbols = ["❖", "✦", "✧", "✩", "✪", "✫", "✯"];
@@ -363,7 +364,7 @@ Dirasakan: ${gempaData.dirasakan}
         };
 
         case "owner": {
-          m.reply(`*Contact:* wa.me/${botOwner}\n\n*Note:* Nomor di atas adalah *nomor Owner* ya *bukan nomor bot* oke!.\n  Bot saya gratis untuk semua orang (kalo sewa ya bayar Server berat soalnya) [...]`);
+          m.reply(`*Contact:* wa.me/${global.owner}\n\n*Note:* Nomor di atas adalah *nomor Owner* ya *bukan nomor bot* oke!.\n  Bot saya gratis untuk semua orang (kalo sewa ya bayar Server berat soalnya)`);
           break;
         };
 
@@ -444,6 +445,10 @@ Dirasakan: ${gempaData.dirasakan}
 
         case "menu": {
           m.reply(menu);
+          break;
+        };
+        case "gcbot": {
+          m.reply(global.gcbot);
           break;
         };
       }
