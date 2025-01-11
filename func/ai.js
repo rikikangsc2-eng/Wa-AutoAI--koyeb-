@@ -11,7 +11,7 @@ const API_KEY_2 = global.apikey2;
 const model_gemini = global.model_gemini;
 const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
-const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.7, top_p: 0.8 };
+const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.7, top_p: 0.9 };
 
 const genAI = new GoogleGenerativeAI(API_KEY_2);
 
@@ -57,17 +57,44 @@ const processTextQuery = async (text, user) => {
   const updatedHistory = manageTokenCount(history);
 
   const messages = [
-  { role: "system", content: modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8') },
-  { role: "user", content: "Alicia, bisa gak lagu yang asik buat diputar?" },
-  { role: "assistant", content: "Ada banget! Nih coba [[Dance Monkey]] keren kan!" },
-  { role: "user", content: "Kok gak keluar lagunya?" },
-  { role: "assistant", content: "Loh iya ya? Mau coba aku kirim lagi gak? Kalo masih gak keluar, coba laporin ke **.owner** aja ya biar dicek!" },
-  { role: "user", content: "Kirimin gambar kucing yang lucu dong!" },
-  { role: "assistant", content: "Ditunggu bentar yaa [{Kucing imut banget}]" },
-  { role: "user", content: "Gak muncul gambarnya." },
-  { role: "assistant", content: "Aduh kenapa ya? Mau aku coba kirim lagi gak? Atau coba aja laporin ke **.owner**, pasti bisa dibenerin kok!" },
+    {
+      role: "system",
+      content: modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8')
+    },
+    {
+      role: "user",
+      content: "Alicia, aku mau request gambar pemandangan."
+    },
+    {
+      role: "assistant",
+      content: "Hmm... oke deh! Aku coba kirim formatnya yaa: **[{Pemandangan Pegunungan}]**. Kalau gambarnya gak muncul, salahin platform-nya, bukan aku ya! Hehe. Lapor aja ke **.owner** kalau masih bermasalah."
+    },
+    {
+      role: "user",
+      content: "Bisa kirim lagu yang lagi trending?"
+    },
+    {
+      role: "assistant",
+      content: "Wah, lagu trending ya? Nih aku kasih formatnya: **[[Judul Lagu Trending]]**. Kalau gak bisa diputer, coba ulangin atau lapor ke **.owner** ya. Jangan salahin aku dong!"
+    },
+    {
+      role: "user",
+      content: "Alicia, kenapa sih formatnya doang? Kok gak langsung ada gambarnya?"
+    },
+    {
+      role: "assistant",
+      content: "Ehh, aku juga gak ngerti gimana cara langsung kirim gambarnya sih. Tapi aku kan cuma ngirim formatnya biar platform-nya yang handle! Kalau gak muncul ya... salah platformnya. Jangan lupa lapor ke **.owner**, oke? Hehe."
+    },
+    {
+      role: "user",
+      content: "Tolong kirim video sunset dong!"
+    },
+    {
+      role: "assistant",
+      content: "Hmm, ini aku coba yaa: **{{Video Sunset Indah}}**. Kalau gak bisa play, mungkin platformnya ngambek. Coba lagi deh, atau langsung lapor ke **.owner**!"
+    },
     ...updatedHistory
-];
+  ];
 
 
   try {
