@@ -135,88 +135,79 @@ const bug = async (err) => {
 const user = `${m.sender.split("@")[0]}@V1.0.9`
 
     const autoAI = async () => {
-      try {
-        if (gambar[m.sender]) {
-          await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
-          mkey[m.sender] = null;
-          await m.reply("*Memproses Gambar...*");
-        }
+  try {
+    if (gambar[m.sender]) {
+      await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
+      mkey[m.sender] = null;
+      await m.reply("*Memproses Gambar...*");
+    }
 
-        const hasil = gambar[m.sender]
-          ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
-          : await ai.handleTextQuery(m.body, user);
+    const hasil = gambar[m.sender]
+      ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
+      : await ai.handleTextQuery(m.body, user);
 
-        const remainingText = hasil
-          .trim()
-          .replace(/\*\*(.*?)\*\*/g, '*$1*')
-          .replace(/```(.*?)```/g, '`$1`');
+    const remainingText = hasil
+      .trim()
+      .replace(/\*\*(.*?)\*\*/g, '*$1*')
+      .replace(/```(.*?)```/g, '`$1`');
 
-        const parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\}|\[\[.*?\]\])/);
-        const mediaQueue = [];
-        const textQueue = [];
-        let currentText = '';
+    const parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\}|\[\[.*?\]\])/);
+    const queue = [];
+    let currentText = '';
 
-        for (let i = 0; i < parts.length; i++) {
-          if (parts[i].startsWith("[{")) {
-            const query = parts[i].slice(2, -2).trim();
-            const response = await axios.get(`https://api.ryzendesu.vip/api/search/gimage?query=${encodeURIComponent(query)}`);
-            const images = response.data;
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i].startsWith("[{")) {
+        const query = parts[i].slice(2, -2).trim();
+        const response = await axios.get(`https://api.ryzendesu.vip/api/search/gimage?query=${encodeURIComponent(query)}`);
+        const images = response.data;
 
-            if (images.length > 0) {
-              for (let j = 0; j < Math.min(images.length, 3); j++) {
-                try {
-                  const imageResponse = await axios.get(images[j].image, { responseType: 'arraybuffer' });
-                  mediaQueue.push({ type: 'image', buffer: Buffer.from(imageResponse.data, 'binary'), caption: currentText.trim() });
-                  currentText = '';
-                  break;
-                } catch (error) {
-                  if (j === 2) m.reply("Gambar tidak ditemukan");
-                }
-              }
-            } else {
-              m.reply("Gambar tidak ditemukan");
+        if (images.length > 0) {
+          for (let j = 0; j < Math.min(images.length, 3); j++) {
+            try {
+              const imageResponse = await axios.get(images[j].image, { responseType: 'arraybuffer' });
+              queue.push({ type: 'media', mediaType: 'image', buffer: Buffer.from(imageResponse.data, 'binary'), caption: currentText.trim() });
+              currentText = '';
+              break;
+            } catch (error) {
+              if (j === 2) m.reply("Gambar tidak ditemukan");
             }
-          } else if (parts[i].startsWith("{{")) {
-            const query = parts[i].slice(2, -2).trim();
-            const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
-            const result = searchResponse.data.data;
-            mediaQueue.push({ type: 'video', url: result.no_watermark, caption: currentText.trim() });
-            currentText = '';
-          } else if (parts[i].startsWith("[[")) {
-            const query = parts[i].slice(2, -2).trim();
-            await play.get(m, client, query);
-            if (currentText.trim()) {
-              textQueue.push(currentText.trim());
-            }
-            currentText = '';
-          } else {
-            currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
           }
+        } else {
+          m.reply("Gambar tidak ditemukan");
         }
-
-        if (currentText.trim()) {
-          textQueue.push(currentText.trim());
-        }
-
-        for (const media of mediaQueue) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          if (media.type === 'image') {
-            await client.sendMessage(m.chat, { image: media.buffer, caption: media.caption }, { quoted: m });
-          } else if (media.type === 'video') {
-            await client.sendMessage(m.chat, { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" }, { quoted: m });
-          }
-        }
-
-        for (const text of textQueue) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          await m.reply(text);
-        }
-      } catch (error) {
-        bug(error);
-      } finally {
-        delete gambar[m.sender];
+      } else if (parts[i].startsWith("{{")) {
+        const query = parts[i].slice(2, -2).trim();
+        const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
+        const result = searchResponse.data.data;
+        queue.push({ type: 'media', mediaType: 'video', url: result.no_watermark, caption: currentText.trim() });
+        currentText = '';
+      } else {
+        currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
       }
-    };
+    }
+
+    if (currentText.trim()) {
+      queue.unshift({ type: 'text', content: currentText.trim() });
+    }
+
+    for (const item of queue) {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (item.type === 'text') {
+        await m.reply(item.content);
+      } else if (item.type === 'media') {
+        if (item.mediaType === 'image') {
+          await client.sendMessage(m.chat, { image: item.buffer, caption: item.caption }, { quoted: m });
+        } else if (item.mediaType === 'video') {
+          await client.sendMessage(m.chat, { video: { url: item.url }, caption: item.caption, mimetype: "video/mp4" }, { quoted: m });
+        }
+      }
+    }
+  } catch (error) {
+    bug(error);
+  } finally {
+    delete gambar[m.sender];
+  }
+};
 
     
     if (!m.isGroup && !cekCmd(m.body) && m.body) {
