@@ -96,7 +96,7 @@ const processTextQuery = async (text, user) => {
 
   if (modelConfig.persona) {
     messages.push(
-      { role: "user", content: modelConfig.persona },
+      { role: "user", content: `${modelConfig.persona}` },
       { role: "assistant", content: "Okee yaa aku ingat!" }
     );
   }
@@ -167,9 +167,41 @@ const handleTextQuery = async (text, user) => {
     await saveHistory(user, []);
     return "Riwayat percakapan, preferensi, dan persona telah direset.";
   }
-  const modelConfig = await fetchModelConfig(user);
-  modelConfig.persona = text.trim();
-  await saveModelConfig(user, modelConfig);
+  if (text.toLowerCase().startsWith("persona:")) {
+    const persona = text.replace("persona:", "").trim();
+    const modelConfig = await fetchModelConfig(user);
+    modelConfig.persona = persona;
+    await saveModelConfig(user, modelConfig);
+    return `Persona telah diatur: "${persona}"`;
+  }
+  if (text.toLowerCase().startsWith("setprompt:")) {
+    const modelConfig = await fetchModelConfig(user);
+    if (!modelConfig.isPremium) {
+      return "Anda harus premium, beli di *.owner* hanya 5k kok";
+    }
+    modelConfig.systemPrompt = text.replace("setprompt:", "").trim();
+    await saveModelConfig(user, modelConfig);
+    await saveHistory(user, []);
+    return "Prompt telah diubah dan riwayat telah dihapus.";
+  }
+  if (text.toLowerCase().startsWith("setprem:")) {
+    const adminNumber = global.owner;
+    if (user.includes(adminNumber)) {
+      const targetUser = text.replace("setprem:", "").trim();
+      const targetConfig = await fetchModelConfig(targetUser);
+      targetConfig.isPremium = true;
+      await saveModelConfig(targetUser, targetConfig);
+      return `${targetUser} sekarang adalah pengguna premium.`;
+    } else {
+      return "Anda tidak memiliki izin untuk mengubah pengguna menjadi premium.";
+    }
+  }
+  if (text.toLowerCase() === "resetprompt") {
+    const modelConfig = await fetchModelConfig(user);
+    modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
+    await saveModelConfig(user, modelConfig);
+    return "Prompt telah direset.";
+  }
   return processTextQuery(text, user);
 };
 
