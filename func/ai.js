@@ -26,7 +26,7 @@ const saveHistory = async (user, history) => {
 
 const fetchModelConfig = async (user) => {
   const res = await axios.get(`${BASE_URL}/model/${user}`);
-  return res.data || { lastTokenCount: 0, systemPrompt: "", isPremium: false };
+  return res.data || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "" };
 };
 
 const saveModelConfig = async (user, config) => {
@@ -56,10 +56,13 @@ const processTextQuery = async (text, user) => {
   history.push({ role: "user", content: text });
   const updatedHistory = manageTokenCount(history);
 
+  const personaPart = modelConfig.persona ? `\n\npersona user: ${modelConfig.persona}` : "";
+  const systemPrompt = modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8') + personaPart;
+
   const messages = [
     {
       role: "system",
-      content: modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8')
+      content: systemPrompt
     },
     {
       role: "user",
@@ -96,7 +99,6 @@ const processTextQuery = async (text, user) => {
     ...updatedHistory
   ];
 
-
   try {
     const response = await axios.post(
       GEMMA_API_URL,
@@ -115,7 +117,6 @@ const processTextQuery = async (text, user) => {
   } catch (error) {
     if (error.response && error.response.status === 429) {
       try {
-        // API 2 tanpa header Authorization
         const response = await axios.post(
           ALTERNATIVE_API_URL,
           {
@@ -128,9 +129,7 @@ const processTextQuery = async (text, user) => {
             stop: generationConfig.stop
           },
           {
-            headers: {
-              'Content-Type': 'application/json' // Header standar tanpa Authorization
-            }
+            headers: { 'Content-Type': 'application/json' }
           }
         );
 
@@ -157,8 +156,19 @@ const processTextQuery = async (text, user) => {
 
 const handleTextQuery = async (text, user) => {
   if (text.toLowerCase() === "reset") {
-    await resetUserPreferences(user);
-    return "Riwayat percakapan dan preferensi telah direset. Silakan mulai bertanya.";
+    const modelConfig = await fetchModelConfig(user);
+    modelConfig.persona = "";
+    modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
+    await saveModelConfig(user, modelConfig);
+    await saveHistory(user, []);
+    return "Riwayat percakapan, preferensi, dan persona telah direset.";
+  }
+  if (text.toLowerCase().startsWith("persona:")) {
+    const persona = text.replace("persona:", "").trim();
+    const modelConfig = await fetchModelConfig(user);
+    modelConfig.persona = persona;
+    await saveModelConfig(user, modelConfig);
+    return `Persona telah diatur: "${persona}"`;
   }
   if (text.toLowerCase().startsWith("setprompt:")) {
     const modelConfig = await fetchModelConfig(user);

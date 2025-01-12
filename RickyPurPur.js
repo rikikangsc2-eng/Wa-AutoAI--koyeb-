@@ -436,6 +436,13 @@ Dirasakan: ${gempaData.dirasakan}
           break;
         };
 
+        case "persona": {
+          if (!msg) return m.reply("*Contoh:* .persona Saya adalah Ricky umur saya 18 aku ganteng anjay");
+     const hasilPersona = await ai.handleTextQuery("persona:" + msg, user);
+          m.reply(hasilPersona.trim());
+          break;
+        };
+
         case "reset": {
           const hasilReset = await ai.handleTextQuery("reset", user);
           m.reply(hasilReset.trim());
