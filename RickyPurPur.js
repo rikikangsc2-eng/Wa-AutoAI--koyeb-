@@ -20,6 +20,7 @@ const ai = require("./func/ai.js");
 const {alldown} = require("aio");
 const play = require("./func/play.js");
 const hd = require("./func/hd.js");
+const {jadwalAnime, populerAnime, random} = require("./func/anime.js");
 
 const botOwner = global.owner;
 const noBot = global.nobot;
@@ -228,6 +229,28 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) {
+          case "jadwal": {
+            if (!msg) return m.reply("Masukkan nama hari (senin, selasa, rabu, kamis, jumat, sabtu, minggu)");
+            const result = await jadwalAnime(msg);
+            m.reply(result);
+            break;
+          };
+          case "populer": {
+            const result = await populerAnime();
+            m.reply(result);
+            break;
+          };
+          case "random": {
+            if (!msg) return m.reply("Masukkan genre anime yang ingin dicari (contoh: action, comedy)");
+            m.reply("Sedang mencari anime...");
+            const result = await random(msg);
+            if (result.error) return m.reply(result.error);
+              await client.sendMessage(m.chat, {
+                image: { url: result.image },
+                caption: `*Title:* ${result.title}\n*Genre:* ${result.genre}\n\n*Sinopsis:* ${result.sinopsis}`
+              }, { quoted: m });
+            break;
+          };
           case "ytmp4": {
   if (!msg) return m.reply("Masukkan URL YouTube yang valid");
   try {
