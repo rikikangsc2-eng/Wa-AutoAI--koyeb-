@@ -11,7 +11,7 @@ model_gemini:'gemini-2.0-flash-exp',
 
 
 /*Menu List*/
-downloader:["lirik", "tiktok", "ig", "play", "videy"],
+downloader:["lirik", "tiktok", "ig", "play", "videy",'ytmp4'],
 menuAI:["persona","bawaan", "reset", "set"],
 anime:[],
 tools:["hd","tourl", "img", "gempa", "tts"],
@@ -20,4 +20,4 @@ maker:[],
 other:["owner","sewa","gcbot"],
   
 };
-export { global };
+module.exports = { global };

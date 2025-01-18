@@ -228,6 +228,18 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) {
+          case "ytmp4": {
+  if (!msg) return m.reply("Masukkan URL YouTube yang valid");
+  try {
+    m.reply("Sedang memproses video...");
+    const response = await axios.get(`https://api.ryzendesu.vip/api/downloader/ytmp4?url=${encodeURIComponent(msg)}`);
+    const videoUrl = response.data.downloadUrl;
+    await client.sendMessage(m.chat, { video: { url: videoUrl }, mimetype: "video/mp4" }, { quoted: m });
+  } catch (e) {
+    m.reply(`> ${e.message}\nLaporkan ke .owner`);
+  }
+  break;
+};
           case "tts": {
   if (!msg) return m.reply("Masukkan teks untuk diubah menjadi suara");
   try {
