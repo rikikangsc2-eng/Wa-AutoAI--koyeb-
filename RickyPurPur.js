@@ -245,10 +245,15 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
             m.reply("Sedang mencari anime...");
             const result = await random(msg);
             if (result.error) return m.reply(result.error);
-              await client.sendMessage(m.chat, {
-                image: { url: result.image },
-                caption: `*Title:* ${result.title}\n*Genre:* ${result.genre}\n\n*Sinopsis:* ${result.sinopsis}`
-              }, { quoted: m });
+
+            const originalSynopsis = result.sinopsis;
+            const aiPrompt = `Terjemahkan dan ringkas sinopsis di bawah secara langsung tanpa basa basi:\n\n${originalSynopsis}`;
+            const summarizedSynopsis = await ai.handleTextQuery(aiPrompt, user);
+
+            await client.sendMessage(m.chat, {
+              image: { url: result.image },
+              caption: `*Title:* ${result.title}\n*Genre:* ${result.genre}\n\n*Sinopsis:* ${summarizedSynopsis.trim()}`
+            }, { quoted: m });
             break;
           };
           case "ytmp4": {
