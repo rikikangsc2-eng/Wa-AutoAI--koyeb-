@@ -34,11 +34,18 @@ const populerAnime = async () => {
     }
 };
 
-const random = async (genre) => {
+const random = async (genreInput) => {
     try {
-        const response = await axios.get(`https://api.jikan.moe/v4/anime?genres=${genre}&limit=100`);
+        const genresResponse = await axios.get('https://api.jikan.moe/v4/genres/anime');
+        const genresData = genresResponse.data.data;
+        const selectedGenre = genresData.find(g => g.name.toLowerCase() === genreInput.toLowerCase() || g.mal_id.toString() === genreInput);
+
+        if (!selectedGenre) return { error: "Genre tidak ditemukan." };
+
+        const response = await axios.get(`https://api.jikan.moe/v4/anime?genres=${selectedGenre.mal_id}`);
         const data = response.data.data;
         if (!data.length) return { error: "Tidak ada anime untuk genre ini." };
+
         const randomAnime = data[Math.floor(Math.random() * data.length)];
         return {
             image: randomAnime.images.jpg.image_url,
