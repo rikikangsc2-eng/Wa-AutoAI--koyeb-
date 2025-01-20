@@ -26,7 +26,7 @@ const saveHistory = async (user, history) => {
 
 const fetchModelConfig = async (user) => {
   const res = await axios.get(`${BASE_URL}/model/${user}`);
-  return res.data || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "" };
+  return res.data || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" };
 };
 
 const saveModelConfig = async (user, config) => {
@@ -115,6 +115,7 @@ const processTextQuery = async (text, user) => {
     await saveHistory(user, updatedHistory);
 
     modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
+    modelConfig.lastAPI = "main";
     await saveModelConfig(user, modelConfig);
 
     return responseText;
@@ -142,6 +143,7 @@ const processTextQuery = async (text, user) => {
         await saveHistory(user, updatedHistory);
 
         modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
+        modelConfig.lastAPI = "alternative";
         await saveModelConfig(user, modelConfig);
 
         return responseText;
@@ -196,7 +198,7 @@ const handleTextQuery = async (text, user) => {
       return "Anda tidak memiliki izin untuk mengubah pengguna menjadi premium.";
     }
   }
-  if (text.toLowerCase() === "resetprompt") {
+    if (text.toLowerCase() === "resetprompt") {
     const modelConfig = await fetchModelConfig(user);
     modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
     await saveModelConfig(user, modelConfig);
@@ -232,4 +234,3 @@ module.exports = {
   handleTextQuery,
   handleImageQuery,
 };
-
