@@ -186,10 +186,6 @@ const user = `${m.sender.split("@")[0]}@V1.0.9`
           } else if (parts[i].startsWith("[[")) {
             const query = parts[i].slice(2, -2).trim();
             await play.get(m, client, query);
-            if (currentText.trim()) {
-              textQueue.push(currentText.trim());
-            }
-            currentText = '';
           } else {
             currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
           }
