@@ -42,7 +42,7 @@ const random = async (genreInput) => {
 
         if (!selectedGenre) return { error: "Genre tidak ditemukan." };
 
-        const response = await axios.get(`https://api.jikan.moe/v4/anime?genres=${selectedGenre.mal_id}`);
+        const response = await axios.get(`https://api.jikan.moe/v4/anime?genres=${selectedGenre.mal_id}&limit=25`);
         const data = response.data.data;
         if (!data.length) return { error: "Tidak ada anime untuk genre ini." };
 

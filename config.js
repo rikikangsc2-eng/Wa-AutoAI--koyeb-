@@ -13,7 +13,7 @@ model_gemini:'gemini-2.0-flash-exp',
 /*Menu List*/
 downloader:["lirik", "tiktok", "ig", "play", "videy",'ytmp4'],
 menuAI:["persona","bawaan", "reset", "set"],
-anime:["jadwal", "populer", "random"],
+anime:["jadwal", "populer", "random","search"],
 tools:["hd","tourl", "img", "gempa", "tts"],
 fun:[],
 maker:[],

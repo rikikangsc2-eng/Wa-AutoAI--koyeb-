@@ -225,6 +225,25 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) {
+          case "search": {
+            if (!msg) return m.reply("Masukkan judul anime yang ingin dicari");
+            m.reply("Sedang mencari anime...");
+            const response = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(msg)}&sfw`);
+            const result = response.data.data;
+            if (result.length === 0) return m.reply("Anime tidak ditemukan.");
+              const anime = result[0];
+              const originalSynopsis = anime.synopsis;
+              const aiPrompt = `Terjemahkan dan ringkas sinopsis di bawah secara langsung tanpa basa basi:\n\n${originalSynopsis}`;
+              const summarizedSynopsis = await ai.handleTextQuery(aiPrompt, user);
+              const genres = anime.genres.map(genre => genre.name).join(', ');
+              const themes = anime.themes.map(theme => theme.name).join(', ');
+
+              await client.sendMessage(m.chat, {
+                image: { url: anime.images.jpg.image_url },
+                caption: `*Title:* ${anime.title}\n*Genre:* ${genres}\n*Theme:* ${themes}\n*Rating:* ${anime.score}\n\n*Sinopsis:* ${summarizedSynopsis.trim()}`
+              }, { quoted: m });
+            break;
+          };
           case "jadwal": {
             if (!msg) return m.reply("Masukkan nama hari (senin, selasa, rabu, kamis, jumat, sabtu, minggu)");
             const result = await jadwalAnime(msg);
@@ -253,17 +272,17 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
             break;
           };
           case "ytmp4": {
-  if (!msg) return m.reply("Masukkan URL YouTube yang valid");
-  try {
-    m.reply("Sedang memproses video...");
-    const response = await axios.get(`https://api.ryzendesu.vip/api/downloader/ytmp4?url=${encodeURIComponent(msg)}`);
-    const videoUrl = response.data.downloadUrl;
-    await client.sendMessage(m.chat, { video: { url: videoUrl }, mimetype: "video/mp4" }, { quoted: m });
-  } catch (e) {
-    m.reply(`> ${e.message}\nLaporkan ke .owner`);
-  }
-  break;
-};
+            if (!msg) return m.reply("Masukkan URL YouTube yang valid");
+            try {
+              m.reply("Sedang memproses video...");
+              const response = await axios.get(`https://api.agatz.xyz/api/ytmp4?url=${encodeURIComponent(msg)}`);
+              const videoUrl = response.data.data.downloadUrl;
+              await client.sendMessage(m.chat, { video: { url: videoUrl }, mimetype: "video/mp4" }, { quoted: m });
+            } catch (e) {
+              m.reply(`> ${e.message}\nLaporkan ke .owner`);
+            }
+            break;
+          };
           case "tts": {
   if (!msg) return m.reply("Masukkan teks untuk diubah menjadi suara");
   try {
