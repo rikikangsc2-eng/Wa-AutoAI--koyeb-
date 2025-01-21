@@ -6,7 +6,7 @@ nobot:'6283873321433',
 gcbot:'https://chat.whatsapp.com/KwK93a3wAsP46D3NdIKK5K',
 apikey:'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',//Groq APIkey
 apikey2:'AIzaSyAgZm62eZ4C4hZsldI52cka5XwNapGWPWw',//Google APIkey
-model_groq:'llama3-70b-8192',
+model_groq:'llama-3.3-70b-versatile',
 model_gemini:'gemini-2.0-flash-exp',
 
 
