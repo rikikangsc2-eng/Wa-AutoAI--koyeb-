@@ -12,25 +12,47 @@ async function get(m, client, msg) {
       return;
     }
 
-
     const topTrack = searchData.data[0];
 
+    let audioUrl;
     try {
-      const downloadResponse = await axios.get(
-        `https://api.ryzendesu.vip/api/downloader/spotify?url=${encodeURIComponent(topTrack.externalUrl)}`,
-        { headers: { 'accept': 'application/json' } }
+      const rapidResponse = await axios.get(
+        `https://spotify-downloader9.p.rapidapi.com/downloadSong?songId=${encodeURIComponent(topTrack.externalUrl)}`,
+        {
+          headers: {
+            'x-rapidapi-host': 'spotify-downloader9.p.rapidapi.com',
+            'x-rapidapi-key': 'fad1bfa0dfmsha3fa3e06b80a387p147910jsn9452a840d8bb'
+          }
+        }
       );
-      const downloadData = downloadResponse.data;
 
-      if (!downloadData.success) {
-        throw new Error("Failed to download audio from the track. Please try again later.");
+      const rapidData = rapidResponse.data;
+      if(rapidData.success){
+          audioUrl = rapidData.data.downloadLink;
+      } else {
+        throw new Error("Failed to download audio from Rapid API");
       }
 
-      const audioUrl = downloadData.link;
-      await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg" }, { quoted: m });
-    } catch (downloadError) {
-      m.reply(`> Failed to download audio: ${downloadError.message}\nReport ke .owner`);
+    } catch (rapidError) {
+        try {
+            const alternativeResponse = await axios.get(`https://express-vercel-ytdl.vercel.app/song?url=${encodeURIComponent(topTrack.externalUrl)}`)
+            const alternativeData = alternativeResponse.data;
+            if(alternativeData.success){
+                audioUrl = alternativeData.data.downloadLink;
+            } else {
+                throw new Error("Failed to download audio from Alternative API");
+            }
+
+        } catch(alternativeError){
+            m.reply(`> Failed to download audio: ${alternativeError.message}\nReport ke .owner`);
+            return;
+        }
     }
+
+
+    await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg" }, { quoted: m });
+
+
   } catch (searchError) {
     m.reply(`> Unexpected error occurred: ${searchError.message}\nReport ke .owner`);
   }
