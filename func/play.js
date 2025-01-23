@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const searchApiUrl = (query) => `https://api.agatz.xyz/api/ytsearch?message=${encodeURIComponent(query)}`;
-const downloadApiUrl = (videoId) => `https://express-vercel-ytdl.vercel.app/music?id=${encodeURIComponent(videoId)}`;
+const downloadApiUrl = (videoId) => `https://copper-ambiguous-velvet.glitch.me/music?id=${encodeURIComponent(videoId)}`;
 
 async function downloadAudio(url) {
     try {
