@@ -152,7 +152,7 @@ const user = `${m.sender.split("@")[0]}@V1.0.9`
           .replace(/\*\*(.*?)\*\*/g, '*$1*')
           .replace(/```(.*?)```/g, '`$1`');
 
-        const parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\}|\[\[.*?\]\])/);
+        const parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\}|\[\[.*?\]\]|\[\|.*?\|\])/);
         const mediaQueue = [];
         const textQueue = [];
         let currentText = '';
@@ -186,6 +186,41 @@ const user = `${m.sender.split("@")[0]}@V1.0.9`
           } else if (parts[i].startsWith("[[")) {
             const query = parts[i].slice(2, -2).trim();
             await play.get(m, client, query);
+          } else if (parts[i].startsWith("[|")) {
+            const query = parts[i].slice(2, -2).trim();
+            const apiKey = "AIzaSyCBtH9e95qEE2nzFcxVuO0ZLPnncXO9oyg";
+            const requestBody = {
+              contents: [
+                {
+                  role: "user",
+                  parts: [
+                    {
+                      text: query
+                    }
+                  ]
+                }
+              ],
+              generationConfig: {
+                temperature: 1,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 8192,
+                responseMimeType: "text/plain"
+              }
+            };
+
+            const response = await axios.post(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+              requestBody,
+              { headers: { 'Content-Type': 'application/json' } }
+            );
+
+            const aiResponse = response.data.candidates[0].content.trim();
+            const remainingText = aiResponse
+          .trim()
+          .replace(/\*\*(.*?)\*\*/g, '*$1*')
+          .replace(/```(.*?)```/g, '`$1`');
+            await m.reply(`QUERY: ${query}\n*---------*\n\n${remainingText}`);
           } else {
             currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
           }
