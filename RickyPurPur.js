@@ -133,124 +133,124 @@ const bug = async (err) => {
   m.reply("> "+err.message+"\nLapor ke *.owner* biar cepet di perbaiki");
 }
 
-const user = `${m.sender.split("@")[0]}@V1.1.1`
+const user = `${m.sender.split("@")[0]}@V1.1.2`
 
     const autoAI = async () => {
-  try {
-    if (gambar[m.sender]) {
-      await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
-      mkey[m.sender] = null;
-      await m.reply("*Memproses Gambar...*");
-    }
-
-    const hasil = gambar[m.sender]
-      ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
-      : await ai.handleTextQuery(m.body, user);
-
-    const remainingText = hasil
-      .trim()
-      .replace(/\*\*(.*?)\*\*/g, '*$1*')
-      .replace(/```(.*?)```/g, '`$1`');
-
-    const parts = remainingText.split(/(\[\{.*?\}\]|\{\{.*?\}\}|\[\[.*?\]\]|\[\|.*?\|\])/);
-    const mediaQueue = [];
-    const textQueue = [];
-    let currentText = '';
-
-    for (let i = 0; i < parts.length; i++) {
-      if (parts[i].startsWith("[{")) {
-        const query = parts[i].slice(2, -2).trim();
-        const response = await axios.get(`https://api.ryzendesu.vip/api/search/gimage?query=${encodeURIComponent(query)}`);
-        const images = response.data;
-
-        if (images.length > 0) {
-          for (let j = 0; j < Math.min(images.length, 3); j++) {
-            try {
-              const imageResponse = await axios.get(images[j].image, { responseType: 'arraybuffer' });
-              mediaQueue.push({ type: 'image', buffer: Buffer.from(imageResponse.data, 'binary'), caption: currentText.trim() });
-              currentText = '';
-              break;
-            } catch (error) {
-              if (j === 2) m.reply("Gambar tidak ditemukan");
-            }
-          }
-        } else {
-          m.reply("Gambar tidak ditemukan");
+      try {
+        if (gambar[m.sender]) {
+          await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
+          mkey[m.sender] = null;
+          await m.reply("*Memproses Gambar...*");
         }
-      } else if (parts[i].startsWith("{{")) {
-        const query = parts[i].slice(2, -2).trim();
-        const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
-        const result = searchResponse.data.data;
-        mediaQueue.push({ type: 'video', url: result.no_watermark, caption: currentText.trim() });
-        currentText = '';
-      } else if (parts[i].startsWith("[[")) {
-        const query = parts[i].slice(2, -2).trim();
-        m.reply("`Alicia sedang mencari lagu; "+query+". Tunggu ya...`")
-        await play.get(m, client, query);
-      } else if (parts[i].startsWith("[|")) {
-        const query = parts[i].slice(2, -2).trim();
-        const apiKey = "AIzaSyCBtH9e95qEE2nzFcxVuO0ZLPnncXO9oyg";
-        const requestBody = {
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: query
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 1,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-            responseMimeType: "text/plain"
-          }
-        };
 
-        const response = await axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
-          requestBody,
-          { headers: { 'Content-Type': 'application/json' } }
-        );
+        const hasil = gambar[m.sender]
+          ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
+          : await ai.handleTextQuery(m.body, user);
 
-        const aiResponse = response.data.candidates[0].content.parts
-          .map(part => part.text)
-          .join('')
+        const remainingText = hasil
           .trim()
-          .replace(/\*\*(.*?)\*\*/g, '*$1*');
+          .replace(/\*\*(.*?)\*\*/g, '*$1*')
+          .replace(/```(.*?)```/g, '`$1`');
 
-        await m.reply(`*Jawaban Gemini AI:*\n${aiResponse}\n*---------*`);
-      } else {
-        currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
+        const parts = remainingText.split(/(\*\*[^\*]+\*\*|\[image.*?\]|\[Image.*?\]|\[image =.*?\]|\[Image =.*?\]|\[video=.*?\]|\[Video=.*?\]|\[video =.*?\]|\[Video =.*?\]|\[song=.*?\]|\[Song=.*?\]|\[song =.*?\]|\[Song =.*?\]|\[ai=.*?\]|\[AI=.*?\]|\[ai =.*?\]|\[AI =.*?\])/);
+        const mediaQueue = [];
+        const textQueue = [];
+        let currentText = '';
+
+        for (let i = 0; i < parts.length; i++) {
+          if (parts[i].toLowerCase().startsWith("[image=") || parts[i].toLowerCase().startsWith("[image =")) {
+            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+            const response = await axios.get(`https://api.ryzendesu.vip/api/search/gimage?query=${encodeURIComponent(query)}`);
+            const images = response.data;
+
+            if (images.length > 0) {
+              for (let j = 0; j < Math.min(images.length, 3); j++) {
+                try {
+                  const imageResponse = await axios.get(images[j].image, { responseType: 'arraybuffer' });
+                  mediaQueue.push({ type: 'image', buffer: Buffer.from(imageResponse.data, 'binary'), caption: currentText.trim() });
+                  currentText = '';
+                  break;
+                } catch (error) {
+                  if (j === 2) m.reply("Gambar tidak ditemukan");
+                }
+              }
+            } else {
+              m.reply("Gambar tidak ditemukan");
+            }
+          } else if (parts[i].toLowerCase().startsWith("[video=") || parts[i].toLowerCase().startsWith("[video =")) {
+            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+            const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
+            const result = searchResponse.data.data;
+            mediaQueue.push({ type: 'video', url: result.no_watermark, caption: currentText.trim() });
+            currentText = '';
+          } else if (parts[i].toLowerCase().startsWith("[song=") || parts[i].toLowerCase().startsWith("[song =")) {
+            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+            m.reply("`Alicia sedang mencari lagu; " + query + ". Tunggu ya...`");
+            await play.get(m, client, query);
+          } else if (parts[i].toLowerCase().startsWith("[ai=") || parts[i].toLowerCase().startsWith("[ai =")) {
+            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+            const apiKey = "AIzaSyCBtH9e95qEE2nzFcxVuO0ZLPnncXO9oyg";
+            const requestBody = {
+              contents: [
+                {
+                  role: "user",
+                  parts: [
+                    {
+                      text: query
+                    }
+                  ]
+                }
+              ],
+              generationConfig: {
+                temperature: 1,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 1024,
+                responseMimeType: "text/plain"
+              }
+            };
+
+            const response = await axios.post(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+              requestBody,
+              { headers: { 'Content-Type': 'application/json' } }
+            );
+
+            const aiResponse = response.data.candidates[0].content.parts
+              .map(part => part.text)
+              .join('')
+              .trim()
+              .replace(/\*\*(.*?)\*\*/g, '*$1*');
+
+            await m.reply(`*Jawaban Gemini AI:*\n${aiResponse}\n*---------*`);
+          } else {
+            currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
+          }
+        }
+
+        if (currentText.trim()) {
+          textQueue.push(currentText.trim());
+        }
+
+        for (const media of mediaQueue) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          if (media.type === 'image') {
+            await client.sendMessage(m.chat, { image: media.buffer, caption: media.caption }, { quoted: m });
+          } else if (media.type === 'video') {
+            await client.sendMessage(m.chat, { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" }, { quoted: m });
+          }
+        }
+
+        for (const text of textQueue) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await m.reply(text);
+        }
+      } catch (error) {
+        bug(error);
+      } finally {
+        delete gambar[m.sender];
       }
-    }
-
-    if (currentText.trim()) {
-      textQueue.push(currentText.trim());
-    }
-
-    for (const media of mediaQueue) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      if (media.type === 'image') {
-        await client.sendMessage(m.chat, { image: media.buffer, caption: media.caption }, { quoted: m });
-      } else if (media.type === 'video') {
-        await client.sendMessage(m.chat, { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" }, { quoted: m });
-      }
-    }
-
-    for (const text of textQueue) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await m.reply(text);
-    }
-  } catch (error) {
-    bug(error);
-  } finally {
-    delete gambar[m.sender];
-  }
-};
+    };
 
     if (!m.isGroup && !cekCmd(m.body) && m.body) {
       return autoAI();
