@@ -179,15 +179,18 @@ const user = `${m.sender.split("@")[0]}@V1.0.9`
         }
       } else if (parts[i].startsWith("{{")) {
         const query = parts[i].slice(2, -2).trim();
+        m.reply("`Alicia sedang mencari video; "+query+". Tunggu ya...`")
         const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
         const result = searchResponse.data.data;
         mediaQueue.push({ type: 'video', url: result.no_watermark, caption: currentText.trim() });
         currentText = '';
       } else if (parts[i].startsWith("[[")) {
         const query = parts[i].slice(2, -2).trim();
+        m.reply("`Alicia sedang mencari lagu; "+query+". Tunggu ya...`")
         await play.get(m, client, query);
       } else if (parts[i].startsWith("[|")) {
         const query = parts[i].slice(2, -2).trim();
+        m.reply("`Alicia sedang bertanya ke AI yang lebih sepuh; "+query+". Tunggu ya...`")
         const apiKey = "AIzaSyCBtH9e95qEE2nzFcxVuO0ZLPnncXO9oyg";
         const requestBody = {
           contents: [
@@ -204,7 +207,7 @@ const user = `${m.sender.split("@")[0]}@V1.0.9`
             temperature: 1,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 8192,
+            maxOutputTokens: 1024,
             responseMimeType: "text/plain"
           }
         };
@@ -221,7 +224,7 @@ const user = `${m.sender.split("@")[0]}@V1.0.9`
           .trim()
           .replace(/\*\*(.*?)\*\*/g, '*$1*');
 
-        await m.reply(`QUERY: ${query}\n*---------*\n\n${aiResponse}`);
+        await m.reply(`*Jawaban Gemini AI:*\n${aiResponse}`);
       } else {
         currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
       }
