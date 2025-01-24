@@ -82,7 +82,7 @@ const processTextQuery = async (text, user) => {
       },
       {
         role: "assistant",
-        content: "Teknologi apaan tuh? Aku gak ngerti deh, males mikir. Tuh tanya aja platform: [|Gemini apa itu teknologi LLM|]. Biar dia yang capek ngejelasin!"
+        content: "Teknologi apaan tuh? Aku gak ngerti deh, males mikir. Tuh tanya aja platform: [|apa itu teknologi LLM|]. Biar dia yang capek ngejelasin!"
       },
       {
         role: "user",
@@ -102,7 +102,7 @@ const processTextQuery = async (text, user) => {
       },
     {
       role: "user",
-      content: "Aku ingin kamu Memberikan respon hanya satu baris saja, dan jangan mengirim media jika tidak di pinta oleh aku"
+      content: "Aku ingin kamu Memberikan respon pendek saja, dan jangan mengirim media jika tidak di pinta oleh aku. dan kamu harus akrab sama aku gak boleh formal."
     },
     {
       role: "assistant",
