@@ -133,7 +133,7 @@ const bug = async (err) => {
   m.reply("> "+err.message+"\nLapor ke *.owner* biar cepet di perbaiki");
 }
 
-const user = `${m.sender.split("@")[0]}@V1.0.9`
+const user = `${m.sender.split("@")[0]}@V1.1.0`
 
     const autoAI = async () => {
   try {
@@ -179,7 +179,6 @@ const user = `${m.sender.split("@")[0]}@V1.0.9`
         }
       } else if (parts[i].startsWith("{{")) {
         const query = parts[i].slice(2, -2).trim();
-        m.reply("`Alicia sedang mencari video; "+query+". Tunggu ya...`")
         const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
         const result = searchResponse.data.data;
         mediaQueue.push({ type: 'video', url: result.no_watermark, caption: currentText.trim() });
@@ -190,7 +189,6 @@ const user = `${m.sender.split("@")[0]}@V1.0.9`
         await play.get(m, client, query);
       } else if (parts[i].startsWith("[|")) {
         const query = parts[i].slice(2, -2).trim();
-        m.reply("`Alicia sedang bertanya ke AI yang lebih sepuh; "+query+". Tunggu ya...`")
         const apiKey = "AIzaSyCBtH9e95qEE2nzFcxVuO0ZLPnncXO9oyg";
         const requestBody = {
           contents: [
@@ -224,7 +222,7 @@ const user = `${m.sender.split("@")[0]}@V1.0.9`
           .trim()
           .replace(/\*\*(.*?)\*\*/g, '*$1*');
 
-        await m.reply(`*Jawaban Gemini AI:*\n${aiResponse}`);
+        await m.reply(`*Jawaban Gemini AI:*\n${aiResponse}\n*---------*`);
       } else {
         currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
       }

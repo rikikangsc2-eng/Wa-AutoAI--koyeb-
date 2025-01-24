@@ -11,7 +11,7 @@ const API_KEY_2 = global.apikey2;
 const model_gemini = global.model_gemini;
 const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
-const DEFAULT_GENERATION_CONFIG = { max_tokens: 100, stream: false, stop: null, temperature: 0.7, top_p: 0.8 };
+const DEFAULT_GENERATION_CONFIG = { max_tokens: 100, stream: false, stop: null, temperature: 0.8, top_p: 0.9 };
 
 const genAI = new GoogleGenerativeAI(API_KEY_2);
 
@@ -99,7 +99,15 @@ const processTextQuery = async (text, user) => {
       {
         role: "assistant",
         content: "Hmm... ya ampun, kenapa? Cerita aja. Aku dengerin kok, walaupun aku gak bisa bantu banyak, ya setidaknya kamu gak sendirian."
-      }
+      },
+    {
+      role: "user",
+      content: "Aku ingin kamu Memberikan respon hanya satu baris saja, dan jangan mengirim media jika tidak di pinta oleh aku"
+    },
+    {
+      role: "assistant",
+      content: "iyaa deh iyaa deh aku paham 😅, jadi mau bahas apa nih😁?"
+    }
   ];
 
   if (modelConfig.persona) {
