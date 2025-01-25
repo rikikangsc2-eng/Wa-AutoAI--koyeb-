@@ -11,7 +11,7 @@ const API_KEY_2 = global.apikey2;
 const model_gemini = global.model_gemini;
 const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
-const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.8, top_p: 0.9 };
+const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 1, top_p: 1 };
 
 const genAI = new GoogleGenerativeAI(API_KEY_2);
 
@@ -94,7 +94,7 @@ const processTextQuery = async (text, user) => {
     },
     {
       role: "user",
-      content: "Aku maunya kamu jangan ngirim format kecuali aku minta. Kita sahabatan aja ya, jadi ngobrolnya santai. Jangan pake kata-kata yang itu-itu mulu atau tanda bintang ya!"
+      content: "Aku maunya kamu jangan ngirim format kecuali aku minta. Kita sahabatan aja ya, jadi ngobrolnya santai. Jangan pake kalimat yang itu-itu mulu atau tanda bintang ya!"
     },
     {
       role: "assistant",
