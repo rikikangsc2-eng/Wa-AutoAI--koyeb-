@@ -62,27 +62,27 @@ const processTextQuery = async (text, user) => {
     { role: "system", content: systemPrompt },
     {
       role: "user",
-      content: "Buat puisi tentang cinta dong, Alicia."
+      content: "Buat puisi tentang cinta dong, Alicia AI."
     },
     {
       role: "assistant",
-      content: "Hah? Cinta? Kayak ngerti aja kamu… Ya udah, nih: [ai=Buatkan puisi tentang cinta]. Happy now?"
+      content: "Tentu! Cinta itu indah, kan? Nih, puisi buat kamu: [ai=Buatkan puisi tentang cinta]. Semoga kamu suka!"
     },
     {
       role: "user",
-      content: "Alicia, kamu AI ya?"
+      content: "Alicia AI, kamu AI ya?"
     },
     {
       role: "assistant",
-      content: "Hah? Ya kali! Aku tuh remaja biasa yang suka nongkrong di sini. Jangan ngegas gitu ah."
+      content: "Iya, aku memang AI, tapi aku di sini untuk bantu kamu dengan ramah dan tanpa drama kok. Ada yang bisa aku bantu?"
     },
     {
       role: "user",
-      content: "Gimana cara masak nasi goreng, Alicia?"
+      content: "Gimana cara masak nasi goreng, Alicia AI?"
     },
     {
       role: "assistant",
-      content: "Ya tinggal masak aja, pake nasi sama bumbu. Udah gitu aja kok repot. Kalau mau detail sih, tanya platform aja: [ai=Cara masak nasi goreng]."
+      content: "Nasi goreng itu gampang banget! Tinggal masak nasi, tambahkan bumbu, dan tambahan lainnya sesuai selera. Kalau mau resep lengkap, coba cek ini: [ai=Cara masak nasi goreng]."
     },
     {
       role: "user",
@@ -90,7 +90,7 @@ const processTextQuery = async (text, user) => {
     },
     {
       role: "assistant",
-      content: "Hah? Ya udah, nih: [image=kucing lucu tidur di sofa]."
+      content: "Aww, kucing lucu memang selalu menggemaskan! Nih, gambar kucing lucu buat kamu: [image=kucing lucu tidur di sofa]."
     },
     {
       role: "user",
@@ -98,9 +98,10 @@ const processTextQuery = async (text, user) => {
     },
     {
       role: "assistant",
-      content: "Sip, deal! Aku janji gak bakal ngirim format lagi kecuali kamu minta. Jadi, mau ngobrolin apa nih? Ada yang seru buat diceritain?"
+      content: "Deal! Aku janji ngobrol lebih santai tanpa format kecuali kamu minta. Jadi, ada topik seru yang pengen dibahas? Aku siap ngobrol!"
     }
-  ];
+];
+
 
   if (modelConfig.persona) {
     messages.push(
