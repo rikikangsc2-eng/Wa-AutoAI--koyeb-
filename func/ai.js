@@ -14,24 +14,52 @@ const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.8, top_p: 0.9 };
 
 const genAI = new GoogleGenerativeAI(API_KEY_2);
+const userData = {};
+const SYNC_INTERVAL = 30 * 60 * 1000; // 30 menit
 
-const fetchHistory = async (user) => {
-  const res = await axios.get(`${BASE_URL}/history/${user}`);
-  return res.data.history || [];
+const syncUserData = async (user) => {
+  if (!userData[user]) {
+    const modelConfig = await axios.get(`${BASE_URL}/model/${user}`).then(res => res.data);
+    const history = await axios.get(`${BASE_URL}/history/${user}`).then(res => res.data.history);
+
+    userData[user] = {
+        first: true,
+        date: Date.now(),
+        settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
+        history: history || []
+      };
+    return;
+  }
+
+  if (userData[user].first) {
+    const modelConfig = await axios.get(`${BASE_URL}/model/${user}`).then(res => res.data);
+      const history = await axios.get(`${BASE_URL}/history/${user}`).then(res => res.data.history);
+
+    userData[user] = {
+        first: false,
+        date: Date.now(),
+        settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
+        history: history || []
+      };
+    return;
+  }
+
+  if (Date.now() - userData[user].date >= SYNC_INTERVAL) {
+    await axios.post(`${BASE_URL}/model/${user}`, { config: userData[user].settings });
+    await axios.post(`${BASE_URL}/history/${user}`, { history: userData[user].history });
+
+     const modelConfig = await axios.get(`${BASE_URL}/model/${user}`).then(res => res.data);
+      const history = await axios.get(`${BASE_URL}/history/${user}`).then(res => res.data.history);
+
+    userData[user] = {
+        first: true,
+        date: Date.now(),
+       settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
+       history: history || []
+    };
+  }
 };
 
-const saveHistory = async (user, history) => {
-  await axios.post(`${BASE_URL}/history/${user}`, { history });
-};
-
-const fetchModelConfig = async (user) => {
-  const res = await axios.get(`${BASE_URL}/model/${user}`);
-  return res.data || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" };
-};
-
-const saveModelConfig = async (user, config) => {
-  await axios.post(`${BASE_URL}/model/${user}`, { config });
-};
 
 const manageTokenCount = (history) => {
   let totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
@@ -43,15 +71,16 @@ const manageTokenCount = (history) => {
 };
 
 const processTextQuery = async (text, user) => {
-  let modelConfig = await fetchModelConfig(user);
+  await syncUserData(user);
+
+  let modelConfig = userData[user].settings;
 
   if (!modelConfig.isPremium && modelConfig.systemPrompt !== fs.readFileSync('./prompt.txt', 'utf8')) {
     modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
-    await saveModelConfig(user, modelConfig);
   }
 
   const generationConfig = { ...DEFAULT_GENERATION_CONFIG };
-  const history = await fetchHistory(user);
+  let history = userData[user].history;
 
   history.push({ role: "user", content: text });
   const updatedHistory = manageTokenCount(history);
@@ -82,11 +111,12 @@ const processTextQuery = async (text, user) => {
 
     const responseText = response.data.choices[0].message.content;
     updatedHistory.push({ role: "assistant", content: responseText });
-    await saveHistory(user, updatedHistory);
+    userData[user].history = updatedHistory;
 
     modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
     modelConfig.lastAPI = "main";
-    await saveModelConfig(user, modelConfig);
+    userData[user].settings = modelConfig
+
 
     return responseText;
   } catch (error) {
@@ -110,11 +140,11 @@ const processTextQuery = async (text, user) => {
 
         const responseText = response.data.choices[0].message.content;
         updatedHistory.push({ role: "assistant", content: responseText });
-        await saveHistory(user, updatedHistory);
+         userData[user].history = updatedHistory;
 
         modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
         modelConfig.lastAPI = "alternative";
-        await saveModelConfig(user, modelConfig);
+        userData[user].settings = modelConfig
 
         return responseText;
       } catch (altError) {
@@ -131,59 +161,54 @@ const processTextQuery = async (text, user) => {
 };
 
 const handleTextQuery = async (text, user) => {
+  await syncUserData(user)
   if (text.toLowerCase() === "reset") {
-    const modelConfig = await fetchModelConfig(user);
-    modelConfig.persona = "";
-    modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
-    await saveModelConfig(user, modelConfig);
-    await saveHistory(user, []);
+      userData[user].settings.persona = "";
+     userData[user].settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
+    userData[user].history = [];
     return "Riwayat percakapan, preferensi, dan persona telah direset.";
   }
   if (text.toLowerCase().startsWith("persona:")) {
     const persona = text.replace("persona:", "").trim();
-    const modelConfig = await fetchModelConfig(user);
-    modelConfig.persona = persona;
-    await saveModelConfig(user, modelConfig);
+    userData[user].settings.persona = persona;
     return `Persona telah diatur: "${persona}"`;
   }
   if (text.toLowerCase().startsWith("setprompt:")) {
-    const modelConfig = await fetchModelConfig(user);
-    if (!modelConfig.isPremium) {
+      if (!userData[user].settings.isPremium) {
       return "Anda harus premium, beli di *.owner* hanya 5k kok";
     }
-    modelConfig.systemPrompt = text.replace("setprompt:", "").trim();
-    await saveModelConfig(user, modelConfig);
-    await saveHistory(user, []);
+    userData[user].settings.systemPrompt = text.replace("setprompt:", "").trim();
+    userData[user].history = [];
     return "Prompt telah diubah dan riwayat telah dihapus.";
   }
   if (text.toLowerCase().startsWith("setprem:")) {
     const adminNumber = global.owner;
     if (user.includes(adminNumber)) {
       const targetUser = text.replace("setprem:", "").trim();
-      const targetConfig = await fetchModelConfig(targetUser);
-      targetConfig.isPremium = true;
-      await saveModelConfig(targetUser, targetConfig);
+     if(!userData[targetUser]) {
+         await syncUserData(targetUser)
+     }
+      userData[targetUser].settings.isPremium = true;
       return `${targetUser} sekarang adalah pengguna premium.`;
     } else {
       return "Anda tidak memiliki izin untuk mengubah pengguna menjadi premium.";
     }
   }
     if (text.toLowerCase() === "resetprompt") {
-    const modelConfig = await fetchModelConfig(user);
-    modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
-    await saveModelConfig(user, modelConfig);
+    userData[user].settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
     return "Prompt telah direset.";
   }
   return processTextQuery(text, user);
 };
 
 const handleImageQuery = async (url, text, user) => {
-  const modelConfig = await fetchModelConfig(user);
-  if (!modelConfig.isPremium) {
+  await syncUserData(user);
+
+  if (!userData[user].settings.isPremium) {
     return "Anda harus premium untuk menggunakan fitur ini.";
   }
   const responseSettings = { temperature: 0.6, top_p: 0.8 };
-  const history = await fetchHistory(user);
+  let history = userData[user].history;
   const response = await axios.get(url, { responseType: "arraybuffer" });
   const imageData = Buffer.from(response.data).toString("base64");
   const prompt = [
@@ -196,7 +221,7 @@ const handleImageQuery = async (url, text, user) => {
   const responseText = result.response.text();
   history.push({ role: "user", content: text });
   history.push({ role: "assistant", content: responseText });
-  await saveHistory(user, history);
+  userData[user].history = history
   return responseText;
 };
 
