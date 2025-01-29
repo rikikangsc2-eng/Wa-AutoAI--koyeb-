@@ -133,7 +133,7 @@ const bug = async (err) => {
   m.reply("> "+err.message+"\nLapor ke *.owner* biar cepet di perbaiki");
 }
 
-const user = `${m.sender.split("@")[0]}@V1.0.15`
+const user = `${m.sender.split("@")[0]}@V1.0.16`
 
     const autoAI = async () => {
       try {
@@ -152,77 +152,16 @@ const user = `${m.sender.split("@")[0]}@V1.0.15`
           .replace(/\*\*(.*?)\*\*/g, '*$1*')
           .replace(/```(.*?)```/g, '`$1`');
 
-        const parts = remainingText.split(/(\*\*[^\*]+\*\*|\[image.*?\]|\[Image.*?\]|\[image =.*?\]|\[Image =.*?\]|\[video=.*?\]|\[Video=.*?\]|\[video =.*?\]|\[Video =.*?\]|\[song=.*?\]|\[Song=.*?\]|\[song =.*?\]|\[Song =.*?\]|\[ai=.*?\]|\[AI=.*?\]|\[ai =.*?\]|\[AI =.*?\])/);
+        const parts = remainingText.split(/(\*\*[^\*]+\*\*|\[song.*?\]|\[Song.*?\]|\[song =.*?\]|\[Song =.*?\])/);
         const mediaQueue = [];
         const textQueue = [];
         let currentText = '';
 
         for (let i = 0; i < parts.length; i++) {
-          if (parts[i].toLowerCase().startsWith("[image=") || parts[i].toLowerCase().startsWith("[image =")) {
-            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
-            const response = await axios.get(`https://api.ryzendesu.vip/api/search/gimage?query=${encodeURIComponent(query)}`);
-            const images = response.data;
-
-            if (images.length > 0) {
-              for (let j = 0; j < Math.min(images.length, 3); j++) {
-                try {
-                  const imageResponse = await axios.get(images[j].image, { responseType: 'arraybuffer' });
-                  mediaQueue.push({ type: 'image', buffer: Buffer.from(imageResponse.data, 'binary'), caption: currentText.trim() });
-                  currentText = '';
-                  break;
-                } catch (error) {
-                  if (j === 2) m.reply("Gambar tidak ditemukan");
-                }
-              }
-            } else {
-              m.reply("Gambar tidak ditemukan");
-            }
-          } else if (parts[i].toLowerCase().startsWith("[video=") || parts[i].toLowerCase().startsWith("[video =")) {
-            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
-            const searchResponse = await axios.get("https://itzpire.com/search/tiktok", { params: { query: query } });
-            const result = searchResponse.data.data;
-            mediaQueue.push({ type: 'video', url: result.no_watermark, caption: currentText.trim() });
-            currentText = '';
-          } else if (parts[i].toLowerCase().startsWith("[song=") || parts[i].toLowerCase().startsWith("[song =")) {
+          if (parts[i].toLowerCase().startsWith("[song=") || parts[i].toLowerCase().startsWith("[song =")) {
             const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
             m.reply("`Alicia sedang mencari lagu; " + query + ". Tunggu ya...`");
             await play.get(m, client, query);
-          } else if (parts[i].toLowerCase().startsWith("[ai=") || parts[i].toLowerCase().startsWith("[ai =")) {
-            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
-            const apiKey = "AIzaSyCBtH9e95qEE2nzFcxVuO0ZLPnncXO9oyg";
-            const requestBody = {
-              contents: [
-                {
-                  role: "user",
-                  parts: [
-                    {
-                      text: query
-                    }
-                  ]
-                }
-              ],
-              generationConfig: {
-                temperature: 1,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 1024,
-                responseMimeType: "text/plain"
-              }
-            };
-
-            const response = await axios.post(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
-              requestBody,
-              { headers: { 'Content-Type': 'application/json' } }
-            );
-
-            const aiResponse = response.data.candidates[0].content.parts
-              .map(part => part.text)
-              .join('')
-              .trim()
-              .replace(/\*\*(.*?)\*\*/g, '*$1*');
-
-            await m.reply(`*Jawaban Gemini AI:*\n${aiResponse}\n*---------*`);
           } else {
             currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
           }

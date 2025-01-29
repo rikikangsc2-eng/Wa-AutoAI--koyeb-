@@ -59,7 +59,8 @@ const processTextQuery = async (text, user) => {
   const systemPrompt = modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8');
 
   const messages = [
-    { role: "system", content: systemPrompt }
+    { role: "system", content: systemPrompt },
+    {role: "user", content: "Jangan pernah mengirimkan musik kecuali diminta. Jika saya meminta Anda untuk mencari atau memutar musik, Anda hanya perlu memberikan format teks yang sesuai."}
   ];
 
   if (modelConfig.persona) {
