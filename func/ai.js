@@ -15,7 +15,7 @@ const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, 
 
 const genAI = new GoogleGenerativeAI(API_KEY_2);
 const userData = {};
-const SYNC_INTERVAL = 30 * 60 * 1000; // 30 menit
+const SYNC_INTERVAL = 30 * 60 * 1000;
 
 const syncUserData = async (user) => {
   if (!userData[user]) {
@@ -41,25 +41,8 @@ const syncUserData = async (user) => {
         settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
         history: history || []
       };
-    return;
-  }
-
-  if (Date.now() - userData[user].date >= SYNC_INTERVAL) {
-    await axios.post(`${BASE_URL}/model/${user}`, { config: userData[user].settings });
-    await axios.post(`${BASE_URL}/history/${user}`, { history: userData[user].history });
-
-     const modelConfig = await axios.get(`${BASE_URL}/model/${user}`).then(res => res.data);
-      const history = await axios.get(`${BASE_URL}/history/${user}`).then(res => res.data.history);
-
-    userData[user] = {
-        first: true,
-        date: Date.now(),
-       settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
-       history: history || []
-    };
   }
 };
-
 
 const manageTokenCount = (history) => {
   let totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
@@ -102,6 +85,7 @@ const processTextQuery = async (text, user) => {
 
   messages.push(...updatedHistory);
 
+  let responseText;
   try {
     const response = await axios.post(
       GEMMA_API_URL,
@@ -109,7 +93,7 @@ const processTextQuery = async (text, user) => {
       { headers: { Authorization: `Bearer ${API_KEY}` } }
     );
 
-    const responseText = response.data.choices[0].message.content;
+    responseText = response.data.choices[0].message.content;
     updatedHistory.push({ role: "assistant", content: responseText });
     userData[user].history = updatedHistory;
 
@@ -117,8 +101,6 @@ const processTextQuery = async (text, user) => {
     modelConfig.lastAPI = "main";
     userData[user].settings = modelConfig
 
-
-    return responseText;
   } catch (error) {
     if (error.response && error.response.status === 429) {
       try {
@@ -138,7 +120,7 @@ const processTextQuery = async (text, user) => {
           }
         );
 
-        const responseText = response.data.choices[0].message.content;
+        responseText = response.data.choices[0].message.content;
         updatedHistory.push({ role: "assistant", content: responseText });
          userData[user].history = updatedHistory;
 
@@ -146,7 +128,6 @@ const processTextQuery = async (text, user) => {
         modelConfig.lastAPI = "alternative";
         userData[user].settings = modelConfig
 
-        return responseText;
       } catch (altError) {
         if (altError.response && altError.response.status === 400) {
           return "API 2 mengembalikan error 400. Mohon periksa payload.";
@@ -158,6 +139,23 @@ const processTextQuery = async (text, user) => {
     }
     return `API 1: ${error.message}`;
   }
+
+    if (Date.now() - userData[user].date >= SYNC_INTERVAL) {
+    await axios.post(`${BASE_URL}/model/${user}`, { config: userData[user].settings });
+    await axios.post(`${BASE_URL}/history/${user}`, { history: userData[user].history });
+
+      const modelConfig = await axios.get(`${BASE_URL}/model/${user}`).then(res => res.data);
+      const history = await axios.get(`${BASE_URL}/history/${user}`).then(res => res.data.history);
+
+        userData[user] = {
+            first: true,
+            date: Date.now(),
+           settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
+           history: history || []
+      };
+  }
+
+  return responseText;
 };
 
 const handleTextQuery = async (text, user) => {
@@ -222,6 +220,22 @@ const handleImageQuery = async (url, text, user) => {
   history.push({ role: "user", content: text });
   history.push({ role: "assistant", content: responseText });
   userData[user].history = history
+
+      if (Date.now() - userData[user].date >= SYNC_INTERVAL) {
+    await axios.post(`${BASE_URL}/model/${user}`, { config: userData[user].settings });
+    await axios.post(`${BASE_URL}/history/${user}`, { history: userData[user].history });
+
+       const modelConfig = await axios.get(`${BASE_URL}/model/${user}`).then(res => res.data);
+       const history = await axios.get(`${BASE_URL}/history/${user}`).then(res => res.data.history);
+
+        userData[user] = {
+            first: true,
+            date: Date.now(),
+           settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
+           history: history || []
+        };
+  }
+
   return responseText;
 };
 
