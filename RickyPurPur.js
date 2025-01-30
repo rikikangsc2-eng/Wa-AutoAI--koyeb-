@@ -192,6 +192,14 @@ const user = `${m.sender.split("@")[0]}@V1.0.17`
     };
 
     if (!m.isGroup && !cekCmd(m.body) && m.body) {
+      if (m.mtype.includes("imageMessage")){
+        await client.sendMessage(m.chat, {
+          react: { text: "🆙", key: m.key }
+        });
+
+        mkey[m.sender] = m.key;
+        gambar[m.sender] = await toUrl.get(m, client);
+      }
       return autoAI();
     }
     

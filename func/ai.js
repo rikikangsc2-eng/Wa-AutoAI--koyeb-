@@ -62,7 +62,7 @@ const syncUserData = async (user) => {
 
 const manageTokenCount = (history) => {
   let totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
-  while (totalTokens > 1536 && history.length > 1) {
+  while (totalTokens > 3000 && history.length > 1) {
     history.shift();
     totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
   }
@@ -110,10 +110,11 @@ const processTextQuery = async (text, user) => {
     );
 
     responseText = response.data.choices[0].message.content;
+    const completionTokens = response.data.usage.completion_tokens;
     updatedHistory.push({ role: "assistant", content: responseText });
     userData[user].history = updatedHistory;
 
-    modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
+    modelConfig.lastTokenCount += completionTokens;
     modelConfig.lastAPI = "main";
     userData[user].settings = modelConfig
 
@@ -137,10 +138,11 @@ const processTextQuery = async (text, user) => {
         );
 
         responseText = response.data.choices[0].message.content;
+         const completionTokens = response.data.usage.completion_tokens;
         updatedHistory.push({ role: "assistant", content: responseText });
          userData[user].history = updatedHistory;
 
-        modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
+       modelConfig.lastTokenCount += completionTokens;
         modelConfig.lastAPI = "alternative";
         userData[user].settings = modelConfig
 
@@ -217,42 +219,42 @@ const handleTextQuery = async (text, user) => {
 
 const handleImageQuery = async (url, text, user) => {
   await syncUserData(user);
+    try {
+        const responseSettings = { temperature: 0.6, top_p: 0.8 };
+        let history = userData[user].history;
+        const response = await axios.get(url, { responseType: "arraybuffer" });
+        const imageData = Buffer.from(response.data).toString("base64");
+        const prompt = [
+            ...history.map(item => `**${item.role === "assistant" ? "Gemini" : "User"}**: ${item.content}`),
+            `**User**: ${text}`,
+            { inlineData: { data: imageData, mimeType: "image/png" } },
+        ];
+        const model = genAI.getGenerativeModel({ model: model_gemini });
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+        history.push({ role: "user", content: text });
+        history.push({ role: "assistant", content: responseText });
+        userData[user].history = history
 
-  if (!userData[user].settings.isPremium) {
-    return "Anda harus premium untuk menggunakan fitur ini.";
-  }
-  const responseSettings = { temperature: 0.6, top_p: 0.8 };
-  let history = userData[user].history;
-  const response = await axios.get(url, { responseType: "arraybuffer" });
-  const imageData = Buffer.from(response.data).toString("base64");
-  const prompt = [
-    ...history.map(item => `**${item.role === "assistant" ? "Gemini" : "User"}**: ${item.content}`),
-    `**User**: ${text}`,
-    { inlineData: { data: imageData, mimeType: "image/png" } },
-  ];
-  const model = genAI.getGenerativeModel({ model: model_gemini });
-  const result = await model.generateContent(prompt);
-  const responseText = result.response.text();
-  history.push({ role: "user", content: text });
-  history.push({ role: "assistant", content: responseText });
-  userData[user].history = history
+            if (Date.now() - userData[user].date >= SYNC_INTERVAL) {
+        await apiRequest(`${BASE_URL}/model/${user}`, { method: 'post', data: { config: userData[user].settings } });
+        await apiRequest(`${BASE_URL}/history/${user}`, { method: 'post', data: { history: userData[user].history } });
 
-      if (Date.now() - userData[user].date >= SYNC_INTERVAL) {
-    await apiRequest(`${BASE_URL}/model/${user}`, { method: 'post', data: { config: userData[user].settings } });
-    await apiRequest(`${BASE_URL}/history/${user}`, { method: 'post', data: { history: userData[user].history } });
+            const modelConfig = await apiRequest(`${BASE_URL}/model/${user}`).then(res => res.data);
+            const history = await apiRequest(`${BASE_URL}/history/${user}`).then(res => res.data.history);
 
-       const modelConfig = await apiRequest(`${BASE_URL}/model/${user}`).then(res => res.data);
-       const history = await apiRequest(`${BASE_URL}/history/${user}`).then(res => res.data.history);
+            userData[user] = {
+                first: true,
+                date: Date.now(),
+            settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
+            history: history || []
+            };
+        }
 
-        userData[user] = {
-            first: true,
-            date: Date.now(),
-           settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
-           history: history || []
-        };
-  }
-
-  return responseText;
+        return responseText;
+    } catch (error) {
+        return `Error processing image: ${error.message}`;
+    }
 };
 
 module.exports = {
