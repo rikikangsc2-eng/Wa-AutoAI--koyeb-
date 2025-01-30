@@ -199,8 +199,24 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
       if (m.quoted.sender.includes(noBot)) return autoAI()
     } 
 
+    if (m.body.includes("† *Intro🕊️*†") &&
+        (m.body.includes("*Nama🕊️*:") ||
+         m.body.includes("*asal🕊️*:")
+        )
+    ) {
+      const introText = m.body;
+      const aiPrompt = `Hallo alicia salam kenal aku member baru di sini \n\n${introText}\n\n"System: anda harus sapa pengguna dengan data yang ada"`;
+      const aiResponse = await ai.handleTextQuery(aiPrompt, user);
+      return m.reply(aiResponse.trim());
+    }
+
     if (cekCmd(m.body)) {
       switch (command) {
+         case "intro": {
+          if (!m.isGroup) return m.reply("Fitur intro hanya untuk di group chat.");
+          m.reply("† *Intro🕊️*†\n*Nama🕊️*: \n*asal🕊️*   : \n*Waifu/husbu🕊️*:");
+          break;
+        };
           case "search": {
             if (!msg) return m.reply("Masukkan judul anime yang ingin dicari");
             m.reply("Sedang mencari anime...");

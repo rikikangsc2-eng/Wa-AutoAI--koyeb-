@@ -17,7 +17,7 @@ anime:["jadwal", "populer", "random","search"],
 tools:["hd","tourl", "img", "gempa", "tts"],
 fun:[],
 maker:[],
-other:["owner","sewa","gcbot"],
+other:["owner","sewa","gcbot","intro"],
   
 };
 module.exports = { global };
