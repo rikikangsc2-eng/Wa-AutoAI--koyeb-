@@ -192,19 +192,21 @@ const user = `${m.sender.split("@")[0]}@V1.0.17`
     };
 
     if (!m.isGroup && !cekCmd(m.body) && m.body) {
-      if (m.mtype.includes("imageMessage")){
+      return autoAI();
+    }
+    
+if (m.isGroup && m.quoted && !cekCmd(m.body)){
+      if (m.quoted.sender.includes(noBot)){
+        if (m.mtype.includes("imageMessage")){
         await client.sendMessage(m.chat, {
           react: { text: "🆙", key: m.key }
         });
 
         mkey[m.sender] = m.key;
         gambar[m.sender] = await toUrl.get(m, client);
-      }
-      return autoAI();
-    }
-    
-if (m.isGroup && m.quoted && !cekCmd(m.body)){
-      if (m.quoted.sender.includes(noBot)) return autoAI()
+        }
+      return autoAI()
+                                          }
     } 
 
     if (m.body.includes("† *Intro🕊️*†") &&
