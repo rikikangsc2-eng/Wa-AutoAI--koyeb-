@@ -16,11 +16,27 @@ const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, 
 const genAI = new GoogleGenerativeAI(API_KEY_2);
 const userData = {};
 const SYNC_INTERVAL = 30 * 60 * 1000;
+const USER_AGENT = "Mozilla/5.0 (Linux; Android 10; RMX2185 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.260 Mobile Safari/537.36";
+const API_DELAY = 2000;
+
+const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
+const apiRequest = async (url, options = {}) => {
+    await delay(API_DELAY);
+    return axios({
+        url,
+        ...options,
+        headers: {
+            ...options.headers,
+            'User-Agent': USER_AGENT
+        }
+    });
+};
 
 const syncUserData = async (user) => {
   if (!userData[user]) {
-    const modelConfig = await axios.get(`${BASE_URL}/model/${user}`).then(res => res.data);
-    const history = await axios.get(`${BASE_URL}/history/${user}`).then(res => res.data.history);
+        const modelConfig = await apiRequest(`${BASE_URL}/model/${user}`).then(res => res.data);
+        const history = await apiRequest(`${BASE_URL}/history/${user}`).then(res => res.data.history);
 
     userData[user] = {
         first: true,
@@ -32,8 +48,8 @@ const syncUserData = async (user) => {
   }
 
   if (userData[user].first) {
-    const modelConfig = await axios.get(`${BASE_URL}/model/${user}`).then(res => res.data);
-      const history = await axios.get(`${BASE_URL}/history/${user}`).then(res => res.data.history);
+        const modelConfig = await apiRequest(`${BASE_URL}/model/${user}`).then(res => res.data);
+        const history = await apiRequest(`${BASE_URL}/history/${user}`).then(res => res.data.history);
 
     userData[user] = {
         first: false,
@@ -141,11 +157,11 @@ const processTextQuery = async (text, user) => {
   }
 
     if (Date.now() - userData[user].date >= SYNC_INTERVAL) {
-    await axios.post(`${BASE_URL}/model/${user}`, { config: userData[user].settings });
-    await axios.post(`${BASE_URL}/history/${user}`, { history: userData[user].history });
+    await apiRequest(`${BASE_URL}/model/${user}`, { method: 'post', data: { config: userData[user].settings } });
+    await apiRequest(`${BASE_URL}/history/${user}`, { method: 'post', data: { history: userData[user].history } });
 
-      const modelConfig = await axios.get(`${BASE_URL}/model/${user}`).then(res => res.data);
-      const history = await axios.get(`${BASE_URL}/history/${user}`).then(res => res.data.history);
+      const modelConfig = await apiRequest(`${BASE_URL}/model/${user}`).then(res => res.data);
+        const history = await apiRequest(`${BASE_URL}/history/${user}`).then(res => res.data.history);
 
         userData[user] = {
             first: true,
@@ -222,11 +238,11 @@ const handleImageQuery = async (url, text, user) => {
   userData[user].history = history
 
       if (Date.now() - userData[user].date >= SYNC_INTERVAL) {
-    await axios.post(`${BASE_URL}/model/${user}`, { config: userData[user].settings });
-    await axios.post(`${BASE_URL}/history/${user}`, { history: userData[user].history });
+    await apiRequest(`${BASE_URL}/model/${user}`, { method: 'post', data: { config: userData[user].settings } });
+    await apiRequest(`${BASE_URL}/history/${user}`, { method: 'post', data: { history: userData[user].history } });
 
-       const modelConfig = await axios.get(`${BASE_URL}/model/${user}`).then(res => res.data);
-       const history = await axios.get(`${BASE_URL}/history/${user}`).then(res => res.data.history);
+       const modelConfig = await apiRequest(`${BASE_URL}/model/${user}`).then(res => res.data);
+       const history = await apiRequest(`${BASE_URL}/history/${user}`).then(res => res.data.history);
 
         userData[user] = {
             first: true,
