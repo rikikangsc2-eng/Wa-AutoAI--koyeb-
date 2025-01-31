@@ -62,7 +62,7 @@ const syncUserData = async (user) => {
 
 const manageTokenCount = (history) => {
   let totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
-  while (totalTokens > 3000 && history.length > 1) {
+  while (totalTokens > 2100 && history.length > 1) {
     history.shift();
     totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
   }
