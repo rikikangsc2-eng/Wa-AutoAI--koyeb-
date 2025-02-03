@@ -15,7 +15,7 @@ downloader:["lirik", "tiktok", "ig", "play", "videy",'ytmp4'],
 menuAI:["persona","bawaan", "reset", "set"],
 anime:["jadwal", "populer", "random","search"],
 tools:["hd","tourl", "img", "gempa", "tts"],
-fun:[],
+fun:["susunkata","siapakahaku","point","top","nyerah"],
 maker:[],
 other:["owner","sewa","gcbot","intro"],
   

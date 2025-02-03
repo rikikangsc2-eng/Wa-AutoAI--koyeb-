@@ -21,6 +21,7 @@ const {alldown} = require("aio");
 const play = require("./func/play.js");
 const hd = require("./func/hd.js");
 const {jadwalAnime, populerAnime, random} = require("./func/anime.js");
+const game = require('./func/game.js')
 
 const botOwner = global.owner;
 const noBot = global.nobot;
@@ -191,6 +192,19 @@ const user = `${m.sender.split("@")[0]}@V1.0.18`
       }
     };
 
+
+//Jawab GAME
+    if (m.quoted) {
+      if (m.quoted.text.includes("AliciaGames")){
+        const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
+          const query = { text: body };
+          const gameResponse = await game.gameLogic("jawab", params, query);
+          m.reply(gameResponse);
+        return;
+      }
+    }
+
+    
     if (!m.isGroup && !cekCmd(m.body) && m.body) {
       return autoAI();
     }
@@ -219,9 +233,39 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
       const aiResponse = await ai.handleTextQuery(aiPrompt, user);
       return m.reply(aiResponse.trim());
     }
-
+  
     if (cekCmd(m.body)) {
       switch (command) {
+                 case "susunkata": {
+          const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
+          const gameResponse = await game.gameLogic(command, params);
+          m.reply(gameResponse+"\n\nAliciaGames");
+          break;
+        }
+        case "siapakahaku": {
+          const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
+          const gameResponse = await game.gameLogic(command, params);
+          m.reply(gameResponse+"\n\nAliciaGames");
+          break;
+        }
+        case "point": {
+          const game = require('./func/game.js')
+          const params = { user: m.sender.split("@")[0] };
+          const gameResponse = await game.gameLogic(command, params);
+          m.reply(gameResponse);
+          break;
+        }
+        case "top": {
+          const gameResponse = await game.gameLogic(command);
+          m.reply(gameResponse);
+          break;
+        }
+        case "nyerah": {
+          const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
+          const gameResponse = await game.gameLogic(command, params);
+          m.reply(gameResponse);
+          break;
+        }
          case "intro": {
           if (!m.isGroup) return m.reply("Fitur intro hanya untuk di group chat.");
           m.reply("† *Intro🕊️*†\n*Nama🕊️*: \n*asal🕊️*   : \n*Waifu/husbu🕊️*:");
