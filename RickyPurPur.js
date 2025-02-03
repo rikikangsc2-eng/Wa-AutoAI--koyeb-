@@ -236,6 +236,40 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
   
     if (cekCmd(m.body)) {
       switch (command) {
+          case "think": {
+          if (!msg) return m.reply("Masukkan pertanyaan");
+          m.reply("AI sedang berpikir 🤔");
+          try {
+            const response = await axios.post(
+              "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key="+global.apikey2,
+              {
+                contents: [
+                  {
+                    role: "user",
+                    parts: [{ text: msg }],
+                  },
+                ],
+                generationConfig: {
+                  temperature: 0.7,
+                  topK: 64,
+                  topP: 0.95,
+                  maxOutputTokens: 65536,
+                  responseMimeType: "text/plain",
+                },
+              },
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            const answer = response.data.candidates[0].content.parts[0].text;
+            m.reply(answer);
+          } catch (e) {
+            bug(e);
+          }
+          break;
+        };
                  case "susunkata": {
           const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
           const gameResponse = await game.gameLogic(command, params);
