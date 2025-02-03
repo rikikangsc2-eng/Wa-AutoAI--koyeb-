@@ -194,7 +194,7 @@ const user = `${m.sender.split("@")[0]}@V1.0.18`
 
 
 //Jawab GAME
-    if (m.quoted) {
+    if (m.quoted && !cekCmd()) {
       if (m.quoted.text.includes("AliciaGames")){
         const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
           const query = { text: body };
@@ -256,8 +256,8 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
           break;
         }
         case "top": {
-          const gameResponse = await game.gameLogic(command);
-          m.reply(gameResponse);
+          const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
+          await game.gameLogic(command, params, null, m, client);
           break;
         }
         case "nyerah": {
