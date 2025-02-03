@@ -194,7 +194,7 @@ const user = `${m.sender.split("@")[0]}@V1.0.18`
 
 
 //Jawab GAME
-    if (m.quoted && !cekCmd()) {
+    if (m.quoted && !cekCmd(m.body)) {
       if (m.quoted.text.includes("AliciaGames")){
         const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
           const query = { text: body };
