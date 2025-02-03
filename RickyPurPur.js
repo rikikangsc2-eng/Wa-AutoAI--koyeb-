@@ -236,6 +236,19 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
   
     if (cekCmd(m.body)) {
       switch (command) {
+        case "hint": {
+          const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
+          const query = { hintType: msg };
+          const gameResponse = await game.gameLogic(command, params, query);
+          m.reply(gameResponse);
+          break;
+        }
+        case "tebaktebakan": {
+          const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
+          const gameResponse = await game.gameLogic(command, params);
+          m.reply(gameResponse+"\n\nAliciaGames");
+          break;
+        }
           case "think": {
           if (!msg) return m.reply("Masukkan pertanyaan");
           m.reply("AI sedang berpikir 🤔");

@@ -1,4 +1,3 @@
-// gameLogic.js (File terpisah untuk logika game)
 const axios = require('axios')
 
 const API_ENDPOINT = 'https://copper-ambiguous-velvet.glitch.me/data'
@@ -51,11 +50,47 @@ const fetchSoalSiapakahAku = async () => {
     }
 }
 
-const QUESTION_TIMEOUT = 2 * 60 * 1000
+const fetchSoalTebakTebakan = async () => {
+    try {
+        const response = await axios.get('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebaktebakan.json')
+        return response.data
+    } catch (error) {
+        console.error("Failed to fetch soal tebak tebakan:", error)
+        return []
+    }
+}
+
+function generateHint(answer, percentage) {
+    const answerArray = answer.toLowerCase().split('');
+    const visibleIndices = [];
+    for (let i = 0; i < answerArray.length; i++) {
+        if (answerArray[i] !== ' ') {
+            visibleIndices.push(i);
+        }
+    }
+
+    const shuffledIndices = visibleIndices.sort(() => Math.random() - 0.5);
+    const revealCount = Math.ceil(shuffledIndices.length * percentage);
+    const indicesToReveal = new Set(shuffledIndices.slice(0, revealCount));
+
+    let hint = '';
+    for (let i = 0; i < answerArray.length; i++) {
+        if (indicesToReveal.has(i)) {
+            hint += answerArray[i];
+        } else if (answerArray[i] === ' ') {
+            hint += ' ';
+        }
+        else {
+            hint += '×';
+        }
+    }
+    return hint;
+}
+
 
 async function gameLogic(endpoint, params, query, m, client) {
     const { user, room } = params || {}
-    const { text } = query || {}
+    const { text, hintType } = query || {}
 
     if (endpoint === 'susunkata') {
         const roomsData = await apiGetData('rooms')
@@ -76,7 +111,7 @@ async function gameLogic(endpoint, params, query, m, client) {
         if (!roomsData.rooms[room]) {
             roomsData.rooms[room] = { currentQuestion: null }
         }
-        roomsData.rooms[room].currentQuestion = { ...selectedSoal, answered: false, attempts: 0, timestamp: Date.now() }
+        roomsData.rooms[room].currentQuestion = { ...selectedSoal, gameType: 'susunkata', answered: false, attempts: 0, timestamp: Date.now() }
         await apiWriteData('rooms', roomsData)
 
         return `Soal susun kata berikut: ${selectedSoal.soal} - Tipe: ${selectedSoal.tipe}`
@@ -100,10 +135,33 @@ async function gameLogic(endpoint, params, query, m, client) {
         if (!roomsData.rooms[room]) {
             roomsData.rooms[room] = { currentQuestion: null }
         }
-        roomsData.rooms[room].currentQuestion = { ...selectedSoal, answered: false, attempts: 0, timestamp: Date.now() }
+        roomsData.rooms[room].currentQuestion = { ...selectedSoal, gameType: 'siapakahaku', answered: false, attempts: 0, timestamp: Date.now() }
         await apiWriteData('rooms', roomsData)
 
         return `Soal siapakah aku berikut: ${selectedSoal.soal}`
+    } else if (endpoint === 'tebaktebakan') {
+        const roomsData = await apiGetData('rooms')
+        const currentRoom = roomsData.rooms[room]
+
+        if (currentRoom && currentRoom.currentQuestion) {
+            return 'Soal sudah diambil. Jawab atau nyerah dulu!'
+        }
+
+        const soalList = await fetchSoalTebakTebakan()
+        if (soalList.length === 0) {
+            return 'Soal tebak tebakan lagi kosong, coba nanti ya!'
+        }
+
+        const randomIndex = Math.floor(Math.random() * soalList.length)
+        const selectedSoal = soalList[randomIndex]
+
+        if (!roomsData.rooms[room]) {
+            roomsData.rooms[room] = { currentQuestion: null }
+        }
+        roomsData.rooms[room].currentQuestion = { ...selectedSoal, gameType: 'tebaktebakan', answered: false, attempts: 0, timestamp: Date.now() }
+        await apiWriteData('rooms', roomsData)
+
+        return `Soal tebak tebakan berikut: ${selectedSoal.soal}`
 
     } else if (endpoint === 'jawab') {
         const usersData = await apiGetData('users')
@@ -146,11 +204,54 @@ async function gameLogic(endpoint, params, query, m, client) {
             if (attempts >= 3) {
                 roomsData.rooms[room].currentQuestion = null
                 await apiWriteData('rooms', roomsData)
-                return `Jawaban salah 3 kali. Soal dihapus. Point -2. Silakan ambil soal baru.`
+                return `Jawaban salah 3 kali. Soal dihapus. Point -2. Silakan ambil soal baru. Jawaban yang benar adalah: ${currentRoom.currentQuestion.jawaban}`
             } else {
                 return `Jawaban Salah! Point -2. Kesempatan menjawab tersisa ${3 - attempts} kali lagi.`
             }
         }
+    } else if (endpoint === 'hint') {
+        const usersData = await apiGetData('users')
+        const roomsData = await apiGetData('rooms')
+        const currentRoom = roomsData.rooms[room]
+
+        if (!currentRoom || !currentRoom.currentQuestion) {
+            return 'Ambil soal dulu sebelum minta hint!'
+        }
+
+        if (currentRoom.currentQuestion.answered) {
+            return 'Soal sudah dijawab atau timeout, tidak bisa minta hint lagi.'
+        }
+
+        const jawaban = currentRoom.currentQuestion.jawaban;
+        let hintText = '';
+        let pointCost = 0;
+        let hintPercentage = 0;
+
+        if (hintType === 'murah') {
+            hintPercentage = 0.3;
+            pointCost = 0; // Gratis
+        } else if (hintType === 'mahal') {
+            hintPercentage = 0.5;
+            pointCost = 1;
+        } else if (hintType === 'sultan') {
+            hintPercentage = 0.8;
+            pointCost = 2;
+        } else {
+            return 'Tipe hint tidak valid. Pilih: murah, mahal, sultan';
+        }
+
+        if (pointCost > 0) {
+            if (!usersData.users[user] || (usersData.users[user].points || 0) < pointCost) {
+                return `Poin tidak cukup untuk hint ${hintType}. Butuh ${pointCost} poin. Poin kamu: ${usersData.users[user] ? usersData.users[user].points : 0}`;
+            }
+            usersData.users[user].points -= pointCost;
+            await apiWriteData('users', usersData);
+        }
+
+        hintText = generateHint(jawaban, hintPercentage);
+        return `Hint ${hintType} (${pointCost > 0 ? `-${pointCost} poin` : 'gratis'}):\nJawaban: ${hintText}`;
+
+
     } else if (endpoint === 'point') {
         const usersData = await apiGetData('users')
         const userPoints = usersData.users[user] ? usersData.users[user].points : 0
@@ -196,9 +297,10 @@ async function gameLogic(endpoint, params, query, m, client) {
             return 'Tidak ada soal yang bisa diserahin!'
         }
 
+        const jawabanBenar = currentRoom.currentQuestion.jawaban;
         roomsData.rooms[room].currentQuestion = null
         await apiWriteData('rooms', roomsData)
-        return 'Yah nyerah? Cupu!'
+        return `Yah nyerah? Cupu! Jawaban yang benar adalah: ${jawabanBenar}`
     } else {
         return 'Endpoint tidak dikenal'
     }
