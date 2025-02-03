@@ -9,60 +9,15 @@ const GEMMA_MODEL_NAME = global.model_groq;
 const API_KEY = global.apikey;
 const API_KEY_2 = global.apikey2;
 const model_gemini = global.model_gemini;
-const BASE_URL = "https://copper-ambiguous-velvet.glitch.me";
 
 const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.8, top_p: 0.9 };
 
 const genAI = new GoogleGenerativeAI(API_KEY_2);
 const userData = {};
-const SYNC_INTERVAL = 30 * 60 * 1000;
-const USER_AGENT = "Mozilla/5.0 (Linux; Android 10; RMX2185 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.260 Mobile Safari/537.36";
-const API_DELAY = 0;
-
-const delay = (ms) => new Promise(res => setTimeout(res, ms));
-
-const apiRequest = async (url, options = {}) => {
-    await delay(API_DELAY);
-    return axios({
-        url,
-        ...options,
-        headers: {
-            ...options.headers,
-            'User-Agent': USER_AGENT
-        }
-    });
-};
-
-const syncUserData = async (user) => {
-  if (!userData[user]) {
-        const modelConfig = await apiRequest(`${BASE_URL}/model/${user}`).then(res => res.data);
-        const history = await apiRequest(`${BASE_URL}/history/${user}`).then(res => res.data.history);
-
-    userData[user] = {
-        first: true,
-        date: Date.now(),
-        settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
-        history: history || []
-      };
-    return;
-  }
-
-  if (userData[user].first) {
-        const modelConfig = await apiRequest(`${BASE_URL}/model/${user}`).then(res => res.data);
-        const history = await apiRequest(`${BASE_URL}/history/${user}`).then(res => res.data.history);
-
-    userData[user] = {
-        first: false,
-        date: Date.now(),
-        settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
-        history: history || []
-      };
-  }
-};
 
 const manageTokenCount = (history) => {
   let totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
-  while (totalTokens > 2100 && history.length > 1) {
+  while (totalTokens > 1536 && history.length > 1) {
     history.shift();
     totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
   }
@@ -70,7 +25,12 @@ const manageTokenCount = (history) => {
 };
 
 const processTextQuery = async (text, user) => {
-  await syncUserData(user);
+  if (!userData[user]) {
+    userData[user] = {
+      settings: { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
+      history: []
+    };
+  }
 
   let modelConfig = userData[user].settings;
 
@@ -88,8 +48,8 @@ const processTextQuery = async (text, user) => {
 
   const messages = [
     { role: "system", content: systemPrompt },
-    {role: "user", content: "Jangan pernah kirim musik kecuali saya yang minta. Kalau saya minta cari atau putar musik, kasih aja format teksnya yang sesuai."},
-    { role: "assistant", content: "baik, aku akan mencoba." }
+    {role: "user", content: "Jangan pernah kirim musik kecuali saya yang minta. Kalau saya minta cari atau putar musik, kasih aja format teksnya yang sesuai. Ingat, jawabnya cuma satu paragraf dan maksimal 200 kata ya."},
+    { role: "assistant", content: "Hmph, terserah. Aku bakal ingat itu! Tapi kalau kamu butuh musik, bilang aja ya. Aku bisa cariin kok. Nggak perlu ngomel-ngomel." }
   ];
 
   if (modelConfig.persona) {
@@ -110,11 +70,10 @@ const processTextQuery = async (text, user) => {
     );
 
     responseText = response.data.choices[0].message.content;
-    const completionTokens = response.data.usage.completion_tokens;
     updatedHistory.push({ role: "assistant", content: responseText });
     userData[user].history = updatedHistory;
 
-    modelConfig.lastTokenCount += completionTokens;
+    modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
     modelConfig.lastAPI = "main";
     userData[user].settings = modelConfig
 
@@ -138,11 +97,10 @@ const processTextQuery = async (text, user) => {
         );
 
         responseText = response.data.choices[0].message.content;
-         const completionTokens = response.data.usage.completion_tokens;
         updatedHistory.push({ role: "assistant", content: responseText });
          userData[user].history = updatedHistory;
 
-       modelConfig.lastTokenCount += completionTokens;
+        modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
         modelConfig.lastAPI = "alternative";
         userData[user].settings = modelConfig
 
@@ -158,26 +116,18 @@ const processTextQuery = async (text, user) => {
     return `API 1: ${error.message}`;
   }
 
-    if (Date.now() - userData[user].date >= SYNC_INTERVAL) {
-    await apiRequest(`${BASE_URL}/model/${user}`, { method: 'post', data: { config: userData[user].settings } });
-    await apiRequest(`${BASE_URL}/history/${user}`, { method: 'post', data: { history: userData[user].history } });
-
-      const modelConfig = await apiRequest(`${BASE_URL}/model/${user}`).then(res => res.data);
-        const history = await apiRequest(`${BASE_URL}/history/${user}`).then(res => res.data.history);
-
-        userData[user] = {
-            first: true,
-            date: Date.now(),
-           settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
-           history: history || []
-      };
-  }
 
   return responseText;
 };
 
 const handleTextQuery = async (text, user) => {
-  await syncUserData(user)
+  if (!userData[user]) {
+    userData[user] = {
+      settings: { isPremium: false, systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "" },
+      history: []
+    };
+  }
+
   if (text.toLowerCase() === "reset") {
       userData[user].settings.persona = "";
      userData[user].settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
@@ -202,7 +152,10 @@ const handleTextQuery = async (text, user) => {
     if (user.includes(adminNumber)) {
       const targetUser = text.replace("setprem:", "").trim();
      if(!userData[targetUser]) {
-         await syncUserData(targetUser)
+        userData[targetUser] = {
+          settings: { isPremium: false, systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "" },
+          history: []
+        };
      }
       userData[targetUser].settings.isPremium = true;
       return `${targetUser} sekarang adalah pengguna premium.`;
@@ -218,43 +171,33 @@ const handleTextQuery = async (text, user) => {
 };
 
 const handleImageQuery = async (url, text, user) => {
-  await syncUserData(user);
-    try {
-        const responseSettings = { temperature: 0.6, top_p: 0.8 };
-        let history = userData[user].history;
-        const response = await axios.get(url, { responseType: "arraybuffer" });
-        const imageData = Buffer.from(response.data).toString("base64");
-        const prompt = [
-            ...history.map(item => `**${item.role === "assistant" ? "Gemini" : "User"}**: ${item.content}`),
-            `**User**: ${text}`,
-            { inlineData: { data: imageData, mimeType: "image/png" } },
-        ];
-        const model = genAI.getGenerativeModel({ model: model_gemini });
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
-        history.push({ role: "user", content: text });
-        history.push({ role: "assistant", content: responseText });
-        userData[user].history = history
+  if (!userData[user]) {
+    userData[user] = {
+      settings: { isPremium: false },
+      history: []
+    };
+  }
 
-            if (Date.now() - userData[user].date >= SYNC_INTERVAL) {
-        await apiRequest(`${BASE_URL}/model/${user}`, { method: 'post', data: { config: userData[user].settings } });
-        await apiRequest(`${BASE_URL}/history/${user}`, { method: 'post', data: { history: userData[user].history } });
+  if (!userData[user].settings.isPremium) {
+    return "Anda harus premium untuk menggunakan fitur ini.";
+  }
+  const responseSettings = { temperature: 0.6, top_p: 0.8 };
+  let history = userData[user].history;
+  const response = await axios.get(url, { responseType: "arraybuffer" });
+  const imageData = Buffer.from(response.data).toString("base64");
+  const prompt = [
+    ...history.map(item => `**${item.role === "assistant" ? "Gemini" : "User"}**: ${item.content}`),
+    `**User**: ${text}`,
+    { inlineData: { data: imageData, mimeType: "image/png" } },
+  ];
+  const model = genAI.getGenerativeModel({ model: model_gemini });
+  const result = await model.generateContent(prompt);
+  const responseText = result.response.text();
+  history.push({ role: "user", content: text });
+  history.push({ role: "assistant", content: responseText });
+  userData[user].history = history
 
-            const modelConfig = await apiRequest(`${BASE_URL}/model/${user}`).then(res => res.data);
-            const history = await apiRequest(`${BASE_URL}/history/${user}`).then(res => res.data.history);
-
-            userData[user] = {
-                first: true,
-                date: Date.now(),
-            settings: modelConfig || { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
-            history: history || []
-            };
-        }
-
-        return responseText;
-    } catch (error) {
-        return `Error processing image: ${error.message}`;
-    }
+  return responseText;
 };
 
 module.exports = {
