@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { global } = require('../config.js');
 
 const searchApiUrl = (query) => `https://api.agatz.xyz/api/ytsearch?message=${encodeURIComponent(query)}`;
 
@@ -9,7 +10,7 @@ async function downloadAudio(videoId) {
             {
                 headers: {
                     'x-rapidapi-host': 'youtube-mp36.p.rapidapi.com',
-                    'x-rapidapi-key': '222ac7fb8bmsh0cb23acb6003932p1bfcadjsne797ba726a04'
+                    'x-rapidapi-key': global.rapidapikey
                 }
             }
         );

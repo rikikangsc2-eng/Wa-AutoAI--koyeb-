@@ -1,206 +1,199 @@
 const axios = require('axios');
 const fs = require('fs');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { global } = require('../config.js');
 
 const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const ALTERNATIVE_API_URL = "https://express-vercel-ytdl.vercel.app/llm";
 const GEMMA_MODEL_NAME = global.model_groq;
 const API_KEY = global.apikey;
-const API_KEY_2 = global.apikey2;
-const model_gemini = global.model_gemini;
+const RAPID_API_KEY = global.rapidapikey; 
+const RAPID_API_HOST = "chatgpt-vision1.p.rapidapi.com";
+const RAPID_API_URL = "https://chatgpt-vision1.p.rapidapi.com/matagvision21";
 
 const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.8, top_p: 0.9 };
 
-const genAI = new GoogleGenerativeAI(API_KEY_2);
 const userData = {};
 
 const manageTokenCount = (history) => {
-  let totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
-  while (totalTokens > 3000 && history.length > 1) {
-    history.shift();
-    totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
-  }
-  return history;
+    let totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
+    while (totalTokens > 3000 && history.length > 1) {
+        history.shift();
+        totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
+    }
+    return history;
 };
 
 const processTextQuery = async (text, user) => {
-  if (!userData[user]) {
-    userData[user] = {
-      settings: { lastTokenCount: 0, systemPrompt: "", isPremium: false, persona: "", lastAPI: "main" },
-      history: []
-    };
-  }
+    if (!userData[user]) {
+        userData[user] = {
+            settings: { lastTokenCount: 0, systemPrompt: "", persona: "", lastAPI: "main" },
+            history: []
+        };
+    }
 
-  let modelConfig = userData[user].settings;
+    let modelConfig = userData[user].settings;
 
-  if (!modelConfig.isPremium && modelConfig.systemPrompt !== fs.readFileSync('./prompt.txt', 'utf8')) {
-    modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
-  }
+    if (modelConfig.systemPrompt !== fs.readFileSync('./prompt.txt', 'utf8')) {
+        modelConfig.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
+    }
 
-  const generationConfig = { ...DEFAULT_GENERATION_CONFIG };
-  let history = userData[user].history;
+    const generationConfig = { ...DEFAULT_GENERATION_CONFIG };
+    let history = userData[user].history;
 
-  history.push({ role: "user", content: text });
-  const updatedHistory = manageTokenCount(history);
+    history.push({ role: "user", content: text });
+    const updatedHistory = manageTokenCount(history);
 
-  const systemPrompt = modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8');
+    const systemPrompt = modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8');
 
-  const messages = [
-    { role: "system", content: systemPrompt },
-    {role: "user", content: "Jangan pernah kirim musik kecuali saya yang minta. Kalau saya minta cari atau putar musik, kasih aja format teksnya yang sesuai. Ingat, jawabnya cuma satu paragraf dan maksimal 200 kata ya."},
-    { role: "assistant", content: "Hmph, terserah. Aku bakal ingat itu! Tapi kalau kamu butuh musik, bilang aja ya. Aku bisa cariin kok. Nggak perlu ngomel-ngomel." }
-  ];
+    const messages = [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: "Jangan pernah kirim musik kecuali saya yang minta. Kalau saya minta cari atau putar musik, kasih aja format teksnya yang sesuai." },
+        { role: "assistant", content: "baik aku mengerti tidak akan mencari musik kecuali anda meminta" }
+    ];
 
-  if (modelConfig.persona) {
-    messages.push(
-      { role: "user", content: `${modelConfig.persona}` },
-      { role: "assistant", content: "Okee yaa aku ingat!" }
-    );
-  }
+    if (modelConfig.persona) {
+        messages.push(
+            { role: "user", content: `${modelConfig.persona}` },
+            { role: "assistant", content: "Okee yaa aku ingat!" }
+        );
+    }
 
-  messages.push(...updatedHistory);
+    messages.push(...updatedHistory);
 
-  let responseText;
-  try {
-    const response = await axios.post(
-      GEMMA_API_URL,
-      { model: GEMMA_MODEL_NAME, messages, ...generationConfig },
-      { headers: { Authorization: `Bearer ${API_KEY}` } }
-    );
-
-    responseText = response.data.choices[0].message.content;
-    updatedHistory.push({ role: "assistant", content: responseText });
-    userData[user].history = updatedHistory;
-
-    modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
-    modelConfig.lastAPI = "main";
-    userData[user].settings = modelConfig
-
-  } catch (error) {
-    if (error.response && error.response.status === 429) {
-      try {
+    let responseText;
+    try {
         const response = await axios.post(
-          ALTERNATIVE_API_URL,
-          {
-            model: GEMMA_MODEL_NAME,
-            messages,
-            temperature: generationConfig.temperature,
-            max_tokens: generationConfig.max_tokens,
-            top_p: generationConfig.top_p,
-            stream: generationConfig.stream,
-            stop: generationConfig.stop
-          },
-          {
-            headers: { 'Content-Type': 'application/json' }
-          }
+            GEMMA_API_URL,
+            { model: GEMMA_MODEL_NAME, messages, ...generationConfig },
+            { headers: { Authorization: `Bearer ${API_KEY}` } }
         );
 
         responseText = response.data.choices[0].message.content;
         updatedHistory.push({ role: "assistant", content: responseText });
-         userData[user].history = updatedHistory;
+        userData[user].history = updatedHistory;
 
         modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
-        modelConfig.lastAPI = "alternative";
+        modelConfig.lastAPI = "main";
         userData[user].settings = modelConfig
 
-      } catch (altError) {
-        if (altError.response && altError.response.status === 400) {
-          return "API 2 mengembalikan error 400. Mohon periksa payload.";
-        } else if (altError.response && altError.response.status === 429) {
-          return "API 2 juga mengalami batasan permintaan.";
+    } catch (error) {
+        if (error.response && error.response.status === 429) {
+            try {
+                const response = await axios.post(
+                    ALTERNATIVE_API_URL,
+                    {
+                        model: GEMMA_MODEL_NAME,
+                        messages,
+                        temperature: generationConfig.temperature,
+                        max_tokens: generationConfig.max_tokens,
+                        top_p: generationConfig.top_p,
+                        stream: generationConfig.stream,
+                        stop: generationConfig.stop
+                    },
+                    {
+                        headers: { 'Content-Type': 'application/json' }
+                    }
+                );
+
+                responseText = response.data.choices[0].message.content;
+                updatedHistory.push({ role: "assistant", content: responseText });
+                userData[user].history = updatedHistory;
+
+                modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
+                modelConfig.lastAPI = "alternative";
+                userData[user].settings = modelConfig
+
+            } catch (altError) {
+                if (altError.response && altError.response.status === 400) {
+                    return "API 2 mengembalikan error 400. Mohon periksa payload.";
+                } else if (altError.response && altError.response.status === 429) {
+                    return "API 2 juga mengalami batasan permintaan.";
+                }
+                return `API 2: ${altError.message}`;
+            }
         }
-        return `API 2: ${altError.message}`;
-      }
+        return `API 1: ${error.message}`;
     }
-    return `API 1: ${error.message}`;
-  }
 
 
-  return responseText;
+    return responseText;
 };
 
 const handleTextQuery = async (text, user) => {
-  if (!userData[user]) {
-    userData[user] = {
-      settings: { isPremium: false, systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "" },
-      history: []
-    };
-  }
-
-  if (text.toLowerCase() === "reset") {
-      userData[user].settings.persona = "";
-     userData[user].settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
-    userData[user].history = [];
-    return "Riwayat percakapan, preferensi, dan persona telah direset.";
-  }
-  if (text.toLowerCase().startsWith("persona:")) {
-    const persona = text.replace("persona:", "").trim();
-    userData[user].settings.persona = persona;
-    return `Persona telah diatur: "${persona}"`;
-  }
-  if (text.toLowerCase().startsWith("setprompt:")) {
-      if (!userData[user].settings.isPremium) {
-      return "Anda harus premium, beli di *.owner* hanya 5k kok";
-    }
-    userData[user].settings.systemPrompt = text.replace("setprompt:", "").trim();
-    userData[user].history = [];
-    return "Prompt telah diubah dan riwayat telah dihapus.";
-  }
-  if (text.toLowerCase().startsWith("setprem:")) {
-    const adminNumber = global.owner;
-    if (user.includes(adminNumber)) {
-      const targetUser = text.replace("setprem:", "").trim();
-     if(!userData[targetUser]) {
-        userData[targetUser] = {
-          settings: { isPremium: false, systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "" },
-          history: []
+    if (!userData[user]) {
+        userData[user] = {
+            settings: { systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "" },
+            history: []
         };
-     }
-      userData[targetUser].settings.isPremium = true;
-      return `${targetUser} sekarang adalah pengguna premium.`;
-    } else {
-      return "Anda tidak memiliki izin untuk mengubah pengguna menjadi premium.";
     }
-  }
+
+    if (text.toLowerCase() === "reset") {
+        userData[user].settings.persona = "";
+        userData[user].settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
+        userData[user].history = [];
+        return "Riwayat percakapan, preferensi, dan persona telah direset.";
+    }
+    if (text.toLowerCase().startsWith("persona:")) {
+        const persona = text.replace("persona:", "").trim();
+        userData[user].settings.persona = persona;
+        return `Persona telah diatur: "${persona}"`;
+    }
+   
     if (text.toLowerCase() === "resetprompt") {
-    userData[user].settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
-    return "Prompt telah direset.";
-  }
-  return processTextQuery(text, user);
+        userData[user].settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
+        return "Prompt telah direset.";
+    }
+    return processTextQuery(text, user);
 };
 
 const handleImageQuery = async (url, text, user) => {
-  if (!userData[user]) {
-    userData[user] = {
-      settings: { isPremium: false },
-      history: []
-    };
-  }
+      if (!userData[user]) {
+        userData[user] = {
+            settings: { systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "" },
+            history: []
+        };
+    }
 
-  if (!userData[user].settings.isPremium) {
-    return "Anda harus premium untuk menggunakan fitur ini.";
-  }
-  const responseSettings = { temperature: 0.6, top_p: 0.8 };
-  let history = userData[user].history;
-  const response = await axios.get(url, { responseType: "arraybuffer" });
-  const imageData = Buffer.from(response.data).toString("base64");
-  const prompt = [
-    ...history.map(item => `**${item.role === "assistant" ? "Gemini" : "User"}**: ${item.content}`),
-    `**User**: ${text}`,
-    { inlineData: { data: imageData, mimeType: "image/png" } },
-  ];
-  const model = genAI.getGenerativeModel({ model: model_gemini });
-  const result = await model.generateContent(prompt);
-  const responseText = result.response.text();
-  history.push({ role: "user", content: text });
-  history.push({ role: "assistant", content: responseText });
-  userData[user].history = history
+    try {
+        const payload = {
+            messages: [
+                {
+                    role: "user",
+                    content: [
+                        { type: "text", text: text },
+                        { type: "image", url: url }
+                    ]
+                }
+            ],
+            web_access: true
+        };
 
-  return responseText;
+        const response = await axios.post(RAPID_API_URL, payload, {
+            headers: {
+                'Content-Type': 'application/json',
+                'x-rapidapi-ua': 'RapidAPI-Playground',
+                'x-rapidapi-key': RAPID_API_KEY,
+                'x-rapidapi-host': RAPID_API_HOST,
+            }
+        });
+
+        const responseText = response.data.result;
+
+        // Save to history
+         let history = userData[user].history;
+         history.push({ role: "user", content: `Gambar: ${url} , Pertanyaan: ${text}` });
+         history.push({ role: "assistant", content: responseText });
+         userData[user].history = history;
+
+        return responseText;
+
+    } catch (error) {
+        console.error("Error in handleImageQuery:", error);
+        return `Error processing image query: ${error.message}`;
+    }
 };
 
 module.exports = {
-  handleTextQuery,
-  handleImageQuery,
+    handleTextQuery,
+    handleImageQuery,
 };
