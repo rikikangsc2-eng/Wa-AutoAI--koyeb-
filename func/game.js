@@ -60,6 +60,16 @@ const fetchSoalTebakTebakan = async () => {
     }
 }
 
+const fetchSoalTebakGambar = async () => {
+    try {
+        const response = await axios.get('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebakgambar.json')
+        return response.data
+    } catch (error) {
+        console.error("Failed to fetch soal tebak gambar:", error)
+        return []
+    }
+}
+
 function generateHint(answer, percentage) {
     const answerArray = answer.toLowerCase().split('');
     const visibleIndices = [];
@@ -92,54 +102,51 @@ async function gameLogic(endpoint, params, query, m, client) {
     const { user, room } = params || {}
     const { text, hintType } = query || {}
 
+    const ambilSoal = async (soalFetcher, gameType, soalMessage) => {
+        const roomsData = await apiGetData('rooms')
+        const currentRoom = roomsData.rooms[room]
+
+        if (currentRoom && currentRoom.currentQuestion) {
+            return 'Soal sudah diambil. Jawab atau nyerah dulu!'
+        }
+
+        const soalList = await soalFetcher()
+        if (soalList.length === 0) {
+            return `Soal ${gameType} lagi kosong, coba nanti ya!`
+        }
+
+        const randomIndex = Math.floor(Math.random() * soalList.length)
+        const selectedSoal = soalList[randomIndex]
+
+        if (!roomsData.rooms[room]) {
+            roomsData.rooms[room] = { currentQuestion: null }
+        }
+        roomsData.rooms[room].currentQuestion = { ...selectedSoal, gameType: gameType, answered: false, attempts: 0, timestamp: Date.now() }
+        await apiWriteData('rooms', roomsData)
+
+        return soalMessage(selectedSoal)
+    }
+
+
     if (endpoint === 'susunkata') {
-        const roomsData = await apiGetData('rooms')
-        const currentRoom = roomsData.rooms[room]
-
-        if (currentRoom && currentRoom.currentQuestion) {
-            return 'Soal sudah diambil. Jawab atau nyerah dulu!'
-        }
-
-        const soalList = await fetchSoalSusunKata()
-        if (soalList.length === 0) {
-            return 'Soal susun kata lagi kosong, coba nanti ya!'
-        }
-
-        const randomIndex = Math.floor(Math.random() * soalList.length)
-        const selectedSoal = soalList[randomIndex]
-
-        if (!roomsData.rooms[room]) {
-            roomsData.rooms[room] = { currentQuestion: null }
-        }
-        roomsData.rooms[room].currentQuestion = { ...selectedSoal, gameType: 'susunkata', answered: false, attempts: 0, timestamp: Date.now() }
-        await apiWriteData('rooms', roomsData)
-
-        return `Soal susun kata berikut: ${selectedSoal.soal} - Tipe: ${selectedSoal.tipe}`
-
+        return await ambilSoal(
+            fetchSoalSusunKata,
+            'susunkata',
+            (soal) => `Soal susun kata berikut: ${soal.soal} - Tipe: ${soal.tipe}`
+        )
     } else if (endpoint === 'siapakahaku') {
-        const roomsData = await apiGetData('rooms')
-        const currentRoom = roomsData.rooms[room]
-
-        if (currentRoom && currentRoom.currentQuestion) {
-            return 'Soal sudah diambil. Jawab atau nyerah dulu!'
-        }
-
-        const soalList = await fetchSoalSiapakahAku()
-        if (soalList.length === 0) {
-            return 'Soal siapakah aku lagi kosong, coba nanti ya!'
-        }
-
-        const randomIndex = Math.floor(Math.random() * soalList.length)
-        const selectedSoal = soalList[randomIndex]
-
-        if (!roomsData.rooms[room]) {
-            roomsData.rooms[room] = { currentQuestion: null }
-        }
-        roomsData.rooms[room].currentQuestion = { ...selectedSoal, gameType: 'siapakahaku', answered: false, attempts: 0, timestamp: Date.now() }
-        await apiWriteData('rooms', roomsData)
-
-        return `Soal siapakah aku berikut: ${selectedSoal.soal}`
+        return await ambilSoal(
+            fetchSoalSiapakahAku,
+            'siapakahaku',
+            (soal) => `Soal siapakah aku berikut: ${soal.soal}`
+        )
     } else if (endpoint === 'tebaktebakan') {
+        return await ambilSoal(
+            fetchSoalTebakTebakan,
+            'tebaktebakan',
+            (soal) => `Soal tebak tebakan berikut: ${soal.soal}`
+        )
+    } else if (endpoint === 'tebakgambar') {
         const roomsData = await apiGetData('rooms')
         const currentRoom = roomsData.rooms[room]
 
@@ -147,9 +154,9 @@ async function gameLogic(endpoint, params, query, m, client) {
             return 'Soal sudah diambil. Jawab atau nyerah dulu!'
         }
 
-        const soalList = await fetchSoalTebakTebakan()
+        const soalList = await fetchSoalTebakGambar()
         if (soalList.length === 0) {
-            return 'Soal tebak tebakan lagi kosong, coba nanti ya!'
+            return 'Soal tebak gambar lagi kosong, coba nanti ya!'
         }
 
         const randomIndex = Math.floor(Math.random() * soalList.length)
@@ -158,10 +165,14 @@ async function gameLogic(endpoint, params, query, m, client) {
         if (!roomsData.rooms[room]) {
             roomsData.rooms[room] = { currentQuestion: null }
         }
-        roomsData.rooms[room].currentQuestion = { ...selectedSoal, gameType: 'tebaktebakan', answered: false, attempts: 0, timestamp: Date.now() }
+        roomsData.rooms[room].currentQuestion = { ...selectedSoal, gameType: 'tebakgambar', answered: false, attempts: 0, timestamp: Date.now() }
         await apiWriteData('rooms', roomsData)
 
-        return `Soal tebak tebakan berikut: ${selectedSoal.soal}`
+        client.sendMessage(m.chat, {
+            image: { url: selectedSoal.img },
+            caption: 'AliciaGames'
+        },{quoted:m})
+        return null
 
     } else if (endpoint === 'jawab') {
         const usersData = await apiGetData('users')
@@ -196,17 +207,19 @@ async function gameLogic(endpoint, params, query, m, client) {
             currentRoom.currentQuestion.attempts = attempts
             await apiWriteData('rooms', roomsData)
 
-            if (usersData.users[user]) {
-                usersData.users[user].points = Math.max((usersData.users[user].points || 0) - 2, 0)
-                await apiWriteData('users', usersData)
-            }
-
             if (attempts >= 3) {
                 roomsData.rooms[room].currentQuestion = null
                 await apiWriteData('rooms', roomsData)
-                return `Jawaban salah 3 kali. Soal dihapus. Point -2. Silakan ambil soal baru. Jawaban yang benar adalah: ${currentRoom.currentQuestion.jawaban}`
+
+                if (!usersData.users[user]) {
+                    usersData.users[user] = { points: 0 }
+                }
+                usersData.users[user].points = Math.max((usersData.users[user].points || 0) - 3, 0)
+                await apiWriteData('users', usersData)
+
+                return `Jawaban salah 3 kali. Soal dihapus. Point -3. Silakan ambil soal baru. Jawaban yang benar adalah: ${currentRoom.currentQuestion.jawaban}`
             } else {
-                return `Jawaban Salah! Point -2. Kesempatan menjawab tersisa ${3 - attempts} kali lagi.`
+                return `Jawaban Salah! Kesempatan menjawab tersisa ${3 - attempts} kali lagi.`
             }
         }
     } else if (endpoint === 'hint') {
@@ -265,6 +278,8 @@ async function gameLogic(endpoint, params, query, m, client) {
 
         let topUsersFormatted = 'Top 10 Poin Tertinggi\n\n'
         let mentions = []
+        let positionMessage = '';
+
         if (sortedUsers.length > 0) {
             topUsersFormatted += '```\n'
             topUsersFormatted += 'No.  Username        Points\n'
@@ -275,22 +290,37 @@ async function gameLogic(endpoint, params, query, m, client) {
                 const points = String(data.points).padEnd(6)
                 topUsersFormatted += `${rank}  ${username} ${points}\n`
                 mentions.push(`${userName}@s.whatsapp.net`)
+
+                if (userName === user) {
+                    if (index === 0) {
+                        positionMessage = "wahh hebat banget ada di peringkat pertama 😁";
+                    } else if (index <= 2) {
+                        positionMessage = `Selamat! Kamu berada di peringkat ${index + 1} besar!`;
+                    } else if (index >= sortedUsers.length - 2) {
+                        positionMessage = `Lumayan lah ya, peringkat ${index + 1}.`;
+                    } else {
+                        positionMessage = `Kamu di peringkat ${index + 1}, biasa aja sih.`;
+                    }
+                }
             })
             topUsersFormatted += '```'
         } else {
             topUsersFormatted += 'Belum ada pemain yang memiliki poin.'
+            positionMessage = 'Ayo main biar ada poinnya!';
         }
 
         client.sendMessage(
             m.chat,
             {
-                text: topUsersFormatted,
+                text: topUsersFormatted + '\n' + positionMessage,
                 mentions: mentions
-            }
+            }, {qouted:m}
         )
         return null
+
     } else if (endpoint === 'nyerah') {
         const roomsData = await apiGetData('rooms')
+        const usersData = await apiGetData('users')
         const currentRoom = roomsData.rooms[room]
 
         if (!currentRoom || !currentRoom.currentQuestion) {
@@ -300,7 +330,14 @@ async function gameLogic(endpoint, params, query, m, client) {
         const jawabanBenar = currentRoom.currentQuestion.jawaban;
         roomsData.rooms[room].currentQuestion = null
         await apiWriteData('rooms', roomsData)
-        return `Yah nyerah? Cupu! Jawaban yang benar adalah: ${jawabanBenar}`
+
+        if (!usersData.users[user]) {
+            usersData.users[user] = { points: 0 }
+        }
+        usersData.users[user].points = Math.max((usersData.users[user].points || 0) - 3, 0)
+        await apiWriteData('users', usersData)
+
+        return `Yah nyerah? Cupu! Jawaban yang benar adalah: ${jawabanBenar}. Point -3.`
     } else {
         return 'Endpoint tidak dikenal'
     }

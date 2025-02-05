@@ -236,6 +236,11 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
   
     if (cekCmd(m.body)) {
       switch (command) {
+      case "tebakgambar": {
+          const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
+          await game.gameLogic(command, params, null, m, client);
+          break;
+        }
         case "hint": {
           const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
           const query = { hintType: msg };
