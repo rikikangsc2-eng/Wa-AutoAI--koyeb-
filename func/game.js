@@ -170,8 +170,7 @@ async function gameLogic(endpoint, params, query, m, client) {
 
         client.sendMessage(m.chat, {
             image: { url: selectedSoal.img },
-            caption: 'AliciaGames'
-        },{quoted:m})
+            caption: 'AliciaGames',mimetype:"image/jpeg"},{quoted:m})
         return null
 
     } else if (endpoint === 'jawab') {
