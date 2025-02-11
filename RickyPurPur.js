@@ -137,78 +137,69 @@ const bug = async (err) => {
 const user = `${m.sender.split("@")[0]}@V1.0.18`
 
     const autoAI = async () => {
-        try {
-            if (gambar[m.sender]) {
-                await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
-                mkey[m.sender] = null;
-                await m.reply("*Memproses Gambar...*");
-            }
-
-            const hasil = gambar[m.sender]
-                ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
-                : await ai.handleTextQuery(m.body, user);
-
-            let cleanedText = hasil.trim();
-
-            if (cleanedText.startsWith("<think>")) {
-                cleanedText = cleanedText.substring(cleanedText.indexOf("</think>") + 7).trim();
-            }
-
-            const remainingText = cleanedText
-                .replace(/\*\*(.*?)\*\*/g, '*$1*')
-                .replace(/```(.*?)```/g, '`$1`');
-
-            const parts = remainingText.split(/(\*\*[^\*]+\*\*|\[song.*?\]|\[Song.*?\]|\[song =.*?\]|\[Song =.*?\]|\[vn.*?\]|\[Vn.*?\]|\[vn =.*?\]|\[Vn =.*?\])/);
-            const mediaQueue = [];
-            const textQueue = [];
-            let currentText = '';
-
-            for (let i = 0; i < parts.length; i++) {
-                if (parts[i].toLowerCase().startsWith("[song=") || parts[i].toLowerCase().startsWith("[song =")) {
-                    const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
-                    m.reply("`Alicia sedang mencari lagu; " + query + ". Tunggu ya...`");
-                    await play.get(m, client, query);
-                } else if (parts[i].toLowerCase().startsWith("[vn=") || parts[i].toLowerCase().startsWith("[vn =")) {
-                    const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
-                    try {
-                        const response = await axios.get(`https://api.agatz.xyz/api/voiceover?text=${encodeURIComponent(query)}&model=miku`);
-                        const audioUrl = response.data.data.oss_url;
-                        await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg", ptt: true }, { quoted: m });
-                    } catch (e) {
-                        try {
-                            const fallbackResponse = await axios.get(`https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(query)}`, { responseType: "arraybuffer" });
-                            await client.sendMessage(m.chat, { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true }, { quoted: m });
-                        } catch (e) {
-                            m.reply("Terjadi kesalahan saat memproses teks");
-                        }
-                    }
-                } else {
-                    currentText += `${currentText ? '\n' : ''}${parts[i].trim()}`;
-                }
-            }
-
-            if (currentText.trim()) {
-                textQueue.push(currentText.trim());
-            }
-
-            for (const media of mediaQueue) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                if (media.type === 'image') {
-                    await client.sendMessage(m.chat, { image: media.buffer, caption: media.caption }, { quoted: m });
-                } else if (media.type === 'video') {
-                    await client.sendMessage(m.chat, { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" }, { quoted: m });
-                }
-            }
-
-            for (const text of textQueue) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                await m.reply(text);
-            }
-        } catch (error) {
-            bug(error);
-        } finally {
-            delete gambar[m.sender];
+      try {
+        if (gambar[m.sender]) {
+          await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
+          mkey[m.sender] = null;
+          await m.reply("*Memproses Gambar...*");
         }
+        const hasil = gambar[m.sender]
+          ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
+          : await ai.handleTextQuery(m.body, user);
+        let cleanedText = hasil.trim();
+        if (cleanedText.includes("<think>") && cleanedText.includes("</think>")) {
+          cleanedText = cleanedText.replace(/<think>[\s\S]*?<\/think>/, "").trim();
+        } else {
+          cleanedText = cleanedText.replace("<think>", "").trim();
+        }
+        const remainingText = cleanedText.replace(/\*\*(.*?)\*\*/g, "*$1*").replace(/```(.*?)```/g, "`$1`");
+        const parts = remainingText.split(/(\*\*[^\*]+\*\*|\[song.*?\]|\[Song.*?\]|\[song =.*?\]|\[Song =.*?\]|\[vn.*?\]|\[Vn.*?\]|\[vn =.*?\]|\[Vn =.*?\])/);
+        const mediaQueue = [];
+        const textQueue = [];
+        let currentText = "";
+        for (let i = 0; i < parts.length; i++) {
+          if (parts[i].toLowerCase().startsWith("[song=") || parts[i].toLowerCase().startsWith("[song =")) {
+            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+            m.reply("`Alicia sedang mencari lagu; " + query + ". Tunggu ya...`");
+            await play.get(m, client, query);
+          } else if (parts[i].toLowerCase().startsWith("[vn=") || parts[i].toLowerCase().startsWith("[vn =")) {
+            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+            try {
+              const response = await axios.get(`https://api.agatz.xyz/api/voiceover?text=${encodeURIComponent(query)}&model=miku`);
+              const audioUrl = response.data.data.oss_url;
+              await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg", ptt: true }, { quoted: m });
+            } catch (e) {
+              try {
+                const fallbackResponse = await axios.get(`https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(query)}`, { responseType: "arraybuffer" });
+                await client.sendMessage(m.chat, { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true }, { quoted: m });
+              } catch (e) {
+                m.reply("Terjadi kesalahan saat memproses teks");
+              }
+            }
+          } else {
+            currentText += `${currentText ? "\n" : ""}${parts[i].trim()}`;
+          }
+        }
+        if (currentText.trim()) {
+          textQueue.push(currentText.trim());
+        }
+        for (const media of mediaQueue) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          if (media.type === "image") {
+            await client.sendMessage(m.chat, { image: media.buffer, caption: media.caption }, { quoted: m });
+          } else if (media.type === "video") {
+            await client.sendMessage(m.chat, { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" }, { quoted: m });
+          }
+        }
+        for (const text of textQueue) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await m.reply(text);
+        }
+      } catch (error) {
+        bug(error);
+      } finally {
+        delete gambar[m.sender];
+      }
     };
     
 //Jawab GAME
