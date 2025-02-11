@@ -134,7 +134,7 @@ const bug = async (err) => {
   m.reply("> "+err.message+"\nLapor ke *.owner* biar cepet di perbaiki");
 }
 
-const user = `${m.sender.split("@")[0]}@V1.0.18`
+const user = `${m.sender.split("@")[0]}`
 
     const autoAI = async () => {
       try {
@@ -147,11 +147,6 @@ const user = `${m.sender.split("@")[0]}@V1.0.18`
           ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
           : await ai.handleTextQuery(m.body, user);
         let cleanedText = hasil.trim();
-        if (cleanedText.includes("<think>") && cleanedText.includes("</think>")) {
-          cleanedText = cleanedText.replace(/<think>[\s\S]*?<\/think>/, "").trim();
-        } else {
-          cleanedText = cleanedText.replace("<think>", "").trim();
-        }
         const remainingText = cleanedText.replace(/\*\*(.*?)\*\*/g, "*$1*").replace(/```(.*?)```/g, "`$1`");
         const parts = remainingText.split(/(\*\*[^\*]+\*\*|\[song.*?\]|\[Song.*?\]|\[song =.*?\]|\[Song =.*?\]|\[vn.*?\]|\[Vn.*?\]|\[vn =.*?\]|\[Vn =.*?\])/);
         const mediaQueue = [];

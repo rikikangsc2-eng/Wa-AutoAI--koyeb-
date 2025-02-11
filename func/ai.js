@@ -10,13 +10,13 @@ const RAPID_API_KEY = global.rapidapikey;
 const RAPID_API_HOST = "chatgpt-vision1.p.rapidapi.com";
 const RAPID_API_URL = "https://chatgpt-vision1.p.rapidapi.com/matagvision21";
 
-const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.8, top_p: 0.9 };
+const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.7, top_p: 0.8 };
 
 const userData = {};
 
 const manageTokenCount = (history) => {
     let totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
-    while (totalTokens > 3000 && history.length > 1) {
+    while (totalTokens > 1500 && history.length > 1) {
         history.shift();
         totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
     }
@@ -112,8 +112,13 @@ const processTextQuery = async (text, user) => {
         }
         return `API 1: ${error.message}`;
     }
-
-
+    
+    if (responseText.includes("<think>") && responseText.includes("</think>")) {
+              responseText = responseText.replace(/<think>[\s\S]*?<\/think>/, "").trim();
+        } 
+        else {
+              responseText = responseText.replace("<think>", "").trim();
+        }
     return responseText;
 };
 
