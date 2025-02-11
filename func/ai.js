@@ -47,8 +47,6 @@ const processTextQuery = async (text, user) => {
 
     const messages = [
         { role: "system", content: systemPrompt },
-        { role: "user", content: "Jangan pernah kirim musik kecuali saya yang minta. Kalau saya minta cari atau putar musik, kasih aja format teksnya yang sesuai." },
-        { role: "assistant", content: "baik aku mengerti tidak akan mencari musik kecuali anda meminta" }
     ];
 
     if (modelConfig.persona) {
