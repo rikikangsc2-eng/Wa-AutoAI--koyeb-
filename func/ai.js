@@ -47,6 +47,11 @@ const processTextQuery = async (text, user) => {
 
     const messages = [
         { role: "system", content: systemPrompt },
+        { role: "user", content: `SETTINGS untuk melakukan percakapan bersama alicia:
+- jangan kirim format musik tanpa di minta
+- jangan kirim format musik tanpa tau judulnya
+- kirim format musik walaupun anda gak tau itu judul asli atau palsu, ada atau ngga
+- anda juga boleh kirim vn tanpa di minta tapi jangan terlalu sering menggunakan vn yaa`},
     ];
 
     if (modelConfig.persona) {
