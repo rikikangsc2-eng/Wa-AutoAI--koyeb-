@@ -239,7 +239,10 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
     }
   
     if (cekCmd(m.body)) {
-      switch (command) {
+      switch (command) { 
+      case "ai":{
+        m.reply(ai.riwayat(user))
+      }break;
       case "tebakgambar": {
           const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
           await game.gameLogic(command, params, null, m, client);
