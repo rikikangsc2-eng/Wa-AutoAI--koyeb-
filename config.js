@@ -13,7 +13,7 @@ rapidapikey: "222ac7fb8bmsh0cb23acb6003932p1bfcadjsne797ba726a04",
 
 /*Menu List*/
 downloader:["lirik", "tiktok", "ig", "play", "videy",'ytmp4'],
-menuAI:["persona","bawaan", "reset", "set", "think"],
+menuAI:["persona","bawaan", "reset", "set", "think","riwayat"],
 anime:["jadwal", "populer", "random","search"],
 tools:["hd","tourl", "img", "gempa", "tts"],
 fun:["susunkata","siapakahaku","point","top","nyerah","hint","tebaktebakan","tebakgambar"],

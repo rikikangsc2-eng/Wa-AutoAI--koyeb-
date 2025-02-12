@@ -240,7 +240,7 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
   
     if (cekCmd(m.body)) {
       switch (command) { 
-      case "ai":{
+      case "riwayat":{
         m.reply(ai.riwayat(user))
       }break;
       case "tebakgambar": {
