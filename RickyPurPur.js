@@ -160,16 +160,10 @@ const user = `${m.sender.split("@")[0]}`
           } else if (parts[i].toLowerCase().startsWith("[vn=") || parts[i].toLowerCase().startsWith("[vn =")) {
             const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
             try {
-              const response = await axios.get(`https://api.agatz.xyz/api/voiceover?text=${encodeURIComponent(query)}&model=miku`);
-              const audioUrl = response.data.data.oss_url;
-              await client.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: "audio/mpeg", ptt: true }, { quoted: m });
+              const response = await axios.get(`https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(query)}`, { responseType: "arraybuffer" });
+              await client.sendMessage(m.chat, { audio: Buffer.from(response.data), mimetype: "audio/mpeg", ptt: true }, { quoted: m });
             } catch (e) {
-              try {
-                const fallbackResponse = await axios.get(`https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(query)}`, { responseType: "arraybuffer" });
-                await client.sendMessage(m.chat, { audio: Buffer.from(fallbackResponse.data), mimetype: "audio/mpeg", ptt: true }, { quoted: m });
-              } catch (e) {
-                m.reply("Terjadi kesalahan saat memproses teks");
-              }
+              m.reply("Suara Alicia mungkin lagi serak🤓 hehe")
             }
           } else {
             currentText += `${currentText ? "\n" : ""}${parts[i].trim()}`;
