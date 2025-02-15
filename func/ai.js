@@ -17,7 +17,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const manageTokenCount = (history) => {
     let totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
-    while (totalTokens > 1500 && history.length > 1) {
+    while (totalTokens > 2050 && history.length > 1) {
         history.shift();
         totalTokens = history.reduce((acc, msg) => acc + msg.content.length, 0);
     }
