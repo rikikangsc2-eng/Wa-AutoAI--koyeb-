@@ -91,7 +91,7 @@ const processTextQuery = async (text, user) => {
                 modelConfig.lastTokenCount = updatedHistory.reduce((acc, msg) => acc + msg.content.length, 0);
                 userData[user].settings = modelConfig;
             } catch (retryError) {
-                return `API Error: ${retryError.message}`;
+                return `Terlalu sering membuat permintaan dalam waktu dekat!`;
             }
         } else {
             return `API Error: ${error.message}`;
