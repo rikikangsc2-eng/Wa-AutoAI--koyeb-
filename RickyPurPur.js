@@ -146,63 +146,32 @@ const user = `${m.sender.split("@")[0]}`
         const hasil = gambar[m.sender]
           ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
           : await ai.handleTextQuery(m.body, user);
-
         let cleanedText = hasil.trim();
         const remainingText = cleanedText
           .replace(/\*\*(.*?)\*\*/g, "*$1*")
           .replace(/```(.*?)```/g, "`$1`");
-
-        const parts = remainingText.split(/(\*\*[^\*]+\*\*|song.*?|Song.*?|song =.*?|Song =.*?|vn.*?|Vn.*?|vn =.*?|Vn =.*?|diffusion.*?|Diffusion.*?|diffusion =.*?|Diffusion =.*?)/);
-
+        const parts = remainingText.split(
+          /(\*\*[^\*]+\*\*|\[song.*?\]|\[Song.*?\]|\[song =.*?\]|\[Song =.*?\]|\[vn.*?\]|\[Vn.*?\]|\[vn =.*?\]|\[Vn.*?\]|\[diffusion.*?\]|\[Diffusion.*?\]|\[diffusion =.*?\]|\[Diffusion =.*?\])/
+        );
         const mediaQueue = [];
         const textQueue = [];
         let currentText = "";
-
         for (let i = 0; i < parts.length; i++) {
-          const part = parts[i].trim();
-          if (!part) continue;
-
-          if (part.toLowerCase().startsWith("[song=") || part.toLowerCase().startsWith("[song =")) {
-            const query = part.replace(/^.*?=/i, "").replace(/$/, "").trim();
-            textQueue.push(currentText.trim());
-            currentText = "";
-            textQueue.push("`Alicia sedang mencari lagu; " + query + ". Tunggu ya...`");
-            mediaQueue.push({ type: "song", query });
-          } else if (part.toLowerCase().startsWith("[vn=") || part.toLowerCase().startsWith("[vn =")) {
-            const query = part.replace(/^.*?=/i, "").replace(/$/, "").trim();
-            textQueue.push(currentText.trim());
-            currentText = "";
-            mediaQueue.push({ type: "vn", query });
-          } else if (part.toLowerCase().startsWith("[diffusion=") || part.toLowerCase().startsWith("[diffusion =")) {
-            const query = part.replace(/^.*?=/i, "").replace(/$/, "").trim();
-            textQueue.push(currentText.trim());
-            currentText = "";
-            textQueue.push("`Alicia sedang membuat gambar; " + query + ". Tunggu ya...`");
-            mediaQueue.push({ type: "diffusion", query });
-          } else {
-            currentText += `${currentText ? "\n" : ""}${part}`;
-          }
-        }
-
-        if (currentText.trim()) {
-          textQueue.push(currentText.trim());
-        }
-
-        for (const text of textQueue) {
-          if (text) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            await m.reply(text);
-          }
-        }
-
-        for (const media of mediaQueue) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          if (media.type === "song") {
-            await play.get(m, client, media.query);
-          } else if (media.type === "vn") {
+          if (
+            parts[i].toLowerCase().startsWith("[song=") ||
+            parts[i].toLowerCase().startsWith("[song =")
+          ) {
+            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+            m.reply("`Alicia sedang mencari lagu; " + query + ". Tunggu ya...`");
+            await play.get(m, client, query);
+          } else if (
+            parts[i].toLowerCase().startsWith("[vn=") ||
+            parts[i].toLowerCase().startsWith("[vn =")
+          ) {
+            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
             try {
               const response = await axios.get(
-                `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(media.query)}`,
+                `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(query)}`,
                 { responseType: "arraybuffer" }
               );
               await client.sendMessage(
@@ -211,13 +180,18 @@ const user = `${m.sender.split("@")[0]}`
                 { quoted: m }
               );
             } catch (e) {
-              await m.reply("> ALICIA lagi males vn🗿\n" + media.query);
+              m.reply("> ALICIA lagi males vn🗿\n" + query);
             }
-          } else if (media.type === "diffusion") {
+          } else if (
+            parts[i].toLowerCase().startsWith("[diffusion=") ||
+            parts[i].toLowerCase().startsWith("[diffusion =")
+          ) {
+            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+            m.reply("`Alicia sedang membuat gambar; " + query + ". Tunggu ya...`");
             try {
               const response = await axios.post(
                 "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-dev",
-                { inputs: media.query },
+                { inputs: query },
                 {
                   headers: {
                     "Content-Type": "application/json",
@@ -227,11 +201,36 @@ const user = `${m.sender.split("@")[0]}`
                 }
               );
               const imageBuffer = Buffer.from(response.data);
-              await client.sendMessage(m.chat, { image: imageBuffer, caption: media.query }, { quoted: m });
+              await client.sendMessage(
+                m.chat,
+                { image: imageBuffer, caption: query },
+                { quoted: m }
+              );
             } catch (error) {
-              await m.reply("`Gagal membuat gambar: " + error.message + "`");
+              m.reply("`Gagal membuat gambar: " + error.message + "`");
             }
+          } else {
+            currentText += `${currentText ? "\n" : ""}${parts[i].trim()}`;
           }
+        }
+        if (currentText.trim()) {
+          textQueue.push(currentText.trim());
+        }
+        for (const media of mediaQueue) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          if (media.type === "image") {
+            await client.sendMessage(m.chat, { image: media.buffer, caption: media.caption }, { quoted: m });
+          } else if (media.type === "video") {
+            await client.sendMessage(
+              m.chat,
+              { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" },
+              { quoted: m }
+            );
+          }
+        }
+        for (const text of textQueue) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await m.reply(text);
         }
       } catch (error) {
         bug(error);
