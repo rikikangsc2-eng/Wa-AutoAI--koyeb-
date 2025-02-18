@@ -13,6 +13,7 @@
     "@bochilteam/scraper": "^4.2.4",
     "@google/generative-ai": "^0.21.0",
     "@hapi/boom": "^10.0.0",
+    "@huggingface/inference": "^3.3.4",
     "@replit/node-fetch": "*",
     "@whiskeysockets/baileys": "*",
     "aio": "github:MOHAMMAD-NAYAN/nayan-media-downloader",

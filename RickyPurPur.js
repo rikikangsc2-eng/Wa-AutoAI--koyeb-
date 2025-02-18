@@ -22,6 +22,7 @@ const play = require("./func/play.js");
 const hd = require("./func/hd.js");
 const {jadwalAnime, populerAnime, random} = require("./func/anime.js");
 const game = require('./func/game.js')
+const { HfInference } = require("@huggingface/inference");
 
 const botOwner = global.owner;
 const noBot = global.nobot;
@@ -146,43 +147,66 @@ const user = `${m.sender.split("@")[0]}`
         const hasil = gambar[m.sender]
           ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
           : await ai.handleTextQuery(m.body, user);
-        let cleanedText = hasil.trim();
-        const remainingText = cleanedText.replace(/\*\*(.*?)\*\*/g, "*$1*").replace(/```(.*?)```/g, "`$1`");
-        const parts = remainingText.split(/(\*\*[^\*]+\*\*|\[song.*?\]|\[Song.*?\]|\[song =.*?\]|\[Song =.*?\]|\[vn.*?\]|\[Vn.*?\]|\[vn =.*?\]|\[Vn =.*?\])/);
-        const mediaQueue = [];
-        const textQueue = [];
-        let currentText = "";
-        for (let i = 0; i < parts.length; i++) {
-          if (parts[i].toLowerCase().startsWith("[song=") || parts[i].toLowerCase().startsWith("[song =")) {
-            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
-            m.reply("`Alicia sedang mencari lagu; " + query + ". Tunggu ya...`");
-            await play.get(m, client, query);
-          } else if (parts[i].toLowerCase().startsWith("[vn=") || parts[i].toLowerCase().startsWith("[vn =")) {
-            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+        let cleanedText = hasil
+          .trim()
+          .replace(/\*\*(.*?)\*\*/g, "*$1*")
+          .replace(/```(.*?)```/g, "`$1`");
+        const regex = /(\[(song|vn|diffusion)\s*=\s*.*?\])/gi;
+        let parts = [];
+        let lastIndex = 0;
+        let match;
+        while ((match = regex.exec(cleanedText)) !== null) {
+          if (match.index > lastIndex) {
+            let textPart = cleanedText.substring(lastIndex, match.index).trim();
+            if (textPart) parts.push({ type: "text", content: textPart });
+          }
+          let marker = match[0].trim();
+          if (/^\[song\s*=/i.test(marker)) {
+            let query = marker.replace(/^\[song\s*=\s*/i, "").replace(/\]$/, "").trim();
+            parts.push({ type: "song", query });
+          } else if (/^\[vn\s*=/i.test(marker)) {
+            let query = marker.replace(/^\[vn\s*=\s*/i, "").replace(/\]$/, "").trim();
+            parts.push({ type: "vn", query });
+          } else if (/^\[diffusion\s*=/i.test(marker)) {
+            let query = marker.replace(/^\[diffusion\s*=\s*/i, "").replace(/\]$/, "").trim();
+            parts.push({ type: "diffusion", query });
+          }
+          lastIndex = regex.lastIndex;
+        }
+        if (lastIndex < cleanedText.length) {
+          let remainingText = cleanedText.substring(lastIndex).trim();
+          if (remainingText) parts.push({ type: "text", content: remainingText });
+        }
+        for (const part of parts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          if (part.type === "text") {
+            await m.reply(part.content);
+          } else if (part.type === "song") {
+            await m.reply("`Alicia sedang mencari lagu; " + part.query + ". Tunggu ya...`");
+            await play.get(m, client, part.query);
+          } else if (part.type === "vn") {
             try {
-              const response = await axios.get(`https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(query)}`, { responseType: "arraybuffer" });
+              const response = await axios.get(`https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(part.query)}`, { responseType: "arraybuffer" });
               await client.sendMessage(m.chat, { audio: Buffer.from(response.data), mimetype: "audio/mpeg", ptt: true }, { quoted: m });
             } catch (e) {
-              m.reply("> ALICIA lagi males vn🗿\n"+query)
+              await m.reply("> ALICIA lagi males vn🗿\n" + part.query);
             }
-          } else {
-            currentText += `${currentText ? "\n" : ""}${parts[i].trim()}`;
+          } else if (part.type === "diffusion") {
+            await m.reply("`Alicia sedang membuat gambar; " + part.query + ". Tunggu ya...`");
+            try {
+              const hfClient = new HfInference("rikipurpur");
+              const imageData = await hfClient.textToImage({
+                model: "black-forest-labs/FLUX.1-dev",
+                inputs: part.query,
+                parameters: { num_inference_steps: 5 },
+                provider: "together",
+              });
+              const imageBuffer = Buffer.from(await imageData.arrayBuffer());
+              await client.sendMessage(m.chat, { image: imageBuffer, caption: part.query }, { quoted: m });
+            } catch (error) {
+              await m.reply("`Gagal membuat gambar: " + error.message + "`");
+            }
           }
-        }
-        if (currentText.trim()) {
-          textQueue.push(currentText.trim());
-        }
-        for (const media of mediaQueue) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          if (media.type === "image") {
-            await client.sendMessage(m.chat, { image: media.buffer, caption: media.caption }, { quoted: m });
-          } else if (media.type === "video") {
-            await client.sendMessage(m.chat, { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" }, { quoted: m });
-          }
-        }
-        for (const text of textQueue) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          await m.reply(text);
         }
       } catch (error) {
         bug(error);
@@ -190,6 +214,7 @@ const user = `${m.sender.split("@")[0]}`
         delete gambar[m.sender];
       }
     };
+
     
 //Jawab GAME
     if (m.quoted && !cekCmd(m.body)) {
