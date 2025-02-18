@@ -22,7 +22,6 @@ const play = require("./func/play.js");
 const hd = require("./func/hd.js");
 const {jadwalAnime, populerAnime, random} = require("./func/anime.js");
 const game = require('./func/game.js')
-const { HfInference } = require("@huggingface/inference");
 
 const botOwner = global.owner;
 const noBot = global.nobot;
@@ -151,7 +150,7 @@ const user = `${m.sender.split("@")[0]}`
           .trim()
           .replace(/\*\*(.*?)\*\*/g, "*$1*")
           .replace(/```(.*?)```/g, "`$1`");
-        const regex = /(\[(song|vn|diffusion)\s*=\s*.*?\])/gi;
+        const regex = /((song|vn|diffusion)\s*=\s*.*?)/gi;
         let parts = [];
         let lastIndex = 0;
         let match;
@@ -161,14 +160,14 @@ const user = `${m.sender.split("@")[0]}`
             if (textPart) parts.push({ type: "text", content: textPart });
           }
           let marker = match[0].trim();
-          if (/^\[song\s*=/i.test(marker)) {
-            let query = marker.replace(/^\[song\s*=\s*/i, "").replace(/\]$/, "").trim();
+          if (/^song\s*=/i.test(marker)) {
+            let query = marker.replace(/^song\s*=\s*/i, "").replace(/$/, "").trim();
             parts.push({ type: "song", query });
-          } else if (/^\[vn\s*=/i.test(marker)) {
-            let query = marker.replace(/^\[vn\s*=\s*/i, "").replace(/\]$/, "").trim();
+          } else if (/^vn\s*=/i.test(marker)) {
+            let query = marker.replace(/^vn\s*=\s*/i, "").replace(/$/, "").trim();
             parts.push({ type: "vn", query });
-          } else if (/^\[diffusion\s*=/i.test(marker)) {
-            let query = marker.replace(/^\[diffusion\s*=\s*/i, "").replace(/\]$/, "").trim();
+          } else if (/^diffusion\s*=/i.test(marker)) {
+            let query = marker.replace(/^diffusion\s*=\s*/i, "").replace(/$/, "").trim();
             parts.push({ type: "diffusion", query });
           }
           lastIndex = regex.lastIndex;
@@ -186,22 +185,33 @@ const user = `${m.sender.split("@")[0]}`
             await play.get(m, client, part.query);
           } else if (part.type === "vn") {
             try {
-              const response = await axios.get(`https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(part.query)}`, { responseType: "arraybuffer" });
-              await client.sendMessage(m.chat, { audio: Buffer.from(response.data), mimetype: "audio/mpeg", ptt: true }, { quoted: m });
+              const response = await axios.get(
+                `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(part.query)}`,
+                { responseType: "arraybuffer" }
+              );
+              await client.sendMessage(
+                m.chat,
+                { audio: Buffer.from(response.data), mimetype: "audio/mpeg", ptt: true },
+                { quoted: m }
+              );
             } catch (e) {
               await m.reply("> ALICIA lagi males vn🗿\n" + part.query);
             }
           } else if (part.type === "diffusion") {
             await m.reply("`Alicia sedang membuat gambar; " + part.query + ". Tunggu ya...`");
             try {
-              const hfClient = new HfInference("rikipurpur");
-              const imageData = await hfClient.textToImage({
-                model: "black-forest-labs/FLUX.1-dev",
-                inputs: part.query,
-                parameters: { num_inference_steps: 5 },
-                provider: "together",
-              });
-              const imageBuffer = Buffer.from(await imageData.arrayBuffer());
+              const response = await axios.post(
+                "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-dev",
+                { inputs: part.query },
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer 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"
+                  },
+                  responseType: "arraybuffer"
+                }
+              );
+              const imageBuffer = Buffer.from(response.data);
               await client.sendMessage(m.chat, { image: imageBuffer, caption: part.query }, { quoted: m });
             } catch (error) {
               await m.reply("`Gagal membuat gambar: " + error.message + "`");
@@ -215,7 +225,6 @@ const user = `${m.sender.split("@")[0]}`
       }
     };
 
-    
 //Jawab GAME
     if (m.quoted && !cekCmd(m.body)) {
       if (m.quoted.text.includes("AliciaGames")){
@@ -227,11 +236,11 @@ const user = `${m.sender.split("@")[0]}`
       }
     }
 
-    
+
     if (!m.isGroup && !cekCmd(m.body) && m.body) {
       return autoAI();
     }
-    
+
 if (m.isGroup && m.quoted && !cekCmd(m.body)){
       if (m.quoted.sender.includes(noBot)){
         if (m.mtype.includes("imageMessage")){
@@ -256,7 +265,7 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
       const aiResponse = await ai.handleTextQuery(aiPrompt, user);
       return m.reply(aiResponse.trim());
     }
-  
+
     if (cekCmd(m.body)) {
       switch (command) { 
       case "riwayat":{
