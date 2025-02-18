@@ -163,7 +163,7 @@ const user = `${m.sender.split("@")[0]}`
               const response = await axios.get(`https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(query)}`, { responseType: "arraybuffer" });
               await client.sendMessage(m.chat, { audio: Buffer.from(response.data), mimetype: "audio/mpeg", ptt: true }, { quoted: m });
             } catch (e) {
-              m.reply("Suara Alicia mungkin lagi serak🤓 hehe")
+              m.reply("> ALICIA lagi males vn🗿\n"+query)
             }
           } else {
             currentText += `${currentText ? "\n" : ""}${parts[i].trim()}`;
