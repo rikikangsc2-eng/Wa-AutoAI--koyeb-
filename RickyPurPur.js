@@ -146,47 +146,63 @@ const user = `${m.sender.split("@")[0]}`
         const hasil = gambar[m.sender]
           ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
           : await ai.handleTextQuery(m.body, user);
-        let cleanedText = hasil
-          .trim()
+
+        let cleanedText = hasil.trim();
+        const remainingText = cleanedText
           .replace(/\*\*(.*?)\*\*/g, "*$1*")
           .replace(/```(.*?)```/g, "`$1`");
-        const regex = /((song|vn|diffusion)\s*=\s*.*?)/gi;
-        let parts = [];
-        let lastIndex = 0;
-        let match;
-        while ((match = regex.exec(cleanedText)) !== null) {
-          if (match.index > lastIndex) {
-            let textPart = cleanedText.substring(lastIndex, match.index).trim();
-            if (textPart) parts.push({ type: "text", content: textPart });
+
+        const parts = remainingText.split(/(\*\*[^\*]+\*\*|song.*?|Song.*?|song =.*?|Song =.*?|vn.*?|Vn.*?|vn =.*?|Vn =.*?|diffusion.*?|Diffusion.*?|diffusion =.*?|Diffusion =.*?)/);
+
+        const mediaQueue = [];
+        const textQueue = [];
+        let currentText = "";
+
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i].trim();
+          if (!part) continue;
+
+          if (part.toLowerCase().startsWith("[song=") || part.toLowerCase().startsWith("[song =")) {
+            const query = part.replace(/^.*?=/i, "").replace(/$/, "").trim();
+            textQueue.push(currentText.trim());
+            currentText = "";
+            textQueue.push("`Alicia sedang mencari lagu; " + query + ". Tunggu ya...`");
+            mediaQueue.push({ type: "song", query });
+          } else if (part.toLowerCase().startsWith("[vn=") || part.toLowerCase().startsWith("[vn =")) {
+            const query = part.replace(/^.*?=/i, "").replace(/$/, "").trim();
+            textQueue.push(currentText.trim());
+            currentText = "";
+            mediaQueue.push({ type: "vn", query });
+          } else if (part.toLowerCase().startsWith("[diffusion=") || part.toLowerCase().startsWith("[diffusion =")) {
+            const query = part.replace(/^.*?=/i, "").replace(/$/, "").trim();
+            textQueue.push(currentText.trim());
+            currentText = "";
+            textQueue.push("`Alicia sedang membuat gambar; " + query + ". Tunggu ya...`");
+            mediaQueue.push({ type: "diffusion", query });
+          } else {
+            currentText += `${currentText ? "\n" : ""}${part}`;
           }
-          let marker = match[0].trim();
-          if (/^song\s*=/i.test(marker)) {
-            let query = marker.replace(/^song\s*=\s*/i, "").replace(/$/, "").trim();
-            parts.push({ type: "song", query });
-          } else if (/^vn\s*=/i.test(marker)) {
-            let query = marker.replace(/^vn\s*=\s*/i, "").replace(/$/, "").trim();
-            parts.push({ type: "vn", query });
-          } else if (/^diffusion\s*=/i.test(marker)) {
-            let query = marker.replace(/^diffusion\s*=\s*/i, "").replace(/$/, "").trim();
-            parts.push({ type: "diffusion", query });
+        }
+
+        if (currentText.trim()) {
+          textQueue.push(currentText.trim());
+        }
+
+        for (const text of textQueue) {
+          if (text) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await m.reply(text);
           }
-          lastIndex = regex.lastIndex;
         }
-        if (lastIndex < cleanedText.length) {
-          let remainingText = cleanedText.substring(lastIndex).trim();
-          if (remainingText) parts.push({ type: "text", content: remainingText });
-        }
-        for (const part of parts) {
+
+        for (const media of mediaQueue) {
           await new Promise(resolve => setTimeout(resolve, 1000));
-          if (part.type === "text") {
-            await m.reply(part.content);
-          } else if (part.type === "song") {
-            await m.reply("`Alicia sedang mencari lagu; " + part.query + ". Tunggu ya...`");
-            await play.get(m, client, part.query);
-          } else if (part.type === "vn") {
+          if (media.type === "song") {
+            await play.get(m, client, media.query);
+          } else if (media.type === "vn") {
             try {
               const response = await axios.get(
-                `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(part.query)}`,
+                `https://express-vercel-ytdl.vercel.app/tts?text=${encodeURIComponent(media.query)}`,
                 { responseType: "arraybuffer" }
               );
               await client.sendMessage(
@@ -195,14 +211,13 @@ const user = `${m.sender.split("@")[0]}`
                 { quoted: m }
               );
             } catch (e) {
-              await m.reply("> ALICIA lagi males vn🗿\n" + part.query);
+              await m.reply("> ALICIA lagi males vn🗿\n" + media.query);
             }
-          } else if (part.type === "diffusion") {
-            await m.reply("`Alicia sedang membuat gambar; " + part.query + ". Tunggu ya...`");
+          } else if (media.type === "diffusion") {
             try {
               const response = await axios.post(
                 "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-dev",
-                { inputs: part.query },
+                { inputs: media.query },
                 {
                   headers: {
                     "Content-Type": "application/json",
@@ -212,7 +227,7 @@ const user = `${m.sender.split("@")[0]}`
                 }
               );
               const imageBuffer = Buffer.from(response.data);
-              await client.sendMessage(m.chat, { image: imageBuffer, caption: part.query }, { quoted: m });
+              await client.sendMessage(m.chat, { image: imageBuffer, caption: media.query }, { quoted: m });
             } catch (error) {
               await m.reply("`Gagal membuat gambar: " + error.message + "`");
             }
