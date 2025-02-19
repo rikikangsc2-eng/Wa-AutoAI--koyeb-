@@ -14,13 +14,18 @@ const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, 
 
 const userData = {};
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
 const manageTokenCount = (history) => {
-  let totalTokens = openaiTokenCounter.chat(history, "gpt-4");
-  while (totalTokens > 3000 && history.length > 1) {
-    history.shift();
-    totalTokens = openaiTokenCounter.chat(history, "gpt-4");
+  let nonSystemMessages = history.filter(msg => msg.role !== "system");
+  let totalTokens = openaiTokenCounter.chat(nonSystemMessages, "gpt-4");
+  while (totalTokens > 1500 && history.filter(msg => msg.role !== "system").length > 1) {
+    for (let i = 0; i < history.length; i++) {
+      if (history[i].role !== "system") {
+        history.splice(i, 1);
+        break;
+      }
+    }
+    nonSystemMessages = history.filter(msg => msg.role !== "system");
+    totalTokens = openaiTokenCounter.chat(nonSystemMessages, "gpt-4");
   }
   return history;
 };
@@ -41,19 +46,13 @@ const processTextQuery = async (text, user) => {
   history.push({ role: "user", content: text });
   const updatedHistory = manageTokenCount(history);
   const systemPrompt = modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8');
-  const messages = [
-    { role: "system", content: systemPrompt }
-  ];
+  const messages = [{ role: "system", content: systemPrompt }];
   if (modelConfig.persona) {
-    messages.push(
-      { role: "user", content: `${modelConfig.persona}` },
-      { role: "assistant", content: "Okee yaa aku ingat!" }
-    );
+    messages.push({ role: "user", content: `${modelConfig.persona}` }, { role: "assistant", content: "Okee yaa aku ingat!" });
   }
   messages.push(...updatedHistory);
   let responseText;
   try {
-    await sleep(2000);
     const response = await axios.post(
       GEMMA_API_URL,
       { model: GEMMA_MODEL_NAME, messages, ...generationConfig },
@@ -66,7 +65,6 @@ const processTextQuery = async (text, user) => {
     userData[user].settings = modelConfig;
   } catch (error) {
     if (error.response && error.response.status === 429) {
-      await sleep(5000);
       try {
         const response = await axios.post(
           GEMMA_API_URL,
