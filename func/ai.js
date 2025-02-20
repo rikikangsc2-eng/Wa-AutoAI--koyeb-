@@ -46,7 +46,7 @@ const processTextQuery = async (text, user) => {
   history.push({ role: "user", content: text });
   const updatedHistory = manageTokenCount(history);
   const systemPrompt = modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8');
-  [
+ const messages = [
     {
       role: "system",
       content: systemPrompt
