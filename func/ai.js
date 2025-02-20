@@ -46,7 +46,21 @@ const processTextQuery = async (text, user) => {
   history.push({ role: "user", content: text });
   const updatedHistory = manageTokenCount(history);
   const systemPrompt = modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8');
-  const messages = [{ role: "system", content: systemPrompt }];
+  [
+    {
+      role: "system",
+      content: systemPrompt
+    },
+    {
+      role: "user",
+      content: "Putar lagu dong"
+    },
+    {
+      role: "assistant",
+      content: "<think>\n      - Analisis teks user: Permintaan musik tanpa menyebutkan judul lagu.\n- Analisis maksud user: Meminta musik tetapi tidak menyebutkan judul.\n- Analisis tindakan Alicia: Tidak memproses permintaan musik; meminta klarifikasi judul lagu secara kreatif.\n- Analisis metode respon: Teks.\n</think>\nJudul lagunya apa sih? Jangan bikin aku nebak terus!"
+    }
+  ];
+
   if (modelConfig.persona) {
     messages.push({ role: "user", content: `${modelConfig.persona}` }, { role: "assistant", content: "Okee yaa aku ingat!" });
   }
