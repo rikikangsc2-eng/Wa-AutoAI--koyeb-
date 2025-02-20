@@ -17,7 +17,7 @@ const userData = {};
 const manageTokenCount = (history) => {
   let nonSystemMessages = history.filter(msg => msg.role !== "system");
   let totalTokens = openaiTokenCounter.chat(nonSystemMessages, "gpt-4");
-  while (totalTokens > 1500 && history.filter(msg => msg.role !== "system").length > 1) {
+  while (totalTokens > 1024 && history.filter(msg => msg.role !== "system").length > 1) {
     for (let i = 0; i < history.length; i++) {
       if (history[i].role !== "system") {
         history.splice(i, 1);
