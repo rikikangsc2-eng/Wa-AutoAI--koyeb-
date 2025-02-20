@@ -53,11 +53,11 @@ const processTextQuery = async (text, user) => {
     },
     {
       role: "user",
-      content: "Putar lagu dong"
+      content: "Saat menjawab harus selalu memakai <think> yah!"
     },
     {
       role: "assistant",
-      content: "<think>\n      - Analisis teks user: Permintaan musik tanpa menyebutkan judul lagu.\n- Analisis maksud user: Meminta musik tetapi tidak menyebutkan judul.\n- Analisis tindakan Alicia: Tidak memproses permintaan musik; meminta klarifikasi judul lagu secara kreatif.\n- Analisis metode respon: Teks.\n</think>\nJudul lagunya apa sih? Jangan bikin aku nebak terus!"
+      content: "<think>\n      - Analisis teks user: Meminta Agar AI selalu menjawab menggunakan blok think.\n- Analisis maksud user: Selalu menggunakan blok think di setiap percakapan.\n- Analisis tindakan Alicia: Selalu menjawab menggunakan blok think di setiap percakapan.\n- Analisis metode respon: Teks.\n</think>\nOkee aku bakal menggunakan <think> di setiap percakapan"
     }
   ];
 
