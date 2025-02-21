@@ -284,6 +284,10 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
       switch (command) { 
       case "diff": {
   const query = msg;
+
+        if (!query) {
+          return reply("*.diff IMAGE_DESCRIPTION_PROMPT*");
+        }
   m.reply("`Alicia sedang membuat gambar; " + query + ". Tunggu ya...`");
   try {
     const response = await axios.post(
