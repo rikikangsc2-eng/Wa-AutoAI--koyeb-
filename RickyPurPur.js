@@ -190,12 +190,12 @@ const user = `${m.sender.split("@")[0]}`
             m.reply("`Alicia sedang membuat gambar; " + query + ". Tunggu ya...`");
             try {
               const response = await axios.post(
-                "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-dev",
+                "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
                 { inputs: query },
                 {
                   headers: {
                     "Content-Type": "application/json",
-                    Authorization: "Bearer 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"
+                    Authorization: global.hf_token
                   },
                   responseType: "arraybuffer"
                 }
@@ -282,6 +282,32 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) { 
+      case "diff": {
+  const query = msg;
+  m.reply("`Alicia sedang membuat gambar; " + query + ". Tunggu ya...`");
+  try {
+    const response = await axios.post(
+      "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
+      { inputs: query },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: global.hf_token
+        },
+        responseType: "arraybuffer"
+      }
+    );
+    const imageBuffer = Buffer.from(response.data);
+    await client.sendMessage(
+      m.chat,
+      { image: imageBuffer, caption: query },
+      { quoted: m }
+    );
+  } catch (error) {
+    m.reply("`Gagal membuat gambar: " + error.message + "`");
+  }
+  break;
+};
       case "riwayat":{
         m.reply(ai.riwayat(user))
       }break;
