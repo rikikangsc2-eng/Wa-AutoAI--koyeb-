@@ -46,7 +46,7 @@ const processTextQuery = async (text, user) => {
   history.push({ role: "user", content: text });
   const updatedHistory = manageTokenCount(history);
   const systemPrompt = modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8');
- const messages = [
+  const messages = [
     {
       role: "system",
       content: systemPrompt
@@ -57,7 +57,13 @@ const processTextQuery = async (text, user) => {
     },
     {
       role: "assistant",
-      content: "<think>\n      - Analisis teks user: Meminta Agar AI selalu menjawab menggunakan blok think.\n- Analisis maksud user: Selalu menggunakan blok think di setiap percakapan.\n- Analisis tindakan Alicia: Selalu menjawab menggunakan blok think di setiap percakapan.\n- Analisis metode respon: Teks.\n</think>\nOkee aku bakal menggunakan <think> di setiap percakapan"
+      content: `<think>
+  - Analisis teks user: Permintaan agar setiap jawaban selalu memakai <think>.
+  - Analisis maksud user: Menginginkan format jawaban yang terstruktur dan konsisten.
+  - Analisis tindakan Alicia: Menyusun jawaban dengan menyertakan blok <think> di awal.
+  - Analisis metode respon: Teks.
+  </think>
+  Baik, saya akan selalu memakai <think> dalam jawaban saya!`
     }
   ];
 
