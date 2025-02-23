@@ -4,9 +4,7 @@ const USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; RMX2185 Build/QP1A.190711.02
 
 const apiGetData = async (dataType) => {
   try {
-    const response = await axios.get(`${API_ENDPOINT}/${dataType}`, {
-      headers: { 'User-Agent': USER_AGENT }
-    });
+    const response = await axios.get(`${API_ENDPOINT}/${dataType}`, { headers: { 'User-Agent': USER_AGENT } });
     return response.data;
   } catch (error) {
     console.error(`Failed to get ${dataType} data from API:`, error);
@@ -16,12 +14,7 @@ const apiGetData = async (dataType) => {
 
 const apiWriteData = async (dataType, data) => {
   try {
-    await axios.post(`${API_ENDPOINT}/${dataType}`, data, {
-      headers: {
-        'User-Agent': USER_AGENT,
-        'Content-Type': 'application/json'
-      }
-    });
+    await axios.post(`${API_ENDPOINT}/${dataType}`, data, { headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/json' } });
     return true;
   } catch (error) {
     console.error(`Failed to write ${dataType} data to API:`, error);
@@ -117,23 +110,11 @@ async function gameLogic(endpoint, params, query, m, client) {
   };
 
   if (endpoint === 'susunkata') {
-    return await ambilSoal(
-      fetchSoalSusunKata,
-      'susunkata',
-      (soal) => `Soal susun kata berikut: ${soal.soal} - Tipe: ${soal.tipe}`
-    );
+    return await ambilSoal(fetchSoalSusunKata, 'susunkata', (soal) => `Soal susun kata berikut: ${soal.soal} - Tipe: ${soal.tipe}`);
   } else if (endpoint === 'siapakahaku') {
-    return await ambilSoal(
-      fetchSoalSiapakahAku,
-      'siapakahaku',
-      (soal) => `Soal siapakah aku berikut: ${soal.soal}`
-    );
+    return await ambilSoal(fetchSoalSiapakahAku, 'siapakahaku', (soal) => `Soal siapakah aku berikut: ${soal.soal}`);
   } else if (endpoint === 'tebaktebakan') {
-    return await ambilSoal(
-      fetchSoalTebakTebakan,
-      'tebaktebakan',
-      (soal) => `Soal tebak tebakan berikut: ${soal.soal}`
-    );
+    return await ambilSoal(fetchSoalTebakTebakan, 'tebaktebakan', (soal) => `Soal tebak tebakan berikut: ${soal.soal}`);
   } else if (endpoint === 'tebakgambar') {
     const roomsData = await apiGetData('rooms');
     const currentRoom = roomsData.rooms[room];
@@ -151,11 +132,7 @@ async function gameLogic(endpoint, params, query, m, client) {
     }
     roomsData.rooms[room].currentQuestion = { ...selectedSoal, gameType: 'tebakgambar', answered: false, attempts: 0, timestamp: Date.now() };
     await apiWriteData('rooms', roomsData);
-    client.sendMessage(m.chat, {
-      image: { url: selectedSoal.img },
-      caption: 'AliciaGames',
-      mimetype: "image/jpeg"
-    }, { quoted: m });
+    client.sendMessage(m.chat, { image: { url: selectedSoal.img }, caption: 'AliciaGames', mimetype: "image/jpeg" }, { quoted: m });
     return null;
   } else if (endpoint === 'jawab') {
     const usersData = await apiGetData('users');
@@ -243,9 +220,7 @@ async function gameLogic(endpoint, params, query, m, client) {
   } else if (endpoint === 'top') {
     const usersData = await apiGetData('users');
     const users = usersData.users;
-    const sortedUsers = Object.entries(users)
-      .sort(([, a], [, b]) => b.points - a.points)
-      .slice(0, 10);
+    const sortedUsers = Object.entries(users).sort(([, a], [, b]) => b.points - a.points).slice(0, 10);
     let topUsersFormatted = 'Top 10 Poin Tertinggi\n\n';
     let mentions = [];
     let positionMessage = '';
@@ -276,13 +251,7 @@ async function gameLogic(endpoint, params, query, m, client) {
       topUsersFormatted += 'Belum ada pemain yang memiliki poin.';
       positionMessage = 'Ayo main biar ada poinnya!';
     }
-    client.sendMessage(
-      m.chat,
-      {
-        text: topUsersFormatted + '\n' + positionMessage,
-        mentions: mentions
-      }, { qouted: m }
-    );
+    client.sendMessage(m.chat, { text: topUsersFormatted + '\n' + positionMessage, mentions: mentions }, { qouted: m });
     return null;
   } else if (endpoint === 'nyerah') {
     const roomsData = await apiGetData('rooms');
@@ -334,16 +303,7 @@ async function gameLogic(endpoint, params, query, m, client) {
       if (level === 'sulit') {
         turn = Math.random() < 0.5 ? 'user' : 'ai';
       }
-      game = {
-        gameType: 'tictactoe',
-        board: board,
-        level: level,
-        turn: turn,
-        answered: false,
-        attempts: 0,
-        timestamp: Date.now(),
-        user: user
-      };
+      game = { gameType: 'tictactoe', board: board, level: level, turn: turn, answered: false, attempts: 0, timestamp: Date.now(), user: user };
       currentRoom.ttt[user] = game;
       await apiWriteData('rooms', roomsData);
       let initialMessage = `Tic Tac Toe (${level}) game dimulai!\n${renderBoard(board)}\n`;
@@ -352,11 +312,19 @@ async function gameLogic(endpoint, params, query, m, client) {
         return initialMessage;
       } else {
         let aiMoveIdx;
-        if (level === 'mudah') {
-          const emptyIndices = board.map((cell, index) => cell === null ? index : null).filter(x => x !== null);
-          aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+        if (board.every(cell => cell === null)) {
+          const groups = { corner: [0,2,6,8], center: [4], edge: [1,3,5,7] };
+          const groupKeys = Object.keys(groups);
+          const randomGroupKey = groupKeys[Math.floor(Math.random() * groupKeys.length)];
+          const possibleMoves = groups[randomGroupKey];
+          aiMoveIdx = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
         } else {
-          aiMoveIdx = getBestMove(board);
+          if (level === 'mudah') {
+            const emptyIndices = board.map((cell, index) => cell === null ? index : null).filter(x => x !== null);
+            aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+          } else {
+            aiMoveIdx = getBestMove(board);
+          }
         }
         game.board[aiMoveIdx] = 'ai';
         game.turn = 'user';
@@ -418,7 +386,9 @@ async function gameLogic(endpoint, params, query, m, client) {
         await apiWriteData('users', usersData);
         delete currentRoom.ttt[user];
         await apiWriteData('rooms', roomsData);
-        return `Kamu kalah!\n${renderBoard(game.board)}\nPoint -1.`;
+        const winningMessages = ["YAAH UDAH SUREN AJA UDAH GW YANG MENANG INI","Udah deh, gw menang dari awal","Gak usah rebutan, gw menang aja!","Terserah, gw pasti menang kok!","Sah, gw udah menang!","Jangan heran, gw memang jagonya.","Hahaha, gampang banget menang!","Serius, gimana bisa lawan gw?","Kalah aja, udah pasti gw menang!","Yah, udah jelas gw pemenangnya!"];
+        const randomMessage = winningMessages[Math.floor(Math.random() * winningMessages.length)];
+        return `Kamu kalah!\n${renderBoard(game.board)}\nPoint -1.\n${randomMessage}`;
       }
       if (game.board.every(cell => cell !== null)) {
         delete currentRoom.ttt[user];
@@ -435,7 +405,7 @@ async function gameLogic(endpoint, params, query, m, client) {
 }
 
 function renderBoard(board) {
-  const numberEmojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
+  const numberEmojis = ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣"];
   const symbols = board.map((cell, index) => {
     if (cell === 'user') return '❌';
     if (cell === 'ai') return '⭕';
@@ -445,16 +415,7 @@ function renderBoard(board) {
 }
 
 function checkWin(board, player) {
-  const winCombinations = [
-    [0,1,2],
-    [3,4,5],
-    [6,7,8],
-    [0,3,6],
-    [1,4,7],
-    [2,5,8],
-    [0,4,8],
-    [2,4,6]
-  ];
+  const winCombinations = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
   return winCombinations.some(comb => comb.every(index => board[index] === player));
 }
 
