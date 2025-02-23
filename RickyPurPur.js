@@ -297,11 +297,6 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
       switch (command) { 
         case "tictactoe":
         case "ttt": {
-  if (!msg) return m.reply("Silakan pilih level permainan: *mudah* atau *sulit*.");
-  const level = msg.toLowerCase();
-  if (level !== "mudah" && level !== "sulit") {
-    return m.reply("Level tidak valid. Pilih *mudah* atau *sulit*.");
-  }
   const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
   const query = { text: level };
   const gameResponse = await game.gameLogic("tictactoe", params, query, m, client);
