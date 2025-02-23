@@ -305,7 +305,7 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
   const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
   const query = { text: level };
   const gameResponse = await game.gameLogic("tictactoe", params, query, m, client);
-  if (gameResponse) m.reply(gameResponse);
+  if (gameResponse) m.reply(gameResponse+"\n\nAlicia-TTT");
   break;
           }
           
