@@ -256,7 +256,7 @@ if (m.quoted && !cekCmd(m.body)) {
     const gameResponse = await game.gameLogic("tictactoe", params, query, m, client);
     if (gameResponse){
       if (gameResponse.toLowerCase().includes("menang!") || gameResponse.toLowerCase().includes("kalah!") || gameResponse.toLowerCase().includes("seri!")) {
-        m.reply(gameResponse+"\n\n*Ketik .ttt untuk memulai game baru*");
+        return m.reply(gameResponse+"\n\n*Ketik .ttt untuk memulai game baru*");
       }
       m.reply(gameResponse+"\n\nAlicia-TTT");
                      }
