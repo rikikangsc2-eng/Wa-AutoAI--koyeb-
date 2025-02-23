@@ -213,7 +213,7 @@ async function gameLogic(endpoint, params, query, m, client) {
                 usersData.users[user].points = Math.max((usersData.users[user].points || 0) - 3, 0);
                 await apiWriteData('users', usersData);
 
-                const jawaban = currentRoom.currentQuestion.jawaban
+                const jawaban = currentRoom.currentQuestion.jawaban;
                 roomsData.rooms[room].currentQuestion = null;
                 await apiWriteData('rooms', roomsData);
 
@@ -337,8 +337,154 @@ async function gameLogic(endpoint, params, query, m, client) {
         await apiWriteData('users', usersData);
 
         return `Yah nyerah? Cupu! Jawaban yang benar adalah: ${jawabanBenar}. Point -3.`;
+    } else if (endpoint === 'tictactoe') {
+        // --- Game Tic Tac Toe ---
+        const roomsData = await apiGetData('rooms');
+        if (!roomsData.rooms[room]) {
+            roomsData.rooms[room] = {};
+        }
+        let currentRoom = roomsData.rooms[room];
+
+        // Jika belum ada game tictactoe berjalan, mulai game baru.
+        if (!currentRoom.currentQuestion || currentRoom.currentQuestion.gameType !== 'tictactoe') {
+            // Ambil level dari query.text ("mudah" atau "sulit"), default "mudah"
+            let level = 'mudah';
+            if (query && query.text && (query.text.toLowerCase() === 'sulit' || query.text.toLowerCase() === 'mudah')) {
+                level = query.text.toLowerCase();
+            }
+            // Inisialisasi papan kosong (array 9 elemen)
+            let board = Array(9).fill(null);
+            currentRoom.currentQuestion = {
+                gameType: 'tictactoe',
+                board: board,
+                level: level,
+                turn: 'user', // giliran user terlebih dahulu
+                answered: false,
+                attempts: 0,
+                timestamp: Date.now()
+            };
+            await apiWriteData('rooms', roomsData);
+            return `Tic Tac Toe (${level}) game dimulai!\n${renderBoard(board)}\nGiliran kamu, kirim nomor kotak (1-9) untuk menempatkan ❌.`;
+        } else {
+            // Game sedang berjalan, proses langkah user
+            let game = currentRoom.currentQuestion;
+            const move = parseInt(query.text);
+            if (isNaN(move) || move < 1 || move > 9) {
+                return "Masukkan nomor kotak yang valid (1-9) untuk langkahmu.";
+            }
+            const idx = move - 1;
+            if (game.board[idx] !== null) {
+                return "Kotak sudah terisi, pilih kotak lain.";
+            }
+            // Tempatkan langkah user
+            game.board[idx] = 'user';
+            if (checkWin(game.board, 'user')) {
+                currentRoom.currentQuestion = null;
+                await apiWriteData('rooms', roomsData);
+                return `Kamu menang!\n${renderBoard(game.board)}`;
+            }
+            if (game.board.every(cell => cell !== null)) {
+                currentRoom.currentQuestion = null;
+                await apiWriteData('rooms', roomsData);
+                return `Permainan seri!\n${renderBoard(game.board)}`;
+            }
+            // Giliran AI
+            let aiMoveIdx;
+            if (game.level === 'mudah') {
+                const emptyIndices = game.board
+                    .map((cell, index) => cell === null ? index : null)
+                    .filter(x => x !== null);
+                aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+            } else {
+                aiMoveIdx = getBestMove(game.board);
+            }
+            game.board[aiMoveIdx] = 'ai';
+            if (checkWin(game.board, 'ai')) {
+                currentRoom.currentQuestion = null;
+                await apiWriteData('rooms', roomsData);
+                return `Kamu kalah!\n${renderBoard(game.board)}`;
+            }
+            if (game.board.every(cell => cell !== null)) {
+                currentRoom.currentQuestion = null;
+                await apiWriteData('rooms', roomsData);
+                return `Permainan seri!\n${renderBoard(game.board)}`;
+            }
+            await apiWriteData('rooms', roomsData);
+            return `Setelah langkahmu:\n${renderBoard(game.board)}\nGiliran kamu. Kirim nomor kotak (1-9) untuk langkah selanjutnya.`;
+        }
     } else {
         return 'Endpoint tidak dikenal';
+    }
+}
+
+function renderBoard(board) {
+    const numberEmojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
+    const symbols = board.map((cell, index) => {
+        if (cell === 'user') return '❌';
+        if (cell === 'ai') return '⭕';
+        return numberEmojis[index];
+    });
+    return `${symbols.slice(0,3).join(' ')}\n${symbols.slice(3,6).join(' ')}\n${symbols.slice(6,9).join(' ')}`;
+}
+
+function checkWin(board, player) {
+    const winCombinations = [
+        [0,1,2],
+        [3,4,5],
+        [6,7,8],
+        [0,3,6],
+        [1,4,7],
+        [2,5,8],
+        [0,4,8],
+        [2,4,6]
+    ];
+    return winCombinations.some(comb => comb.every(index => board[index] === player));
+}
+
+function getBestMove(board) {
+    let bestScore = -Infinity;
+    let move = null;
+    for (let i = 0; i < board.length; i++) {
+        if (board[i] === null) {
+            board[i] = 'ai';
+            let score = minimax(board, 0, false);
+            board[i] = null;
+            if (score > bestScore) {
+                bestScore = score;
+                move = i;
+            }
+        }
+    }
+    return move;
+}
+
+function minimax(board, depth, isMaximizing) {
+    if (checkWin(board, 'ai')) return 10 - depth;
+    if (checkWin(board, 'user')) return depth - 10;
+    if (board.every(cell => cell !== null)) return 0;
+
+    if (isMaximizing) {
+        let bestScore = -Infinity;
+        for (let i = 0; i < board.length; i++) {
+            if (board[i] === null) {
+                board[i] = 'ai';
+                let score = minimax(board, depth + 1, false);
+                board[i] = null;
+                bestScore = Math.max(score, bestScore);
+            }
+        }
+        return bestScore;
+    } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < board.length; i++) {
+            if (board[i] === null) {
+                board[i] = 'user';
+                let score = minimax(board, depth + 1, true);
+                board[i] = null;
+                bestScore = Math.min(score, bestScore);
+            }
+        }
+        return bestScore;
     }
 }
 

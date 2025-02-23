@@ -249,7 +249,20 @@ const user = `${m.sender.split("@")[0]}`
         return;
       }
     }
-
+if (m.quoted && !cekCmd(m.body)) {
+  if (m.quoted.text.includes("Alicia-TTT")) {
+    const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
+    const query = { text: body };
+    const gameResponse = await game.gameLogic("tictactoe", params, query, m, client);
+    if (gameResponse){
+      if (gameResponse.toLowerCase().includes("menang!") || gameResponse.toLowerCase().includes("kalah!") || gameResponse.toLowerCase().includes("seri!")) {
+        m.reply(gameResponse+"\n\n*Ketik .ttt untuk memulai game baru*");
+      }
+      m.reply(gameResponse+"\n\nAlicia-TTT");
+                     }
+    return;
+  }
+}
 
     if (!m.isGroup && !cekCmd(m.body) && m.body) {
       return autoAI();
@@ -282,6 +295,20 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) { 
+        case "tictactoe":
+        case "ttt": {
+  if (!msg) return m.reply("Silakan pilih level permainan: *mudah* atau *sulit*.");
+  const level = msg.toLowerCase();
+  if (level !== "mudah" && level !== "sulit") {
+    return m.reply("Level tidak valid. Pilih *mudah* atau *sulit*.");
+  }
+  const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
+  const query = { text: level };
+  const gameResponse = await game.gameLogic("tictactoe", params, query, m, client);
+  if (gameResponse) m.reply(gameResponse);
+  break;
+          }
+          
       case "diff": {
   const query = msg;
 
