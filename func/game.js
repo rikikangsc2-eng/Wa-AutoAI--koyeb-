@@ -329,8 +329,7 @@ async function gameLogic(endpoint, params, query, m, client) {
         game.board[aiMoveIdx] = 'ai';
         game.turn = 'user';
         await apiWriteData('rooms', roomsData);
-        initialMessage += `Giliran AI:\n${renderBoard(game.board)}\nGiliran kamu, kirim nomor kotak (1-9) untuk langkah selanjutnya.`;
-        return initialMessage;
+        return `Giliran AI:\n${renderBoard(game.board)}\nGiliran kamu, kirim nomor kotak (1-9) untuk langkah selanjutnya.`;
       }
     } else {
       if (game.turn !== 'user') {
@@ -373,31 +372,69 @@ async function gameLogic(endpoint, params, query, m, client) {
       if (game.level === 'mudah') {
         const emptyIndices = game.board.map((cell, index) => cell === null ? index : null).filter(x => x !== null);
         aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-      } else {
-        aiMoveIdx = getBestMove(game.board);
-      }
-      game.board[aiMoveIdx] = 'ai';
-      if (checkWin(game.board, 'ai')) {
-        const usersData = await apiGetData('users');
-        if (!usersData.users[user]) {
-          usersData.users[user] = { points: 0 };
+        game.board[aiMoveIdx] = 'ai';
+        if (checkWin(game.board, 'ai')) {
+          const usersData = await apiGetData('users');
+          if (!usersData.users[user]) {
+            usersData.users[user] = { points: 0 };
+          }
+          usersData.users[user].points = Math.max(usersData.users[user].points - 1, 0);
+          await apiWriteData('users', usersData);
+          delete currentRoom.ttt[user];
+          await apiWriteData('rooms', roomsData);
+          return `Kamu kalah!\n${renderBoard(game.board)}\nPoint -1.`;
         }
-        usersData.users[user].points = Math.max(usersData.users[user].points - 1, 0);
-        await apiWriteData('users', usersData);
-        delete currentRoom.ttt[user];
+        if (game.board.every(cell => cell !== null)) {
+          delete currentRoom.ttt[user];
+          await apiWriteData('rooms', roomsData);
+          return `Permainan seri!\n${renderBoard(game.board)}`;
+        }
+        game.turn = 'user';
         await apiWriteData('rooms', roomsData);
-        const winningMessages = ["YAAH UDAH SUREN AJA UDAH GW YANG MENANG INI","Udah deh, gw menang dari awal","Gak usah rebutan, gw menang aja!","Terserah, gw pasti menang kok!","Sah, gw udah menang!","Jangan heran, gw memang jagonya.","Hahaha, gampang banget menang!","Serius, gimana bisa lawan gw?","Kalah aja, udah pasti gw menang!","Yah, udah jelas gw pemenangnya!"];
-        const randomMessage = winningMessages[Math.floor(Math.random() * winningMessages.length)];
-        return `Kamu kalah!\n${renderBoard(game.board)}\nPoint -1.\n${randomMessage}`;
-      }
-      if (game.board.every(cell => cell !== null)) {
-        delete currentRoom.ttt[user];
+        return `Setelah langkahmu:\n${renderBoard(game.board)}\nGiliran kamu. Kirim nomor kotak (1-9) untuk langkah selanjutnya.`;
+      } else {
+        let bestScore = -Infinity;
+        let bestMove = null;
+        for (let i = 0; i < game.board.length; i++) {
+          if (game.board[i] === null) {
+            game.board[i] = 'ai';
+            let score = minimax(game.board, 0, false);
+            game.board[i] = null;
+            if (score > bestScore) {
+              bestScore = score;
+              bestMove = i;
+            }
+          }
+        }
+        if (bestScore === 0) {
+          delete currentRoom.ttt[user];
+          await apiWriteData('rooms', roomsData);
+          return `Permainan seri!\n${renderBoard(game.board)}`;
+        }
+        const taunts = ["Yah, udah jelas gw bakal menang, bro!", "Santai aja, skor gw udah pasti, kamu kalah deh!", "Gak usah mikir, gw udah jago banget!", "Coba lagi, tapi gw tetep jagonya!", "Hmm, langkahmu lemah, gw menang terus!"];
+        const taunt = taunts[Math.floor(Math.random() * taunts.length)];
+        aiMoveIdx = bestMove;
+        game.board[aiMoveIdx] = 'ai';
+        if (checkWin(game.board, 'ai')) {
+          const usersData = await apiGetData('users');
+          if (!usersData.users[user]) {
+            usersData.users[user] = { points: 0 };
+          }
+          usersData.users[user].points = Math.max(usersData.users[user].points - 1, 0);
+          await apiWriteData('users', usersData);
+          delete currentRoom.ttt[user];
+          await apiWriteData('rooms', roomsData);
+          return `Kamu kalah!\n${renderBoard(game.board)}\nPoint -1.\n${taunt}`;
+        }
+        if (game.board.every(cell => cell !== null)) {
+          delete currentRoom.ttt[user];
+          await apiWriteData('rooms', roomsData);
+          return `Permainan seri!\n${renderBoard(game.board)}`;
+        }
+        game.turn = 'user';
         await apiWriteData('rooms', roomsData);
-        return `Permainan seri!\n${renderBoard(game.board)}`;
+        return `Setelah langkahmu:\n${renderBoard(game.board)}\n${taunt}\nGiliran kamu. Kirim nomor kotak (1-9) untuk langkah selanjutnya.`;
       }
-      game.turn = 'user';
-      await apiWriteData('rooms', roomsData);
-      return `Setelah langkahmu:\n${renderBoard(game.board)}\nGiliran kamu. Kirim nomor kotak (1-9) untuk langkah selanjutnya.`;
     }
   } else {
     return 'Endpoint tidak dikenal';
