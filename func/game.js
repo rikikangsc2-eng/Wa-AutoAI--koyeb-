@@ -189,33 +189,15 @@ async function gameLogic(endpoint, params, query, m, client) {
     const usersData = await apiGetData('users');
     const users = usersData.users;
     const sortedUsers = Object.entries(users).sort(([, a], [, b]) => b.points - a.points).slice(0, 10);
-    let topUsersFormatted = 'Top 10 Poin Tertinggi\n\n';
-    let mentions = [];
-    let positionMessage = '';
-    if (sortedUsers.length > 0) {
-      topUsersFormatted += '```\n';
-      topUsersFormatted += 'No.  Username        Points\n';
-      topUsersFormatted += '-------------------------\n';
-      sortedUsers.forEach(([userName, data], index) => {
-        const displayName = data.name ? data.name : userName;
-        const rank = String(index + 1).padEnd(3);
-        const username = `@${displayName}`;
-        const points = String(data.points).padEnd(6);
-        topUsersFormatted += `${rank}  ${username} ${points}\n`;
-        mentions.push(`${userName}@s.whatsapp.net`);
-        if (userName === user) {
-          if (index === 0) positionMessage = "wahh hebat banget ada di peringkat pertama 😁";
-          else if (index <= 2) positionMessage = `Selamat! Kamu berada di peringkat ${index + 1} besar!`;
-          else if (index >= sortedUsers.length - 2) positionMessage = `Lumayan lah ya, peringkat ${index + 1}.`;
-          else positionMessage = `Kamu di peringkat ${index + 1}, biasa aja sih.`;
-        }
-      });
-      topUsersFormatted += '```';
-    } else {
-      topUsersFormatted += 'Belum ada pemain yang memiliki poin.';
-      positionMessage = 'Ayo main biar ada poinnya!';
-    }
-    client.sendMessage(m.chat, { text: topUsersFormatted + '\n' + positionMessage, mentions: mentions }, { qouted: m });
+    let topText = '';
+    sortedUsers.forEach(([userName, data], index) => {
+      const displayName = data.name ? data.name : userName;
+      topText += `${index + 1}. @${displayName} - ${data.points}\n`;
+    });
+    topText += "Anda bisa mengubah Username di .setname\n\n*Note:* Tiga sepuh bakal di refresh 24 jam";
+    const topImageResponse = await axios.get('https://express-vercel-ytdl.vercel.app/top', { responseType: 'arraybuffer' });
+    const imageBuffer = topImageResponse.data;
+    await client.sendMessage(m.chat, { image: imageBuffer, caption: topText }, { quoted: m });
     return null;
   } else if (endpoint === 'nyerah') {
     const roomsData = await apiGetData('rooms');
@@ -347,11 +329,11 @@ async function gameLogic(endpoint, params, query, m, client) {
       let tauntText = "";
       if (game.level === 'sulit' && game.board.some(cell => cell === null) && aiBestScore > 0) {
         const taunts = [
-          "Wah, kamu makin kewalahan nih!",
-          "Cieee, kalah terus nih!",
-          "Gampang banget, kan?",
-          "Udah, nyerah aja lah!",
-          "Hahaha, bot udah jago banget!"
+          "Gak bisa ngalahin gua udah",
+          "Perjuangan sia sia bro",
+          "Ngarep banget menang Awok awok",
+          "Lah kocak?!",
+          "Loh blunder mas?"
         ];
         tauntText = "\n" + taunts[Math.floor(Math.random() * taunts.length)];
       }
@@ -393,13 +375,13 @@ async function gameLogic(endpoint, params, query, m, client) {
 }
 
 function renderBoard(board) {
-  const numberEmojis = ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣"];
+  const numberEmojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
   const symbols = board.map((cell, index) => {
     if (cell === 'user') return '❌';
     if (cell === 'ai') return '⭕';
     return numberEmojis[index];
   });
-  return `${symbols.slice(0,3).join(' ')}\n${symbols.slice(3,6).join(' ')}\n${symbols.slice(6,9).join(' ')}`;
+  return `${symbols.slice(0, 3).join(' ')}\n${symbols.slice(3, 6).join(' ')}\n${symbols.slice(6, 9).join(' ')}`;
 }
 
 function checkWin(board, player) {
