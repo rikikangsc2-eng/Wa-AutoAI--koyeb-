@@ -295,6 +295,13 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) { 
+        case "setname":{
+          const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
+  const query = { text: msg };
+          const gameResponse = await game.gameLogic("setname", params, query, m, client);
+          m.reply(gameResponse);
+          break;
+        }
         case "tictactoe":
         case "ttt": {
   const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
@@ -674,19 +681,6 @@ Dirasakan: ${gempaData.dirasakan}
           } else {
             m.reply("User yang mau di jadikan prem");
           }
-          break;
-        };
-
-        case "set": {
-          if (!msg) return m.reply("*Contoh:* .set Kamu adalah Alicia gadis 17 tahun...\n\n*Note:* Anda dapat mereset prompt ke dafault dengan mengetik *.bawaan*");
-          const hasil = await ai.handleTextQuery("setPrompt:" + msg, user);
-          m.reply(hasil.trim());
-          break;
-        };
-
-        case "bawaan": {
-          const hasilBawaan = await ai.handleTextQuery("resetprompt", user);
-          m.reply(hasilBawaan.trim());
           break;
         };
 

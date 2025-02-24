@@ -197,8 +197,9 @@ async function gameLogic(endpoint, params, query, m, client) {
       topUsersFormatted += 'No.  Username        Points\n';
       topUsersFormatted += '-------------------------\n';
       sortedUsers.forEach(([userName, data], index) => {
+        const displayName = data.name ? data.name : userName;
         const rank = String(index + 1).padEnd(3);
-        const username = `@${userName}`;
+        const username = `@${displayName}`;
         const points = String(data.points).padEnd(6);
         topUsersFormatted += `${rank}  ${username} ${points}\n`;
         mentions.push(`${userName}@s.whatsapp.net`);
@@ -371,6 +372,20 @@ async function gameLogic(endpoint, params, query, m, client) {
       game.turn = 'user';
       await apiWriteData('rooms', roomsData);
       return `Setelah langkahmu:\n${renderBoard(game.board)}\nGiliran kamu. Kirim nomor kotak (1-9) untuk langkah selanjutnya.${tauntText}`;
+    }
+  } else if (endpoint === 'setname') {
+    const usersData = await apiGetData('users');
+    let newName = text;
+    if (!newName) return 'ketik `.setname nama-kamu` atau `.setname dafault`';
+    if (!usersData.users[user]) usersData.users[user] = { points: 0 };
+    if (newName.toLowerCase() === 'dafault') {
+      delete usersData.users[user].name;
+      await apiWriteData('users', usersData);
+      return 'Nama telah di-reset ke default.';
+    } else {
+      usersData.users[user].name = newName;
+      await apiWriteData('users', usersData);
+      return `Nama telah disetel ke ${newName}.`;
     }
   } else {
     return 'Endpoint tidak dikenal';
