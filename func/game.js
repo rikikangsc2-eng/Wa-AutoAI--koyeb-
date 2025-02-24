@@ -215,7 +215,7 @@ async function gameLogic(endpoint, params, query, m, client) {
       topUsersFormatted += 'Belum ada pemain yang memiliki poin.';
       positionMessage = 'Ayo main biar ada poinnya!';
     }
-    const finalCaption = topUsersFormatted + '\n' + positionMessage + "\n`_Anda bisa mengubah Username di .setname_\n\n*Note:* 3 sepuh refresh 24 jam";
+    const finalCaption = topUsersFormatted + '\n' + positionMessage + "\n_Anda bisa mengubah Username di_ `.setname_`\n\n*Note:* 3 sepuh refresh 24 jam";
     const imgResponse = await axios.get('https://express-vercel-ytdl.vercel.app/top', { responseType: 'arraybuffer' });
     const imageBuffer = Buffer.from(imgResponse.data);
     client.sendMessage(m.chat, { image: imageBuffer, caption: finalCaption, mentions: mentions, mimetype: "image/jpeg" }, { quoted: m });
