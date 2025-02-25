@@ -199,10 +199,10 @@ async function gameLogic(endpoint, params, query, m, client) {
       sortedUsers.forEach(([userName, data], index) => {
         const displayName = data.name ? data.name : userName;
         const rank = String(index + 1).padEnd(3);
-        const username = `@${displayName}`;
+        const username = data.name ? displayName : `@${displayName}`;
         const points = String(data.points).padEnd(6);
         topUsersFormatted += `${rank}  ${username} ${points}\n`;
-        mentions.push(`${userName}@s.whatsapp.net`);
+        if (!data.name) mentions.push(`${userName}@s.whatsapp.net`);
         if (userName === user) {
           if (index === 0) positionMessage = "wahh hebat banget ada di peringkat pertama 😁";
           else if (index <= 2) positionMessage = `Selamat! Kamu berada di peringkat ${index + 1} besar!`;
@@ -215,7 +215,7 @@ async function gameLogic(endpoint, params, query, m, client) {
       topUsersFormatted += 'Belum ada pemain yang memiliki poin.';
       positionMessage = 'Ayo main biar ada poinnya!';
     }
-    const finalCaption = topUsersFormatted + '\n' + positionMessage + "\n_Anda bisa mengubah Username di_ `.setname_`\n\n*Note:* 3 sepuh refresh 24 jam";
+    const finalCaption = topUsersFormatted + '\n' + positionMessage + "\n_Anda bisa mengubah Username di_ `.setname`\n\n*Note:* 3 sepuh refresh 24 jam";
     const imgResponse = await axios.get('https://express-vercel-ytdl.vercel.app/top', { responseType: 'arraybuffer' });
     const imageBuffer = Buffer.from(imgResponse.data);
     client.sendMessage(m.chat, { image: imageBuffer, caption: finalCaption, mentions: mentions, mimetype: "image/jpeg" }, { quoted: m });
