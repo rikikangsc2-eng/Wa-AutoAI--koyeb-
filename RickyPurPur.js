@@ -136,11 +136,14 @@ const bug = async (err) => {
 
 const user = `${m.sender.split("@")[0]}`
 
+
     const autoAI = async () => {
       try {
         if (gambar[m.sender]) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
           await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
           mkey[m.sender] = null;
+          await new Promise(resolve => setTimeout(resolve, 1000));
           await m.reply("*Memproses Gambar...*");
         }
         const hasil = gambar[m.sender]
@@ -150,132 +153,103 @@ const user = `${m.sender.split("@")[0]}`
         const remainingText = cleanedText
           .replace(/\*\*(.*?)\*\*/g, "*$1*")
           .replace(/```(.*?)```/g, "`$1`");
-
-        const parts = remainingText.split(
-          /(\*\*[^\*]+\*\*|song.*?|diffusion.*?|animesearch.*?)/
-        );
-
+        const parts = remainingText.split(/(\*\*[^\*]+\*\*|\[song.*?\]|\[Song.*?\]|\[song =.*?\]|\[Song =.*?\]|\[diffusion.*?\]|\[Diffusion.*?\]|\[diffusion =.*?\]|\[Diffusion =.*?\]|\[animesearch.*?\]|\[Animesearch.*?\]|\[animesearch =.*?\]|\[Animesearch =.*?\])/);
         const mediaQueue = [];
         const textQueue = [];
         let currentText = "";
-
         for (let i = 0; i < parts.length; i++) {
-          if (parts[i].toLowerCase().startsWith("[song=")) {
-            const query = parts[i].replace(/^.*?=/i, "").replace(/$/, "").trim();
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            m.reply("`Alicia sedang mencari lagu; " + query + ". Tunggu ya...`");
+          if (parts[i].toLowerCase().startsWith("[song=") || parts[i].toLowerCase().startsWith("[song =")) {
+            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await m.reply("`Alicia sedang mencari lagu; " + query + ". Tunggu ya...`");
             await play.get(m, client, query);
-          } else if (parts[i].toLowerCase().startsWith("[diffusion=")) {
-            const query = parts[i].replace(/^.*?=/i, "").replace(/$/, "").trim();
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            m.reply("`Alicia sedang membuat gambar; " + query + ". Tunggu ya...`");
-
+          } else if (parts[i].toLowerCase().startsWith("[animesearch=") || parts[i].toLowerCase().startsWith("[animesearch =")) {
+            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await m.reply("`Sedang mencari anime...`");
+            try {
+              const response = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&sfw`);
+              const result = response.data.data;
+              if (result.length === 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await m.reply("Anime tidak ditemukan.");
+              } else {
+                const anime = result[0];
+                const originalSynopsis = anime.synopsis;
+                const aiPrompt = `Terjemahkan dan ringkas sinopsis di bawah secara langsung tanpa basa basi:\n\n${originalSynopsis}`;
+                const summarizedSynopsis = await ai.handleTextQuery(aiPrompt, user);
+                const genres = anime.genres.map(genre => genre.name).join(", ");
+                const themes = anime.themes.map(theme => theme.name).join(", ");
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await client.sendMessage(m.chat, {
+                  image: { url: anime.images.jpg.image_url },
+                  caption: `*Title:* ${anime.title}\n*Genre:* ${genres}\n*Theme:* ${themes}\n*Rating:* ${anime.score}\n\n*Sinopsis:* ${summarizedSynopsis.trim()}`
+                }, { quoted: m });
+              }
+            } catch (error) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              await m.reply("`Gagal mencari anime: " + error.message + "`");
+            }
+          } else if (parts[i].toLowerCase().startsWith("[diffusion=") || parts[i].toLowerCase().startsWith("[diffusion =")) {
+            const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await m.reply("`Alicia sedang membuat gambar; " + query + ". Tunggu ya...`");
             try {
               const response = await axios.post(
                 "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
                 { inputs: query },
-                {
-                  headers: { "Content-Type": "application/json", Authorization: global.hf_token },
-                  responseType: "arraybuffer",
-                }
+                { headers: { "Content-Type": "application/json", Authorization: global.hf_token }, responseType: "arraybuffer" }
               );
               const imageBuffer = Buffer.from(response.data);
-              await new Promise((resolve) => setTimeout(resolve, 1000));
+              await new Promise(resolve => setTimeout(resolve, 1000));
               await client.sendMessage(m.chat, { image: imageBuffer, caption: query }, { quoted: m });
             } catch (error) {
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-              m.reply("`Gagal menggunakan Hugging Face, mencoba API alternatif...`");
-
               try {
                 const nexraResponse = await axios.post(
                   "https://nexra.aryahcr.cc/api/image/complements",
                   { prompt: query, model: "stablediffusion-1.5" },
                   { headers: { "Content-Type": "application/json" } }
                 );
-
                 let id = nexraResponse.data.id;
                 let status = "pending";
                 let imageUrl = null;
-
-                while (status === "pending") {
-                  await new Promise((resolve) => setTimeout(resolve, 2000));
-                  const checkResponse = await axios.get(
-                    `https://nexra.aryahcr.cc/api/image/complements/${encodeURIComponent(id)}`
-                  );
-
+                let attempts = 0;
+                while (status === "pending" && attempts < 5) {
+                  await new Promise(resolve => setTimeout(resolve, 3000));
+                  const checkResponse = await axios.get("https://nexra.aryahcr.cc/api/image/complements/" + encodeURIComponent(id));
                   status = checkResponse.data.status;
                   if (status === "completed") {
                     imageUrl = checkResponse.data.url;
                   } else if (status === "error" || status === "not_found") {
                     throw new Error("Gagal membuat gambar dengan API alternatif.");
                   }
+                  attempts++;
                 }
-
-                if (imageUrl) {
-                  await new Promise((resolve) => setTimeout(resolve, 1000));
-                  await client.sendMessage(m.chat, { image: { url: imageUrl }, caption: query }, { quoted: m });
-                }
+                if (!imageUrl) throw new Error("Gagal membuat gambar dengan API alternatif.");
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await client.sendMessage(m.chat, { image: { url: imageUrl }, caption: query }, { quoted: m });
               } catch (altError) {
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-                m.reply("`Gagal membuat gambar menggunakan kedua API.`");
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await m.reply("`Gagal membuat gambar menggunakan kedua API.`");
               }
-            }
-          } else if (parts[i].toLowerCase().startsWith("[animesearch=")) {
-            const query = parts[i].replace(/^.*?=/i, "").replace(/$/, "").trim();
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            m.reply("`Sedang mencari anime...`");
-
-            try {
-              const response = await axios.get(
-                `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&sfw`
-              );
-              const result = response.data.data;
-              if (result.length === 0) return m.reply("Anime tidak ditemukan.");
-
-              const anime = result[0];
-              const originalSynopsis = anime.synopsis;
-              const aiPrompt = `Terjemahkan dan ringkas sinopsis di bawah secara langsung tanpa basa basi:\n\n${originalSynopsis}`;
-              const summarizedSynopsis = await ai.handleTextQuery(aiPrompt, user);
-              const genres = anime.genres.map((genre) => genre.name).join(", ");
-              const themes = anime.themes.map((theme) => theme.name).join(", ");
-
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-              await client.sendMessage(
-                m.chat,
-                {
-                  image: { url: anime.images.jpg.image_url },
-                  caption: `*Title:* ${anime.title}\n*Genre:* ${genres}\n*Theme:* ${themes}\n*Rating:* ${anime.score}\n\n*Sinopsis:* ${summarizedSynopsis.trim()}`,
-                },
-                { quoted: m }
-              );
-            } catch (error) {
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-              m.reply("`Gagal mencari anime: " + error.message + "`");
             }
           } else {
             currentText += `${currentText ? "\n" : ""}${parts[i].trim()}`;
           }
         }
-
         if (currentText.trim()) {
           textQueue.push(currentText.trim());
         }
-
         for (const media of mediaQueue) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 1000));
           if (media.type === "image") {
             await client.sendMessage(m.chat, { image: media.buffer, caption: media.caption }, { quoted: m });
           } else if (media.type === "video") {
-            await client.sendMessage(
-              m.chat,
-              { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" },
-              { quoted: m }
-            );
+            await client.sendMessage(m.chat, { video: { url: media.url }, caption: media.caption, mimetype: "video/mp4" }, { quoted: m });
           }
         }
-
         for (const text of textQueue) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 1000));
           await m.reply(text);
         }
       } catch (error) {
@@ -284,7 +258,7 @@ const user = `${m.sender.split("@")[0]}`
         delete gambar[m.sender];
       }
     };
-    
+
 //Jawab GAME
     if (m.quoted && !cekCmd(m.body)) {
       if (m.quoted.text.includes("AliciaGames")){
