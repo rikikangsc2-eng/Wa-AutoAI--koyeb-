@@ -1,16 +1,134 @@
 const axios = require('axios');
 const API_ENDPOINT = 'https://copper-ambiguous-velvet.glitch.me/data';
 const USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; RMX2185 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.260 Mobile Safari/537.36';
-const apiGetData = async (dataType) => { try { const response = await axios.get(`${API_ENDPOINT}/${dataType}`, { headers: { 'User-Agent': USER_AGENT } }); return response.data; } catch (error) { console.error(`Failed to get ${dataType} data from API:`, error); return { users: {}, rooms: {} }; } };
-const apiWriteData = async (dataType, data) => { try { await axios.post(`${API_ENDPOINT}/${dataType}`, data, { headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/json' } }); return true; } catch (error) { console.error(`Failed to write ${dataType} data to API:`, error); return false; } };
-const fetchSoalSusunKata = async () => { try { const response = await axios.get('https://github.com/BochilTeam/database/raw/refs/heads/master/games/susunkata.json'); return response.data; } catch (error) { console.error("Failed to fetch soal susun kata:", error); return []; } };
-const fetchSoalSiapakahAku = async () => { try { const response = await axios.get('https://github.com/BochilTeam/database/raw/refs/heads/master/games/siapakahaku.json'); return response.data; } catch (error) { console.error("Failed to fetch soal siapakah aku:", error); return []; } };
-const fetchSoalTebakTebakan = async () => { try { const response = await axios.get('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebaktebakan.json'); return response.data; } catch (error) { console.error("Failed to fetch soal tebak tebakan:", error); return []; } };
-const fetchSoalTebakGambar = async () => { try { const response = await axios.get('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebakgambar.json'); return response.data; } catch (error) { console.error("Failed to fetch soal tebak gambar:", error); return []; } };
-function generateHint(answer, percentage) { const answerArray = answer.toLowerCase().split(''); const visibleIndices = []; for (let i = 0; i < answerArray.length; i++) { if (answerArray[i] !== ' ') visibleIndices.push(i); } const shuffledIndices = visibleIndices.sort(() => Math.random() - 0.5); const revealCount = Math.ceil(shuffledIndices.length * percentage); const indicesToReveal = new Set(shuffledIndices.slice(0, revealCount)); let hint = ''; for (let i = 0; i < answerArray.length; i++) { if (indicesToReveal.has(i)) hint += answerArray[i]; else if (answerArray[i] === ' ') hint += ' '; else hint += '×'; } return hint; }
-function getDailyResetTime() { const now = new Date(); const options = { timeZone: "Asia/Jakarta", hour12: false }; const localStr = now.toLocaleString("en-US", options); const local = new Date(localStr); local.setHours(0,0,0,0); if (local.getTime() <= now.getTime()) local.setDate(local.getDate() + 1); return local.getTime(); }
-function getWeeklyResetTime() { const now = new Date(); const options = { timeZone: "Asia/Jakarta", hour12: false }; const localStr = now.toLocaleString("en-US", options); const local = new Date(localStr); local.setHours(0,0,0,0); const day = local.getDay(); let daysToAdd = day === 1 ? 7 : day === 0 ? 1 : 8 - day; local.setDate(local.getDate() + daysToAdd); return local.getTime(); }
-function getMonthlyResetTime() { const now = new Date(); const options = { timeZone: "Asia/Jakarta", hour12: false }; const localStr = now.toLocaleString("en-US", options); const local = new Date(localStr); local.setHours(0,0,0,0); local.setDate(1); local.setMonth(local.getMonth() + 1); return local.getTime(); }
+
+const apiGetData = async (dataType) => { 
+  try { 
+    const response = await axios.get(`${API_ENDPOINT}/${dataType}`, { headers: { 'User-Agent': USER_AGENT } }); 
+    return response.data; 
+  } catch (error) { 
+    console.error(`Failed to get ${dataType} data from API:`, error); 
+    return { users: {}, rooms: {} }; 
+  } 
+};
+
+const apiWriteData = async (dataType, data) => { 
+  try { 
+    await axios.post(`${API_ENDPOINT}/${dataType}`, data, { headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/json' } }); 
+    return true; 
+  } catch (error) { 
+    console.error(`Failed to write ${dataType} data to API:`, error); 
+    return false; 
+  } 
+};
+
+const fetchSoalSusunKata = async () => { 
+  try { 
+    const response = await axios.get('https://github.com/BochilTeam/database/raw/refs/heads/master/games/susunkata.json'); 
+    return response.data; 
+  } catch (error) { 
+    console.error("Failed to fetch soal susun kata:", error); 
+    return []; 
+  } 
+};
+
+const fetchSoalSiapakahAku = async () => { 
+  try { 
+    const response = await axios.get('https://github.com/BochilTeam/database/raw/refs/heads/master/games/siapakahaku.json'); 
+    return response.data; 
+  } catch (error) { 
+    console.error("Failed to fetch soal siapakah aku:", error); 
+    return []; 
+  } 
+};
+
+const fetchSoalTebakTebakan = async () => { 
+  try { 
+    const response = await axios.get('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebaktebakan.json'); 
+    return response.data; 
+  } catch (error) { 
+    console.error("Failed to fetch soal tebak tebakan:", error); 
+    return []; 
+  } 
+};
+
+const fetchSoalTebakGambar = async () => { 
+  try { 
+    const response = await axios.get('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebakgambar.json'); 
+    return response.data; 
+  } catch (error) { 
+    console.error("Failed to fetch soal tebak gambar:", error); 
+    return []; 
+  } 
+};
+
+function generateHint(answer, percentage) { 
+  const answerArray = answer.toLowerCase().split(''); 
+  const visibleIndices = []; 
+  for (let i = 0; i < answerArray.length; i++) { 
+    if (answerArray[i] !== ' ') visibleIndices.push(i); 
+  } 
+  const shuffledIndices = visibleIndices.sort(() => Math.random() - 0.5); 
+  const revealCount = Math.ceil(shuffledIndices.length * percentage); 
+  const indicesToReveal = new Set(shuffledIndices.slice(0, revealCount)); 
+  let hint = ''; 
+  for (let i = 0; i < answerArray.length; i++) { 
+    if (indicesToReveal.has(i)) hint += answerArray[i]; 
+    else if (answerArray[i] === ' ') hint += ' '; 
+    else hint += '×'; 
+  } 
+  return hint; 
+}
+
+function getDailyResetTime() { 
+  const now = new Date(); 
+  const options = { timeZone: "Asia/Jakarta", hour12: false }; 
+  const localStr = now.toLocaleString("en-US", options); 
+  const local = new Date(localStr); 
+  local.setHours(0,0,0,0); 
+  if (local.getTime() <= now.getTime()) local.setDate(local.getDate() + 1); 
+  return local.getTime(); 
+}
+
+function getWeeklyResetTime() { 
+  const now = new Date(); 
+  const options = { timeZone: "Asia/Jakarta", hour12: false }; 
+  const localStr = now.toLocaleString("en-US", options); 
+  const local = new Date(localStr); 
+  local.setHours(0,0,0,0); 
+  const day = local.getDay(); 
+  let daysToAdd = day === 1 ? 7 : day === 0 ? 1 : 8 - day; 
+  local.setDate(local.getDate() + daysToAdd); 
+  return local.getTime(); 
+}
+
+function getMonthlyResetTime() { 
+  const now = new Date(); 
+  const options = { timeZone: "Asia/Jakarta", hour12: false }; 
+  const localStr = now.toLocaleString("en-US", options); 
+  const local = new Date(localStr); 
+  local.setHours(0,0,0,0); 
+  local.setDate(1); 
+  local.setMonth(local.getMonth() + 1); 
+  return local.getTime(); 
+}
+
+// Fungsi helper untuk memastikan data user terinisialisasi
+function initializeUser(users, user) {
+  if (!users[user]) {
+    users[user] = {
+      points: 0,
+      harian: { value: 0, expires: getDailyResetTime() },
+      mingguan: { value: 0, expires: getWeeklyResetTime() },
+      bulanan: { value: 0, expires: getMonthlyResetTime() }
+    };
+  } else {
+    if (!users[user].harian) users[user].harian = { value: 0, expires: getDailyResetTime() };
+    if (!users[user].mingguan) users[user].mingguan = { value: 0, expires: getWeeklyResetTime() };
+    if (!users[user].bulanan) users[user].bulanan = { value: 0, expires: getMonthlyResetTime() };
+  }
+}
+
 async function resetExpiredUserData() {
   const usersData = await apiGetData('users');
   let updated = false;
@@ -27,6 +145,7 @@ async function resetExpiredUserData() {
   if (updated) await apiWriteData('users', usersData);
 }
 setInterval(resetExpiredUserData, 3600000);
+
 async function gameLogic(endpoint, params, query, m, client) {
   const { user, room } = params || {};
   const { text, hintType } = query || {};
@@ -43,6 +162,7 @@ async function gameLogic(endpoint, params, query, m, client) {
     await apiWriteData('rooms', roomsData);
     return soalMessage(selectedSoal);
   };
+
   if (endpoint === 'susunkata') {
     return await ambilSoal(fetchSoalSusunKata, 'susunkata', (soal) => `Soal susun kata berikut: ${soal.soal} - Tipe: ${soal.tipe}`);
   } else if (endpoint === 'siapakahaku') {
@@ -72,11 +192,12 @@ async function gameLogic(endpoint, params, query, m, client) {
     const jawabanUser = text ? text.toLowerCase() : '';
     let attempts = currentRoom.currentQuestion.attempts || 0;
     if (jawabanUser === jawabanBenar) {
-      if (!usersData.users[user]) usersData.users[user] = { points: 0 };
-      usersData.users[user].points = (usersData.users[user].points || 0) + 3;
-      usersData.users[user].harian.value = (usersData.users[user].harian ? usersData.users[user].harian.value : 0) + 3;
-      usersData.users[user].mingguan.value = (usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0) + 3;
-      usersData.users[user].bulanan.value = (usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0) + 3;
+      // Pastikan data user sudah terinisialisasi
+      initializeUser(usersData.users, user);
+      usersData.users[user].points += 3;
+      usersData.users[user].harian.value += 3;
+      usersData.users[user].mingguan.value += 3;
+      usersData.users[user].bulanan.value += 3;
       await apiWriteData('users', usersData);
       roomsData.rooms[room].currentQuestion = null;
       await apiWriteData('rooms', roomsData);
@@ -87,11 +208,11 @@ async function gameLogic(endpoint, params, query, m, client) {
       await apiWriteData('rooms', roomsData);
       currentRoom = roomsData.rooms[room];
       if (attempts >= 3) {
-        if (!usersData.users[user]) usersData.users[user] = { points: 0 };
-        usersData.users[user].points = Math.max((usersData.users[user].points || 0) - 3, 0);
-        usersData.users[user].harian.value = Math.max((usersData.users[user].harian ? usersData.users[user].harian.value : 0) - 3, 0);
-        usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0) - 3, 0);
-        usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0) - 3, 0);
+        initializeUser(usersData.users, user);
+        usersData.users[user].points = Math.max(usersData.users[user].points - 3, 0);
+        usersData.users[user].harian.value = Math.max(usersData.users[user].harian.value - 3, 0);
+        usersData.users[user].mingguan.value = Math.max(usersData.users[user].mingguan.value - 3, 0);
+        usersData.users[user].bulanan.value = Math.max(usersData.users[user].bulanan.value - 3, 0);
         await apiWriteData('users', usersData);
         const jawaban = currentRoom.currentQuestion.jawaban;
         roomsData.rooms[room].currentQuestion = null;
@@ -116,25 +237,28 @@ async function gameLogic(endpoint, params, query, m, client) {
     else if (hintType === 'mahal') { hintPercentage = 0.5; pointCost = 1; }
     else if (hintType === 'sultan') { hintPercentage = 0.8; pointCost = 2; }
     else { return 'Tipe hint tidak valid. Pilih: murah, mahal, sultan'; }
+
+    initializeUser(usersData.users, user);
+
     if (pointCost > 0) {
-      if (!usersData.users[user] || (usersData.users[user].points || 0) < pointCost) {
-        return `Poin tidak cukup untuk hint ${hintType}. Butuh ${pointCost} poin. Poin kamu: ${usersData.users[user] ? usersData.users[user].points : 0}`;
+      if (usersData.users[user].points < pointCost) {
+        return `Poin tidak cukup untuk hint ${hintType}. Butuh ${pointCost} poin. Poin kamu: ${usersData.users[user].points}`;
       }
       usersData.users[user].points -= pointCost;
-      usersData.users[user].harian.value = Math.max((usersData.users[user].harian ? usersData.users[user].harian.value : 0) - pointCost, 0);
-      usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0) - pointCost, 0);
-      usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0) - pointCost, 0);
+      usersData.users[user].harian.value = Math.max(usersData.users[user].harian.value - pointCost, 0);
+      usersData.users[user].mingguan.value = Math.max(usersData.users[user].mingguan.value - pointCost, 0);
+      usersData.users[user].bulanan.value = Math.max(usersData.users[user].bulanan.value - pointCost, 0);
       await apiWriteData('users', usersData);
     }
     hintText = generateHint(jawaban, hintPercentage);
     return `Hint ${hintType} (${pointCost > 0 ? `-${pointCost} poin` : 'gratis'}):\nJawaban: ${hintText}`;
   } else if (endpoint === 'point') {
     const usersData = await apiGetData('users');
-    if (!usersData.users[user]) usersData.users[user] = { points: 0 };
-    const globalPoints = usersData.users[user].points || 0;
-    const harian = usersData.users[user].harian ? usersData.users[user].harian.value : 0;
-    const mingguan = usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0;
-    const bulanan = usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0;
+    initializeUser(usersData.users, user);
+    const globalPoints = usersData.users[user].points;
+    const harian = usersData.users[user].harian.value;
+    const mingguan = usersData.users[user].mingguan.value;
+    const bulanan = usersData.users[user].bulanan.value;
     return `Poin Semua: ${globalPoints}\nPoin Harian: ${harian}\nPoin Mingguan: ${mingguan}\nPoin Bulanan: ${bulanan}`;
   } else if (endpoint === 'top') {
     const type = (text || '').toLowerCase();
@@ -183,22 +307,22 @@ async function gameLogic(endpoint, params, query, m, client) {
       const game = currentRoom.ttt[user];
       delete currentRoom.ttt[user];
       await apiWriteData('rooms', roomsData);
-      if (!usersData.users[user]) usersData.users[user] = { points: 0 };
+      initializeUser(usersData.users, user);
       usersData.users[user].points = Math.max(usersData.users[user].points - 1, 0);
-      usersData.users[user].harian.value = Math.max((usersData.users[user].harian ? usersData.users[user].harian.value : 0) - 1, 0);
-      usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0) - 1, 0);
-      usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0) - 1, 0);
+      usersData.users[user].harian.value = Math.max(usersData.users[user].harian.value - 1, 0);
+      usersData.users[user].mingguan.value = Math.max(usersData.users[user].mingguan.value - 1, 0);
+      usersData.users[user].bulanan.value = Math.max(usersData.users[user].bulanan.value - 1, 0);
       await apiWriteData('users', usersData);
       return `Yah nyerah? Cupu! Permainan tic tac toe kamu dihentikan.\nPoint -1.`;
     } else if (currentRoom.currentQuestion) {
       const jawabanBenar = currentRoom.currentQuestion.jawaban;
       currentRoom.currentQuestion = null;
       await apiWriteData('rooms', roomsData);
-      if (!usersData.users[user]) usersData.users[user] = { points: 0 };
-      usersData.users[user].points = Math.max((usersData.users[user].points || 0) - 3, 0);
-      usersData.users[user].harian.value = Math.max((usersData.users[user].harian ? usersData.users[user].harian.value : 0) - 3, 0);
-      usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0) - 3, 0);
-      usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0) - 3, 0);
+      initializeUser(usersData.users, user);
+      usersData.users[user].points = Math.max(usersData.users[user].points - 3, 0);
+      usersData.users[user].harian.value = Math.max(usersData.users[user].harian.value - 3, 0);
+      usersData.users[user].mingguan.value = Math.max(usersData.users[user].mingguan.value - 3, 0);
+      usersData.users[user].bulanan.value = Math.max(usersData.users[user].bulanan.value - 3, 0);
       await apiWriteData('users', usersData);
       return `Yah nyerah? Cupu! Jawaban yang benar adalah: ${jawabanBenar}. Point -3.`;
     } else {
@@ -224,10 +348,26 @@ async function gameLogic(endpoint, params, query, m, client) {
       if (turn === 'user') { initialMessage += "Giliran kamu, kirim nomor kotak (1-9) untuk menempatkan ❌."; return initialMessage; }
       else {
         let aiMoveIdx;
-        if (board.every(cell => cell === null)) { const groups = { corner: [0,2,6,8], center: [4], edge: [1,3,5,7] }; const groupKeys = Object.keys(groups); const randomGroupKey = groupKeys[Math.floor(Math.random() * groupKeys.length)]; const possibleMoves = groups[randomGroupKey]; aiMoveIdx = possibleMoves[Math.floor(Math.random() * possibleMoves.length)]; }
-        else { if (level === 'mudah') { const emptyIndices = board.map((cell, index) => cell === null ? index : null).filter(x => x !== null); aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)]; } else { aiMoveIdx = getBestMove(board); } }
-        game.board[aiMoveIdx] = 'ai'; game.turn = 'user'; await apiWriteData('rooms', roomsData);
-        initialMessage += `Giliran AI:\n${renderBoard(game.board)}\nGiliran kamu, kirim nomor kotak (1-9) untuk langkah selanjutnya.`; return initialMessage;
+        if (board.every(cell => cell === null)) { 
+          const groups = { corner: [0,2,6,8], center: [4], edge: [1,3,5,7] }; 
+          const groupKeys = Object.keys(groups); 
+          const randomGroupKey = groupKeys[Math.floor(Math.random() * groupKeys.length)]; 
+          const possibleMoves = groups[randomGroupKey]; 
+          aiMoveIdx = possibleMoves[Math.floor(Math.random() * possibleMoves.length)]; 
+        }
+        else { 
+          if (level === 'mudah') { 
+            const emptyIndices = board.map((cell, index) => cell === null ? index : null).filter(x => x !== null); 
+            aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)]; 
+          } else { 
+            aiMoveIdx = getBestMove(board); 
+          } 
+        }
+        game.board[aiMoveIdx] = 'ai'; 
+        game.turn = 'user'; 
+        await apiWriteData('rooms', roomsData);
+        initialMessage += `Giliran AI:\n${renderBoard(game.board)}\nGiliran kamu, kirim nomor kotak (1-9) untuk langkah selanjutnya.`; 
+        return initialMessage;
       }
     } else {
       if (game.turn !== 'user') return "Tunggu giliranmu.";
@@ -238,40 +378,86 @@ async function gameLogic(endpoint, params, query, m, client) {
       game.board[idx] = 'user';
       if (checkWin(game.board, 'user')) {
         const usersData = await apiGetData('users');
-        if (!usersData.users[user]) usersData.users[user] = { points: 0 };
+        initializeUser(usersData.users, user);
         let pointMessage = "";
-        if (game.level === 'mudah') { usersData.users[user].points += 5; usersData.users[user].harian.value += 5; usersData.users[user].mingguan.value += 5; usersData.users[user].bulanan.value += 5; pointMessage = "Point +5."; }
-        else { usersData.users[user].points += 99999; usersData.users[user].harian.value += 99999; usersData.users[user].mingguan.value += 99999; usersData.users[user].bulanan.value += 99999; pointMessage = "Point +99999."; }
+        if (game.level === 'mudah') { 
+          usersData.users[user].points += 5; 
+          usersData.users[user].harian.value += 5; 
+          usersData.users[user].mingguan.value += 5; 
+          usersData.users[user].bulanan.value += 5; 
+          pointMessage = "Point +5."; 
+        }
+        else { 
+          usersData.users[user].points += 99999; 
+          usersData.users[user].harian.value += 99999; 
+          usersData.users[user].mingguan.value += 99999; 
+          usersData.users[user].bulanan.value += 99999; 
+          pointMessage = "Point +99999."; 
+        }
         await apiWriteData('users', usersData);
         delete currentRoom.ttt[user];
         await apiWriteData('rooms', roomsData);
         return `Kamu menang!\n${renderBoard(game.board)}\n${pointMessage}`;
       }
-      if (game.board.every(cell => cell !== null)) { delete currentRoom.ttt[user]; await apiWriteData('rooms', roomsData); return `Permainan seri!\n${renderBoard(game.board)}`; }
+      if (game.board.every(cell => cell !== null)) { 
+        delete currentRoom.ttt[user]; 
+        await apiWriteData('rooms', roomsData); 
+        return `Permainan seri!\n${renderBoard(game.board)}`; 
+      }
       game.turn = 'ai';
       let aiMoveIdx;
-      if (game.level === 'mudah') { const emptyIndices = game.board.map((cell, index) => cell === null ? index : null).filter(x => x !== null); aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)]; }
+      if (game.level === 'mudah') { 
+        const emptyIndices = game.board.map((cell, index) => cell === null ? index : null).filter(x => x !== null); 
+        aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)]; 
+      }
       else {
-        let emptyIndices = []; for (let i = 0; i < game.board.length; i++) { if (game.board[i] === null) emptyIndices.push(i); }
-        if (emptyIndices.length === 2 && minimax(game.board, 0, true) === 0) { delete currentRoom.ttt[user]; await apiWriteData('rooms', roomsData); return `Permainan seri!\n${renderBoard(game.board)}`; }
-        else { let bestScore = -Infinity; let bestMove = null; for (let i = 0; i < game.board.length; i++) { if (game.board[i] === null) { game.board[i] = 'ai'; let score = minimax(game.board, 0, false); game.board[i] = null; if (score > bestScore) { bestScore = score; bestMove = i; } } } aiMoveIdx = bestMove; var aiBestScore = bestScore; }
+        let emptyIndices = []; 
+        for (let i = 0; i < game.board.length; i++) { 
+          if (game.board[i] === null) emptyIndices.push(i); 
+        }
+        if (emptyIndices.length === 2 && minimax(game.board, 0, true) === 0) { 
+          delete currentRoom.ttt[user]; 
+          await apiWriteData('rooms', roomsData); 
+          return `Permainan seri!\n${renderBoard(game.board)}`; 
+        }
+        else { 
+          let bestScore = -Infinity; 
+          let bestMove = null; 
+          for (let i = 0; i < game.board.length; i++) { 
+            if (game.board[i] === null) { 
+              game.board[i] = 'ai'; 
+              let score = minimax(game.board, 0, false); 
+              game.board[i] = null; 
+              if (score > bestScore) { bestScore = score; bestMove = i; } 
+            } 
+          } 
+          aiMoveIdx = bestMove; 
+          var aiBestScore = bestScore; 
+        }
       }
       game.board[aiMoveIdx] = 'ai';
       let tauntText = "";
-      if (game.level === 'sulit' && game.board.some(cell => cell === null) && aiBestScore > 0) { const taunts = ["Gak bisa ngalahin gua udah", "Perjuangan sia sia bro", "Ngarep banget menang Awok awok", "Lah kocak?!", "Loh blunder mas?"]; tauntText = "\n" + taunts[Math.floor(Math.random() * taunts.length)]; }
+      if (game.level === 'sulit' && game.board.some(cell => cell === null) && aiBestScore > 0) { 
+        const taunts = ["Gak bisa ngalahin gua udah", "Perjuangan sia sia bro", "Ngarep banget menang Awok awok", "Lah kocak?!", "Loh blunder mas?"]; 
+        tauntText = "\n" + taunts[Math.floor(Math.random() * taunts.length)]; 
+      }
       if (checkWin(game.board, 'ai')) {
         const usersData = await apiGetData('users');
-        if (!usersData.users[user]) usersData.users[user] = { points: 0 };
+        initializeUser(usersData.users, user);
         usersData.users[user].points = Math.max(usersData.users[user].points - 1, 0);
-        usersData.users[user].harian.value = Math.max((usersData.users[user].harian ? usersData.users[user].harian.value : 0) - 1, 0);
-        usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0) - 1, 0);
-        usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0) - 1, 0);
+        usersData.users[user].harian.value = Math.max(usersData.users[user].harian.value - 1, 0);
+        usersData.users[user].mingguan.value = Math.max(usersData.users[user].mingguan.value - 1, 0);
+        usersData.users[user].bulanan.value = Math.max(usersData.users[user].bulanan.value - 1, 0);
         await apiWriteData('users', usersData);
         delete currentRoom.ttt[user];
         await apiWriteData('rooms', roomsData);
         return `Kamu kalah!\n${renderBoard(game.board)}\nPoint -1.${tauntText}`;
       }
-      if (game.board.every(cell => cell !== null)) { delete currentRoom.ttt[user]; await apiWriteData('rooms', roomsData); return `Permainan seri!\n${renderBoard(game.board)}`; }
+      if (game.board.every(cell => cell !== null)) { 
+        delete currentRoom.ttt[user]; 
+        await apiWriteData('rooms', roomsData); 
+        return `Permainan seri!\n${renderBoard(game.board)}`; 
+      }
       game.turn = 'user';
       await apiWriteData('rooms', roomsData);
       return `Setelah langkahmu:\n${renderBoard(game.board)}\nGiliran kamu. Kirim nomor kotak (1-9) untuk langkah selanjutnya.${tauntText}`;
@@ -291,23 +477,32 @@ async function gameLogic(endpoint, params, query, m, client) {
         await apiWriteData('users', usersData);
         return 'Nama tidak valid. Nama di-reset ke default.';
       } else {
-        if (!usersData.users[user]) usersData.users[user] = { points: 0 };
+        initializeUser(usersData.users, user);
         usersData.users[user].name = newName;
         await apiWriteData('users', usersData);
         return `Nama telah disetel ke ${newName}.`;
       }
     }
-  } else { return 'Endpoint tidak dikenal'; }
+  } else { 
+    return 'Endpoint tidak dikenal'; 
+  }
 }
+
 function renderBoard(board) {
   const numberEmojis = ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣"];
-  const symbols = board.map((cell, index) => { if (cell === 'user') return '❌'; if (cell === 'ai') return '⭕'; return numberEmojis[index]; });
+  const symbols = board.map((cell, index) => { 
+    if (cell === 'user') return '❌'; 
+    if (cell === 'ai') return '⭕'; 
+    return numberEmojis[index]; 
+  });
   return `${symbols.slice(0,3).join(' ')}\n${symbols.slice(3,6).join(' ')}\n${symbols.slice(6,9).join(' ')}`;
 }
+
 function checkWin(board, player) {
   const winCombinations = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
   return winCombinations.some(comb => comb.every(index => board[index] === player));
 }
+
 function getBestMove(board) {
   let bestScore = -Infinity;
   let move = null;
@@ -321,6 +516,7 @@ function getBestMove(board) {
   }
   return move;
 }
+
 function minimax(board, depth, isMaximizing) {
   if (checkWin(board, 'ai')) return 10 - depth;
   if (checkWin(board, 'user')) return depth - 10;
@@ -349,4 +545,5 @@ function minimax(board, depth, isMaximizing) {
     return bestScore;
   }
 }
+
 module.exports = { gameLogic };
