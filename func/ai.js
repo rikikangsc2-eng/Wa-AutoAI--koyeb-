@@ -10,7 +10,7 @@ const RAPID_API_KEY = global.rapidapikey;
 const RAPID_API_HOST = "chatgpt-vision1.p.rapidapi.com";
 const RAPID_API_URL = "https://chatgpt-vision1.p.rapidapi.com/matagvision21";
 
-const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.7, top_p: 0.8 };
+const DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 1, top_p: 0.95 };
 
 const userData = {};
 
