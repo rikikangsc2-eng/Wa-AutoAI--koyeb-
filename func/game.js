@@ -11,7 +11,22 @@ function generateHint(answer, percentage) { const answerArray = answer.toLowerCa
 function getDailyResetTime() { const now = new Date(); const options = { timeZone: "Asia/Jakarta", hour12: false }; const localStr = now.toLocaleString("en-US", options); const local = new Date(localStr); local.setHours(0,0,0,0); if (local.getTime() <= now.getTime()) local.setDate(local.getDate() + 1); return local.getTime(); }
 function getWeeklyResetTime() { const now = new Date(); const options = { timeZone: "Asia/Jakarta", hour12: false }; const localStr = now.toLocaleString("en-US", options); const local = new Date(localStr); local.setHours(0,0,0,0); const day = local.getDay(); let daysToAdd = day === 1 ? 7 : day === 0 ? 1 : 8 - day; local.setDate(local.getDate() + daysToAdd); return local.getTime(); }
 function getMonthlyResetTime() { const now = new Date(); const options = { timeZone: "Asia/Jakarta", hour12: false }; const localStr = now.toLocaleString("en-US", options); const local = new Date(localStr); local.setHours(0,0,0,0); local.setDate(1); local.setMonth(local.getMonth() + 1); return local.getTime(); }
-function updateUserRecord(record) { const now = Date.now(); if (!record.harian || !record.harian.expires || now > record.harian.expires) { record.harian = { value: 0, expires: getDailyResetTime() }; } if (!record.mingguan || !record.mingguan.expires || now > record.mingguan.expires) { record.mingguan = { value: 0, expires: getWeeklyResetTime() }; } if (!record.bulanan || !record.bulanan.expires || now > record.bulanan.expires) { record.bulanan = { value: 0, expires: getMonthlyResetTime() }; } }
+async function resetExpiredUserData() {
+  const usersData = await apiGetData('users');
+  let updated = false;
+  const now = Date.now();
+  for (const uid in usersData.users) {
+    let record = usersData.users[uid];
+    if (!record.harian) { record.harian = { value: 0, expires: getDailyResetTime() }; updated = true; }
+    else if (now > record.harian.expires) { record.harian.value = 0; record.harian.expires = getDailyResetTime(); updated = true; }
+    if (!record.mingguan) { record.mingguan = { value: 0, expires: getWeeklyResetTime() }; updated = true; }
+    else if (now > record.mingguan.expires) { record.mingguan.value = 0; record.mingguan.expires = getWeeklyResetTime(); updated = true; }
+    if (!record.bulanan) { record.bulanan = { value: 0, expires: getMonthlyResetTime() }; updated = true; }
+    else if (now > record.bulanan.expires) { record.bulanan.value = 0; record.bulanan.expires = getMonthlyResetTime(); updated = true; }
+  }
+  if (updated) await apiWriteData('users', usersData);
+}
+setInterval(resetExpiredUserData, 3600000);
 async function gameLogic(endpoint, params, query, m, client) {
   const { user, room } = params || {};
   const { text, hintType } = query || {};
@@ -58,11 +73,10 @@ async function gameLogic(endpoint, params, query, m, client) {
     let attempts = currentRoom.currentQuestion.attempts || 0;
     if (jawabanUser === jawabanBenar) {
       if (!usersData.users[user]) usersData.users[user] = { points: 0 };
-      updateUserRecord(usersData.users[user]);
       usersData.users[user].points = (usersData.users[user].points || 0) + 3;
-      usersData.users[user].harian.value = (usersData.users[user].harian.value || 0) + 3;
-      usersData.users[user].mingguan.value = (usersData.users[user].mingguan.value || 0) + 3;
-      usersData.users[user].bulanan.value = (usersData.users[user].bulanan.value || 0) + 3;
+      usersData.users[user].harian.value = (usersData.users[user].harian ? usersData.users[user].harian.value : 0) + 3;
+      usersData.users[user].mingguan.value = (usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0) + 3;
+      usersData.users[user].bulanan.value = (usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0) + 3;
       await apiWriteData('users', usersData);
       roomsData.rooms[room].currentQuestion = null;
       await apiWriteData('rooms', roomsData);
@@ -74,11 +88,10 @@ async function gameLogic(endpoint, params, query, m, client) {
       currentRoom = roomsData.rooms[room];
       if (attempts >= 3) {
         if (!usersData.users[user]) usersData.users[user] = { points: 0 };
-        updateUserRecord(usersData.users[user]);
         usersData.users[user].points = Math.max((usersData.users[user].points || 0) - 3, 0);
-        usersData.users[user].harian.value = Math.max((usersData.users[user].harian.value || 0) - 3, 0);
-        usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan.value || 0) - 3, 0);
-        usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan.value || 0) - 3, 0);
+        usersData.users[user].harian.value = Math.max((usersData.users[user].harian ? usersData.users[user].harian.value : 0) - 3, 0);
+        usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0) - 3, 0);
+        usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0) - 3, 0);
         await apiWriteData('users', usersData);
         const jawaban = currentRoom.currentQuestion.jawaban;
         roomsData.rooms[room].currentQuestion = null;
@@ -107,11 +120,10 @@ async function gameLogic(endpoint, params, query, m, client) {
       if (!usersData.users[user] || (usersData.users[user].points || 0) < pointCost) {
         return `Poin tidak cukup untuk hint ${hintType}. Butuh ${pointCost} poin. Poin kamu: ${usersData.users[user] ? usersData.users[user].points : 0}`;
       }
-      updateUserRecord(usersData.users[user]);
       usersData.users[user].points -= pointCost;
-      usersData.users[user].harian.value = Math.max((usersData.users[user].harian.value || 0) - pointCost, 0);
-      usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan.value || 0) - pointCost, 0);
-      usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan.value || 0) - pointCost, 0);
+      usersData.users[user].harian.value = Math.max((usersData.users[user].harian ? usersData.users[user].harian.value : 0) - pointCost, 0);
+      usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0) - pointCost, 0);
+      usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0) - pointCost, 0);
       await apiWriteData('users', usersData);
     }
     hintText = generateHint(jawaban, hintPercentage);
@@ -119,7 +131,6 @@ async function gameLogic(endpoint, params, query, m, client) {
   } else if (endpoint === 'point') {
     const usersData = await apiGetData('users');
     if (!usersData.users[user]) usersData.users[user] = { points: 0 };
-    updateUserRecord(usersData.users[user]);
     const globalPoints = usersData.users[user].points || 0;
     const harian = usersData.users[user].harian ? usersData.users[user].harian.value : 0;
     const mingguan = usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0;
@@ -127,39 +138,28 @@ async function gameLogic(endpoint, params, query, m, client) {
     return `Poin Semua: ${globalPoints}\nPoin Harian: ${harian}\nPoin Mingguan: ${mingguan}\nPoin Bulanan: ${bulanan}`;
   } else if (endpoint === 'top') {
     const type = (text || '').toLowerCase();
-    if (!['hari','minggu','bulan','semua'].includes(type)) return 'Tipe top tidak valid. Pilih: hari, minggu, bulan, semua';
+    if (!['hari','minggu','bulan','semua'].includes(type)) { m.reply("*Ketik:* `.top hari` `.top minggu` `.top bulan` atau `.top semua`"); return; }
     const usersData = await apiGetData('users');
     const users = usersData.users;
-    for (const key in users) { updateUserRecord(users[key]); }
     let sortedUsers;
-    if (type === 'semua') {
-      sortedUsers = Object.entries(users).sort(([, a], [, b]) => (b.points || 0) - (a.points || 0)).slice(0, 10);
-    } else if (type === 'hari') {
-      sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.harian ? b.harian.value : 0) - (a.harian ? a.harian.value : 0))).slice(0, 10);
-    } else if (type === 'minggu') {
-      sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.mingguan ? b.mingguan.value : 0) - (a.mingguan ? a.mingguan.value : 0))).slice(0, 10);
-    } else if (type === 'bulan') {
-      sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.bulanan ? b.bulanan.value : 0) - (a.bulanan ? a.bulanan.value : 0))).slice(0, 10);
-    }
+    if (type === 'semua') sortedUsers = Object.entries(users).sort(([, a], [, b]) => (b.points || 0) - (a.points || 0)).slice(0, 10);
+    else if (type === 'hari') sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.harian ? b.harian.value : 0) - (a.harian ? a.harian.value : 0))).slice(0, 10);
+    else if (type === 'minggu') sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.mingguan ? b.mingguan.value : 0) - (a.mingguan ? a.mingguan.value : 0))).slice(0, 10);
+    else if (type === 'bulan') sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.bulanan ? b.bulanan.value : 0) - (a.bulanan ? a.bulanan.value : 0))).slice(0, 10);
     let topUsersFormatted = `Top 10 Poin ${type}\n\n`;
     topUsersFormatted += '```\nNo.  Username        Points\n-------------------------\n';
     let mentions = [];
     let positionMessage = '';
     for (let index = 0; index < sortedUsers.length; index++) {
       let [userName, data] = sortedUsers[index];
-      let displayName = (data.name && /^[A-Z_-]{1,60}$/.test(data.name)) ? data.name : userName;
+      let displayName = (data.name && /^[A-Za-z0-9_-]{1,60}$/.test(data.name)) ? data.name : userName;
       let rank = String(index + 1).padEnd(3);
       let points;
-      if(type === 'semua'){
-        points = String(data.points || 0).padEnd(6);
-      } else if(type === 'hari'){
-        points = String((data.harian ? data.harian.value : 0)).padEnd(6);
-      } else if(type === 'minggu'){
-        points = String((data.mingguan ? data.mingguan.value : 0)).padEnd(6);
-      } else if(type === 'bulan'){
-        points = String((data.bulanan ? data.bulanan.value : 0)).padEnd(6);
-      }
-      topUsersFormatted += `${rank}  ${displayName} ${points}\n`;
+      if (type === 'semua') points = String(data.points || 0).padEnd(6);
+      else if (type === 'hari') points = String((data.harian ? data.harian.value : 0)).padEnd(6);
+      else if (type === 'minggu') points = String((data.mingguan ? data.mingguan.value : 0)).padEnd(6);
+      else if (type === 'bulan') points = String((data.bulanan ? data.bulanan.value : 0)).padEnd(6);
+      topUsersFormatted += `${rank}  ${"@"+displayName} ${points}\n`;
       if (!data.name) mentions.push(`${userName}@s.whatsapp.net`);
       if (userName === user) {
         if (index === 0) positionMessage = "wahh hebat banget ada di peringkat pertama 😁";
@@ -184,11 +184,10 @@ async function gameLogic(endpoint, params, query, m, client) {
       delete currentRoom.ttt[user];
       await apiWriteData('rooms', roomsData);
       if (!usersData.users[user]) usersData.users[user] = { points: 0 };
-      updateUserRecord(usersData.users[user]);
       usersData.users[user].points = Math.max(usersData.users[user].points - 1, 0);
-      usersData.users[user].harian.value = Math.max(usersData.users[user].harian.value - 1, 0);
-      usersData.users[user].mingguan.value = Math.max(usersData.users[user].mingguan.value - 1, 0);
-      usersData.users[user].bulanan.value = Math.max(usersData.users[user].bulanan.value - 1, 0);
+      usersData.users[user].harian.value = Math.max((usersData.users[user].harian ? usersData.users[user].harian.value : 0) - 1, 0);
+      usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0) - 1, 0);
+      usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0) - 1, 0);
       await apiWriteData('users', usersData);
       return `Yah nyerah? Cupu! Permainan tic tac toe kamu dihentikan.\nPoint -1.`;
     } else if (currentRoom.currentQuestion) {
@@ -196,11 +195,10 @@ async function gameLogic(endpoint, params, query, m, client) {
       currentRoom.currentQuestion = null;
       await apiWriteData('rooms', roomsData);
       if (!usersData.users[user]) usersData.users[user] = { points: 0 };
-      updateUserRecord(usersData.users[user]);
       usersData.users[user].points = Math.max((usersData.users[user].points || 0) - 3, 0);
-      usersData.users[user].harian.value = Math.max((usersData.users[user].harian.value || 0) - 3, 0);
-      usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan.value || 0) - 3, 0);
-      usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan.value || 0) - 3, 0);
+      usersData.users[user].harian.value = Math.max((usersData.users[user].harian ? usersData.users[user].harian.value : 0) - 3, 0);
+      usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0) - 3, 0);
+      usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0) - 3, 0);
       await apiWriteData('users', usersData);
       return `Yah nyerah? Cupu! Jawaban yang benar adalah: ${jawabanBenar}. Point -3.`;
     } else {
@@ -223,30 +221,13 @@ async function gameLogic(endpoint, params, query, m, client) {
       currentRoom.ttt[user] = game;
       await apiWriteData('rooms', roomsData);
       let initialMessage = `Tic Tac Toe (${level}) game dimulai!\n${renderBoard(board)}\n`;
-      if (turn === 'user') {
-        initialMessage += "Giliran kamu, kirim nomor kotak (1-9) untuk menempatkan ❌.";
-        return initialMessage;
-      } else {
+      if (turn === 'user') { initialMessage += "Giliran kamu, kirim nomor kotak (1-9) untuk menempatkan ❌."; return initialMessage; }
+      else {
         let aiMoveIdx;
-        if (board.every(cell => cell === null)) {
-          const groups = { corner: [0,2,6,8], center: [4], edge: [1,3,5,7] };
-          const groupKeys = Object.keys(groups);
-          const randomGroupKey = groupKeys[Math.floor(Math.random() * groupKeys.length)];
-          const possibleMoves = groups[randomGroupKey];
-          aiMoveIdx = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-        } else {
-          if (level === 'mudah') {
-            const emptyIndices = board.map((cell, index) => cell === null ? index : null).filter(x => x !== null);
-            aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-          } else {
-            aiMoveIdx = getBestMove(board);
-          }
-        }
-        game.board[aiMoveIdx] = 'ai';
-        game.turn = 'user';
-        await apiWriteData('rooms', roomsData);
-        initialMessage += `Giliran AI:\n${renderBoard(game.board)}\nGiliran kamu, kirim nomor kotak (1-9) untuk langkah selanjutnya.`;
-        return initialMessage;
+        if (board.every(cell => cell === null)) { const groups = { corner: [0,2,6,8], center: [4], edge: [1,3,5,7] }; const groupKeys = Object.keys(groups); const randomGroupKey = groupKeys[Math.floor(Math.random() * groupKeys.length)]; const possibleMoves = groups[randomGroupKey]; aiMoveIdx = possibleMoves[Math.floor(Math.random() * possibleMoves.length)]; }
+        else { if (level === 'mudah') { const emptyIndices = board.map((cell, index) => cell === null ? index : null).filter(x => x !== null); aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)]; } else { aiMoveIdx = getBestMove(board); } }
+        game.board[aiMoveIdx] = 'ai'; game.turn = 'user'; await apiWriteData('rooms', roomsData);
+        initialMessage += `Giliran AI:\n${renderBoard(game.board)}\nGiliran kamu, kirim nomor kotak (1-9) untuk langkah selanjutnya.`; return initialMessage;
       }
     } else {
       if (game.turn !== 'user') return "Tunggu giliranmu.";
@@ -258,93 +239,39 @@ async function gameLogic(endpoint, params, query, m, client) {
       if (checkWin(game.board, 'user')) {
         const usersData = await apiGetData('users');
         if (!usersData.users[user]) usersData.users[user] = { points: 0 };
-        updateUserRecord(usersData.users[user]);
         let pointMessage = "";
-        if (game.level === 'mudah') {
-          usersData.users[user].points += 5;
-          usersData.users[user].harian.value += 5;
-          usersData.users[user].mingguan.value += 5;
-          usersData.users[user].bulanan.value += 5;
-          pointMessage = "Point +5.";
-        } else {
-          usersData.users[user].points += 99999;
-          usersData.users[user].harian.value += 99999;
-          usersData.users[user].mingguan.value += 99999;
-          usersData.users[user].bulanan.value += 99999;
-          pointMessage = "Point +99999.";
-        }
+        if (game.level === 'mudah') { usersData.users[user].points += 5; usersData.users[user].harian.value += 5; usersData.users[user].mingguan.value += 5; usersData.users[user].bulanan.value += 5; pointMessage = "Point +5."; }
+        else { usersData.users[user].points += 99999; usersData.users[user].harian.value += 99999; usersData.users[user].mingguan.value += 99999; usersData.users[user].bulanan.value += 99999; pointMessage = "Point +99999."; }
         await apiWriteData('users', usersData);
         delete currentRoom.ttt[user];
         await apiWriteData('rooms', roomsData);
         return `Kamu menang!\n${renderBoard(game.board)}\n${pointMessage}`;
       }
-      if (game.board.every(cell => cell !== null)) {
-        delete currentRoom.ttt[user];
-        await apiWriteData('rooms', roomsData);
-        return `Permainan seri!\n${renderBoard(game.board)}`;
-      }
+      if (game.board.every(cell => cell !== null)) { delete currentRoom.ttt[user]; await apiWriteData('rooms', roomsData); return `Permainan seri!\n${renderBoard(game.board)}`; }
       game.turn = 'ai';
       let aiMoveIdx;
-      if (game.level === 'mudah') {
-        const emptyIndices = game.board.map((cell, index) => cell === null ? index : null).filter(x => x !== null);
-        aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-      } else {
-        let emptyIndices = [];
-        for (let i = 0; i < game.board.length; i++) {
-          if (game.board[i] === null) emptyIndices.push(i);
-        }
-        if (emptyIndices.length === 2 && minimax(game.board, 0, true) === 0) {
-          delete currentRoom.ttt[user];
-          await apiWriteData('rooms', roomsData);
-          return `Permainan seri!\n${renderBoard(game.board)}`;
-        } else {
-          let bestScore = -Infinity;
-          let bestMove = null;
-          for (let i = 0; i < game.board.length; i++) {
-            if (game.board[i] === null) {
-              game.board[i] = 'ai';
-              let score = minimax(game.board, 0, false);
-              game.board[i] = null;
-              if (score > bestScore) {
-                bestScore = score;
-                bestMove = i;
-              }
-            }
-          }
-          aiMoveIdx = bestMove;
-          var aiBestScore = bestScore;
-        }
+      if (game.level === 'mudah') { const emptyIndices = game.board.map((cell, index) => cell === null ? index : null).filter(x => x !== null); aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)]; }
+      else {
+        let emptyIndices = []; for (let i = 0; i < game.board.length; i++) { if (game.board[i] === null) emptyIndices.push(i); }
+        if (emptyIndices.length === 2 && minimax(game.board, 0, true) === 0) { delete currentRoom.ttt[user]; await apiWriteData('rooms', roomsData); return `Permainan seri!\n${renderBoard(game.board)}`; }
+        else { let bestScore = -Infinity; let bestMove = null; for (let i = 0; i < game.board.length; i++) { if (game.board[i] === null) { game.board[i] = 'ai'; let score = minimax(game.board, 0, false); game.board[i] = null; if (score > bestScore) { bestScore = score; bestMove = i; } } } aiMoveIdx = bestMove; var aiBestScore = bestScore; }
       }
       game.board[aiMoveIdx] = 'ai';
       let tauntText = "";
-      if (game.level === 'sulit' && game.board.some(cell => cell === null) && aiBestScore > 0) {
-        const taunts = [
-          "Gak bisa ngalahin gua udah",
-          "Perjuangan sia sia bro",
-          "Ngarep banget menang Awok awok",
-          "Lah kocak?!",
-          "Loh blunder mas?"
-        ];
-        tauntText = "\n" + taunts[Math.floor(Math.random() * taunts.length)];
-      }
+      if (game.level === 'sulit' && game.board.some(cell => cell === null) && aiBestScore > 0) { const taunts = ["Gak bisa ngalahin gua udah", "Perjuangan sia sia bro", "Ngarep banget menang Awok awok", "Lah kocak?!", "Loh blunder mas?"]; tauntText = "\n" + taunts[Math.floor(Math.random() * taunts.length)]; }
       if (checkWin(game.board, 'ai')) {
         const usersData = await apiGetData('users');
         if (!usersData.users[user]) usersData.users[user] = { points: 0 };
-        updateUserRecord(usersData.users[user]);
         usersData.users[user].points = Math.max(usersData.users[user].points - 1, 0);
-        usersData.users[user].harian.value = Math.max(usersData.users[user].harian.value - 1, 0);
-        usersData.users[user].mingguan.value = Math.max(usersData.users[user].mingguan.value - 1, 0);
-        usersData.users[user].bulanan.value = Math.max(usersData.users[user].bulanan.value - 1, 0);
+        usersData.users[user].harian.value = Math.max((usersData.users[user].harian ? usersData.users[user].harian.value : 0) - 1, 0);
+        usersData.users[user].mingguan.value = Math.max((usersData.users[user].mingguan ? usersData.users[user].mingguan.value : 0) - 1, 0);
+        usersData.users[user].bulanan.value = Math.max((usersData.users[user].bulanan ? usersData.users[user].bulanan.value : 0) - 1, 0);
         await apiWriteData('users', usersData);
         delete currentRoom.ttt[user];
         await apiWriteData('rooms', roomsData);
         return `Kamu kalah!\n${renderBoard(game.board)}\nPoint -1.${tauntText}`;
       }
-      if (game.board.every(cell => cell !== null)) {
-        delete currentRoom.ttt[user];
-        await apiWriteData('rooms', roomsData);
-        return `Permainan seri!\n${renderBoard(game.board)}`;
-      }
+      if (game.board.every(cell => cell !== null)) { delete currentRoom.ttt[user]; await apiWriteData('rooms', roomsData); return `Permainan seri!\n${renderBoard(game.board)}`; }
       game.turn = 'user';
       await apiWriteData('rooms', roomsData);
       return `Setelah langkahmu:\n${renderBoard(game.board)}\nGiliran kamu. Kirim nomor kotak (1-9) untuk langkah selanjutnya.${tauntText}`;
@@ -353,7 +280,7 @@ async function gameLogic(endpoint, params, query, m, client) {
     const usersData = await apiGetData('users');
     let newName = text;
     if (!newName) return 'ketik `.setname nama-kamu` atau `.setname dafault`';
-    const validNameRegex = /^[A-Z_-]{1,60}$/;
+    const validNameRegex = /^[A-Za-z0-9_-]{1,60}$/;
     if (newName.toLowerCase() === 'dafault') {
       if(usersData.users[user]) delete usersData.users[user].name;
       await apiWriteData('users', usersData);
@@ -370,9 +297,7 @@ async function gameLogic(endpoint, params, query, m, client) {
         return `Nama telah disetel ke ${newName}.`;
       }
     }
-  } else {
-    return 'Endpoint tidak dikenal';
-  }
+  } else { return 'Endpoint tidak dikenal'; }
 }
 function renderBoard(board) {
   const numberEmojis = ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣"];
