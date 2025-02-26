@@ -62,6 +62,21 @@ const fetchSoalTebakGambar = async () => {
   } 
 };
 
+function scrambleWithVowelsFirst(word) {
+  const vowelsList = "AIUEOaiueo";
+  const letters = word.split('');
+  let vowels = [];
+  let consonants = [];
+  letters.forEach(letter => {
+    if (vowelsList.includes(letter)) vowels.push(letter);
+    else consonants.push(letter);
+  });
+  vowels.sort(() => Math.random() - 0.5);
+  consonants.sort(() => Math.random() - 0.5);
+  const scrambled = vowels.concat(consonants);
+  return scrambled.join('-');
+}
+
 function generateHint(answer, percentage) { 
   const answerArray = answer.toLowerCase().split(''); 
   const visibleIndices = []; 
@@ -113,7 +128,6 @@ function getMonthlyResetTime() {
   return local.getTime(); 
 }
 
-// Fungsi helper untuk memastikan data user terinisialisasi
 function initializeUser(users, user) {
   if (!users[user]) {
     users[user] = {
@@ -164,7 +178,10 @@ async function gameLogic(endpoint, params, query, m, client) {
   };
 
   if (endpoint === 'susunkata') {
-    return await ambilSoal(fetchSoalSusunKata, 'susunkata', (soal) => `Soal susun kata berikut: ${soal.soal} - Tipe: ${soal.tipe}`);
+    return await ambilSoal(fetchSoalSusunKata, 'susunkata', (soal) => {
+      const scrambled = scrambleWithVowelsFirst(soal.jawaban);
+      return `Soal susun kata berikut: ${scrambled} - Tipe: ${soal.tipe}`;
+    });
   } else if (endpoint === 'siapakahaku') {
     return await ambilSoal(fetchSoalSiapakahAku, 'siapakahaku', (soal) => `Soal siapakah aku berikut: ${soal.soal}`);
   } else if (endpoint === 'tebaktebakan') {
@@ -268,7 +285,7 @@ async function gameLogic(endpoint, params, query, m, client) {
     let sortedUsers;
     if (type === 'semua') sortedUsers = Object.entries(users).sort(([, a], [, b]) => (b.points || 0) - (a.points || 0)).slice(0, 10);
     else if (type === 'hari') sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.harian ? b.harian.value : 0) - (a.harian ? a.harian.value : 0))).slice(0, 10);
-    else if (type === 'minggu') sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.mingguan ? b.mingguan.value : 0) - (a.mingguan ? a.mingguan.value : 0))).slice(0, 10);
+    else if (type === 'minggu') sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.mingguan ? b.mingguan.value : 0) - (a.mingguan ? a.harian.value : 0))).slice(0, 10);
     else if (type === 'bulan') sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.bulanan ? b.bulanan.value : 0) - (a.bulanan ? a.bulanan.value : 0))).slice(0, 10);
     let topUsersFormatted = `Top 10 Poin ${type}\n\n`;
     topUsersFormatted += '```\nNo.  Username        Points\n-------------------------\n';
