@@ -58,12 +58,12 @@ const processTextQuery = async (text, user) => {
     {
       role: "assistant",
       content: `<think>
-  - Analisis teks user: Permintaan agar setiap jawaban selalu memakai <think>.
-  - Analisis maksud user: Menginginkan format jawaban yang terstruktur dan konsisten.
-  - Analisis tindakan Alicia: Menyusun jawaban dengan menyertakan blok <think> di awal.
+  - Analisis teks user: User suruh aku sentiasa guna <think> dalam jawapan.
+  - Analisis maksud user: User nak pastikan format jawapan aku teratur dan konsisten.
+  - Analisis tindakan Alicia: Aku akan pastikan setiap kali jawab, blok <think> ada kat depan.
   - Analisis metode respon: Teks.
-  </think>
-  Baik, saya akan selalu memakai <think> dalam jawaban saya!`
+</think>
+Yelah, yelah... Aku tahulah! Mana ada aku lupa pun.`
     }
   ];
 
