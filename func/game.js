@@ -209,7 +209,6 @@ async function gameLogic(endpoint, params, query, m, client) {
     const jawabanUser = text ? text.toLowerCase() : '';
     let attempts = currentRoom.currentQuestion.attempts || 0;
     if (jawabanUser === jawabanBenar) {
-      // Pastikan data user sudah terinisialisasi
       initializeUser(usersData.users, user);
       usersData.users[user].points += 3;
       usersData.users[user].harian.value += 3;
@@ -279,14 +278,34 @@ async function gameLogic(endpoint, params, query, m, client) {
     return `Poin Semua: ${globalPoints}\nPoin Harian: ${harian}\nPoin Mingguan: ${mingguan}\nPoin Bulanan: ${bulanan}`;
   } else if (endpoint === 'top') {
     const type = (text || '').toLowerCase();
-    if (!['hari','minggu','bulan','semua'].includes(type)) { m.reply("*Ketik:* `.top hari` `.top minggu` `.top bulan` atau `.top semua`"); return; }
+    if (!['hari','minggu','bulan','semua'].includes(type)) {
+      m.reply("*Ketik:* `.top hari` `.top minggu` `.top bulan` atau `.top semua`");
+      return;
+    }
     const usersData = await apiGetData('users');
     const users = usersData.users;
     let sortedUsers;
-    if (type === 'semua') sortedUsers = Object.entries(users).sort(([, a], [, b]) => (b.points || 0) - (a.points || 0)).slice(0, 10);
-    else if (type === 'hari') sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.harian ? b.harian.value : 0) - (a.harian ? a.harian.value : 0))).slice(0, 10);
-    else if (type === 'minggu') sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.mingguan ? b.mingguan.value : 0) - (a.mingguan ? a.harian.value : 0))).slice(0, 10);
-    else if (type === 'bulan') sortedUsers = Object.entries(users).sort(([, a], [, b]) => ((b.bulanan ? b.bulanan.value : 0) - (a.bulanan ? a.bulanan.value : 0))).slice(0, 10);
+    if (type === 'semua') {
+      sortedUsers = Object.entries(users)
+        .filter(([userName, data]) => (data.points || 0) > 0)
+        .sort(([, a], [, b]) => (b.points || 0) - (a.points || 0))
+        .slice(0, 10);
+    } else if (type === 'hari') {
+      sortedUsers = Object.entries(users)
+        .filter(([userName, data]) => ((data.harian ? data.harian.value : 0) > 0))
+        .sort(([, a], [, b]) => ((b.harian ? b.harian.value : 0) - (a.harian ? a.harian.value : 0)))
+        .slice(0, 10);
+    } else if (type === 'minggu') {
+      sortedUsers = Object.entries(users)
+        .filter(([userName, data]) => ((data.mingguan ? data.mingguan.value : 0) > 0))
+        .sort(([, a], [, b]) => ((b.mingguan ? b.mingguan.value : 0) - (a.mingguan ? a.mingguan.value : 0)))
+        .slice(0, 10);
+    } else if (type === 'bulan') {
+      sortedUsers = Object.entries(users)
+        .filter(([userName, data]) => ((data.bulanan ? data.bulanan.value : 0) > 0))
+        .sort(([, a], [, b]) => ((b.bulanan ? b.bulanan.value : 0) - (a.bulanan ? a.bulanan.value : 0)))
+        .slice(0, 10);
+    }
     let topUsersFormatted = `Top 10 Poin ${type}\n\n`;
     topUsersFormatted += '```\nNo.  Username        Points\n-------------------------\n';
     let mentions = [];
