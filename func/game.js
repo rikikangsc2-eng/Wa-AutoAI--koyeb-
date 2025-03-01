@@ -378,8 +378,8 @@ async function gameLogic(endpoint, params, query, m, client) {
           for (let i = 0; i < board.length; i++) {
             if (board[i] === null) {
               board[i] = 'ai';
-              let score = minimax(board, 0, false);
-              board[i] = null;
+              let score = minimax(game.board, 0, false, level); // Pass level here
+              game.board[i] = null;
               if (score > bestScore) { bestScore = score; bestMove = i; }
             }
           }
@@ -398,13 +398,16 @@ async function gameLogic(endpoint, params, query, m, client) {
       const idx = move - 1;
       if (game.board[idx] !== null) return "Kotak sudah terisi, pilih kotak lain.";
       game.board[idx] = 'user';
-      if (game.board.every(cell => cell !== null)) {
-        const userWin = checkWin(game.board, 'user');
-        const aiWin = checkWin(game.board, 'ai');
+
+      const userWin = checkWin(game.board, 'user'); // Check win here
+      const aiWin = checkWin(game.board, 'ai');     // and here
+      if (userWin || aiWin || game.board.every(cell => cell !== null)) { // Early game end check
         let resultMessage = `Permainan selesai!\n${renderBoard(game.board)}\n`;
         if (userWin && !aiWin) {
           const usersData = await apiGetData('users');
           initializeUser(usersData.users, user);
+          let emoji = '';
+          if (game.level === 'mudah' || game.level === 'normal') emoji = '🙄'; // Emoji for user win on easy and normal
           if (game.level === 'mudah') {
             usersData.users[user].points += 5;
             usersData.users[user].harian.value += 5;
@@ -422,7 +425,7 @@ async function gameLogic(endpoint, params, query, m, client) {
             usersData.users[user].bulanan.value += 99999;
           }
           await apiWriteData('users', usersData);
-          resultMessage += "Kamu menang!";
+          resultMessage += `Kamu menang! ${emoji}`;
         } else if (aiWin && !userWin) {
           const usersData = await apiGetData('users');
           initializeUser(usersData.users, user);
@@ -439,32 +442,58 @@ async function gameLogic(endpoint, params, query, m, client) {
         await apiWriteData('rooms', roomsData);
         return resultMessage;
       }
+
       let aiMoveIdx;
       if (game.level === 'mudah') {
         const emptyIndices = game.board.map((cell, index) => cell === null ? index : null).filter(x => x !== null);
         aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-      } else {
+      } else if (game.level === 'normal') {
+        // Make normal level easier: 50% chance of random move
+        if (Math.random() < 0.5) {
+          const emptyIndices = game.board.map((cell, index) => cell === null ? index : null).filter(x => x !== null);
+          aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+        } else {
+          let bestScore = -Infinity;
+          let bestMove = null;
+          for (let i = 0; i < game.board.length; i++) {
+            if (game.board[i] === null) {
+              game.board[i] = 'ai';
+              let score = minimax(game.board, 0, false, game.level); // Pass level here
+              game.board[i] = null;
+              if (score > bestScore) { bestScore = score; bestMove = i; }
+            }
+          }
+          aiMoveIdx = bestMove;
+        }
+      }
+       else { // level sulit
         let bestScore = -Infinity;
         let bestMove = null;
         for (let i = 0; i < game.board.length; i++) {
           if (game.board[i] === null) {
             game.board[i] = 'ai';
-            let score = minimax(game.board, 0, false);
+            let score = minimax(game.board, 0, false, game.level); // Pass level here
             game.board[i] = null;
             if (score > bestScore) { bestScore = score; bestMove = i; }
           }
         }
         aiMoveIdx = bestMove;
       }
+
+
       game.board[aiMoveIdx] = 'ai';
       const aiExplanation = `*AI memilih angka ${aiMoveIdx+1}*`;
-      if (game.board.every(cell => cell !== null)) {
-        const userWin = checkWin(game.board, 'user');
-        const aiWin = checkWin(game.board, 'ai');
-        let resultMessage = `${aiExplanation}\n${renderBoard(game.board)}\n`;
-        if (userWin && !aiWin) {
+      const userWinAfterAiMove = checkWin(game.board, 'user');
+      const aiWinAfterAiMove = checkWin(game.board, 'ai');
+
+
+      if (userWinAfterAiMove || aiWinAfterAiMove || game.board.every(cell => cell !== null)) { // Early game end check again after AI move
+        let resultMessage = `${aiExplanation}\n${renderBoard(game.board)}${game.level === 'sulit' && aiWinAfterAiMove ? ' 😜' : ''}\n`; //Emoji for hard mode AI win
+        if (userWinAfterAiMove && !aiWinAfterAiMove) {
           const usersData = await apiGetData('users');
           initializeUser(usersData.users, user);
+          let emoji = '';
+          if (game.level === 'mudah' || game.level === 'normal') emoji = '🙄'; // Emoji for user win on easy and normal
           if (game.level === 'mudah') {
             usersData.users[user].points += 5;
             usersData.users[user].harian.value += 5;
@@ -482,8 +511,8 @@ async function gameLogic(endpoint, params, query, m, client) {
             usersData.users[user].bulanan.value += 99999;
           }
           await apiWriteData('users', usersData);
-          resultMessage += "Kamu menang!";
-        } else if (aiWin && !userWin) {
+          resultMessage += `Kamu menang! ${emoji}`;
+        } else if (aiWinAfterAiMove && !userWinAfterAiMove) {
           const usersData = await apiGetData('users');
           initializeUser(usersData.users, user);
           usersData.users[user].points = Math.max(usersData.users[user].points - 1, 0);
@@ -499,6 +528,8 @@ async function gameLogic(endpoint, params, query, m, client) {
         await apiWriteData('rooms', roomsData);
         return resultMessage;
       }
+
+
       game.turn = 'user';
       await apiWriteData('rooms', roomsData);
       return `${aiExplanation}\n${renderBoard(game.board)}\nGiliran kamu. Kirim nomor kotak (1-9) untuk langkah selanjutnya.`;
@@ -541,16 +572,17 @@ function checkWin(board, player) {
   const winCombinations = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
   return winCombinations.some(comb => comb.every(index => board[index] === player));
 }
-function minimax(board, depth, isMaximizing) {
+function minimax(board, depth, isMaximizing, level) { // Added level parameter
   if (checkWin(board, 'ai')) return 10 - depth;
   if (checkWin(board, 'user')) return depth - 10;
   if (board.every(cell => cell !== null)) return 0;
+
   if (isMaximizing) {
     let bestScore = -Infinity;
     for (let i = 0; i < board.length; i++) {
       if (board[i] === null) {
         board[i] = 'ai';
-        let score = minimax(board, depth + 1, false);
+        let score = minimax(board, depth + 1, false, level); // Pass level down
         board[i] = null;
         bestScore = Math.max(score, bestScore);
       }
@@ -561,7 +593,7 @@ function minimax(board, depth, isMaximizing) {
     for (let i = 0; i < board.length; i++) {
       if (board[i] === null) {
         board[i] = 'user';
-        let score = minimax(board, depth + 1, true);
+        let score = minimax(board, depth + 1, true, level); // Pass level down
         board[i] = null;
         bestScore = Math.min(score, bestScore);
       }
