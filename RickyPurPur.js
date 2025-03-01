@@ -204,34 +204,7 @@ const user = `${m.sender.split("@")[0]}`
               await new Promise(resolve => setTimeout(resolve, 1000));
               await client.sendMessage(m.chat, { image: imageBuffer, caption: query }, { quoted: m });
             } catch (error) {
-              try {
-                const nexraResponse = await axios.post(
-                  "https://nexra.aryahcr.cc/api/image/complements",
-                  { prompt: query, model: "stablediffusion-1.5" },
-                  { headers: { "Content-Type": "application/json" } }
-                );
-                let id = nexraResponse.data.id;
-                let status = "pending";
-                let imageUrl = null;
-                let attempts = 0;
-                while (status === "pending" && attempts < 5) {
-                  await new Promise(resolve => setTimeout(resolve, 3000));
-                  const checkResponse = await axios.get("https://nexra.aryahcr.cc/api/image/complements/" + encodeURIComponent(id));
-                  status = checkResponse.data.status;
-                  if (status === "completed") {
-                    imageUrl = checkResponse.data.url;
-                  } else if (status === "error" || status === "not_found") {
-                    throw new Error("Gagal membuat gambar dengan API alternatif.");
-                  }
-                  attempts++;
-                }
-                if (!imageUrl) throw new Error("Gagal membuat gambar dengan API alternatif.");
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                await client.sendMessage(m.chat, { image: { url: imageUrl }, caption: query }, { quoted: m });
-              } catch (altError) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                await m.reply("`Gagal membuat gambar menggunakan kedua API.`");
-              }
+              m.reply("Gagal membuat gambar:\n\n*Alternatif:* wa.me/13135550002?text="+encodeURIComponent(query))
             }
           } else {
             currentText += `${currentText ? "\n" : ""}${parts[i].trim()}`;
@@ -315,9 +288,6 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) { 
-        case "tes":{
-          client.sendMessage(m.chat, { text: "@13135550002 hallo apa kabar", mentions: ['13135550002@s.whatsapp.net'] })
-        }break;
         case "setname":{
           const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
   const query = { text: msg };
