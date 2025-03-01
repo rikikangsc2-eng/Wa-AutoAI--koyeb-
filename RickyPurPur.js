@@ -315,6 +315,9 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) { 
+        case "tes":{
+          client.sendMessage(m.chat, { text: "@13135550002 hallo apa kabar", mentions: ['13135550002@s.whatsapp.net'] })
+        }break;
         case "setname":{
           const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
   const query = { text: msg };
