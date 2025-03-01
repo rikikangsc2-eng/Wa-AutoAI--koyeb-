@@ -100,7 +100,7 @@ function getDailyResetTime() {
   const options = { timeZone: "Asia/Jakarta", hour12: false };
   const localStr = now.toLocaleString("en-US", options);
   const local = new Date(localStr);
-  local.setHours(0,0,0,0);
+  local.setHours(0, 0, 0, 0);
   if (local.getTime() <= now.getTime()) local.setDate(local.getDate() + 1);
   return local.getTime();
 }
@@ -110,7 +110,7 @@ function getWeeklyResetTime() {
   const options = { timeZone: "Asia/Jakarta", hour12: false };
   const localStr = now.toLocaleString("en-US", options);
   const local = new Date(localStr);
-  local.setHours(0,0,0,0);
+  local.setHours(0, 0, 0, 0);
   const day = local.getDay();
   let daysToAdd = day === 1 ? 7 : day === 0 ? 1 : 8 - day;
   local.setDate(local.getDate() + daysToAdd);
@@ -122,7 +122,7 @@ function getMonthlyResetTime() {
   const options = { timeZone: "Asia/Jakarta", hour12: false };
   const localStr = now.toLocaleString("en-US", options);
   const local = new Date(localStr);
-  local.setHours(0,0,0,0);
+  local.setHours(0, 0, 0, 0);
   local.setDate(1);
   local.setMonth(local.getMonth() + 1);
   return local.getTime();
@@ -253,7 +253,9 @@ async function gameLogic(endpoint, params, query, m, client) {
     else if (hintType === 'mahal') { hintPercentage = 0.5; pointCost = 1; }
     else if (hintType === 'sultan') { hintPercentage = 0.8; pointCost = 2; }
     else { return 'Tipe hint tidak valid. Pilih: murah, mahal, sultan'; }
+
     initializeUser(usersData.users, user);
+
     if (pointCost > 0) {
       if (usersData.users[user].points < pointCost) {
         return `Poin tidak cukup untuk hint ${hintType}. Butuh ${pointCost} poin. Poin kamu: ${usersData.users[user].points}`;
@@ -276,7 +278,7 @@ async function gameLogic(endpoint, params, query, m, client) {
     return `Poin Semua: ${globalPoints}\nPoin Harian: ${harian}\nPoin Mingguan: ${mingguan}\nPoin Bulanan: ${bulanan}`;
   } else if (endpoint === 'top') {
     const type = (text || '').toLowerCase();
-    if (!['hari','minggu','bulan','semua'].includes(type)) {
+    if (!['hari', 'minggu', 'bulan', 'semua'].includes(type)) {
       m.reply("*Ketik:* `.top hari` `.top minggu` `.top bulan` atau `.top semua`");
       return;
     }
@@ -317,7 +319,7 @@ async function gameLogic(endpoint, params, query, m, client) {
       else if (type === 'hari') points = String((data.harian ? data.harian.value : 0)).padEnd(6);
       else if (type === 'minggu') points = String((data.mingguan ? data.mingguan.value : 0)).padEnd(6);
       else if (type === 'bulan') points = String((data.bulanan ? data.bulanan.value : 0)).padEnd(6);
-      topUsersFormatted += `${rank}  ${"@"+displayName} ${points}\n`;
+      topUsersFormatted += `${rank}  ${"@" + displayName} ${points}\n`;
       if (!data.name) mentions.push(`${userName}@s.whatsapp.net`);
       if (userName === user) {
         if (index === 0) positionMessage = "wahh hebat banget ada di peringkat pertama 😁";
@@ -369,12 +371,12 @@ async function gameLogic(endpoint, params, query, m, client) {
     if (!currentRoom.ttt) currentRoom.ttt = {};
     let game = currentRoom.ttt[user];
     if (!game) {
-      if (!query || !query.text || (query.text.toLowerCase() !== 'sulit' && query.text.toLowerCase() !== 'mudah'))
-        return "ketik `.ttt sulit` atau `.ttt mudah`\n\n*Hadiah*:\n- Sulit: 99999 poin\n- Mudah: 5 poin";
+      if (!query || !query.text || (query.text.toLowerCase() !== 'sulit' && query.text.toLowerCase() !== 'mudah' && query.text.toLowerCase() !== 'normal'))
+        return "ketik `.ttt sulit` `.ttt normal` atau `.ttt mudah`\n\n*Hadiah*:\n- Sulit: 99999 poin\n- Normal: 10 poin\n- Mudah: 5 poin";
       let level = query.text.toLowerCase();
       let board = Array(9).fill(null);
       let turn = 'user';
-      if (level === 'sulit') turn = Math.random() < 0.5 ? 'user' : 'ai';
+      if (level === 'sulit' || level === 'normal') turn = Math.random() < 0.5 ? 'user' : 'ai';
       game = { gameType: 'tictactoe', board: board, level: level, turn: turn, answered: false, attempts: 0, timestamp: Date.now(), user: user };
       currentRoom.ttt[user] = game;
       await apiWriteData('rooms', roomsData);
@@ -383,7 +385,7 @@ async function gameLogic(endpoint, params, query, m, client) {
       else {
         let aiMoveIdx;
         if (board.every(cell => cell === null)) {
-          const groups = { corner: [0,2,6,8], center: [4], edge: [1,3,5,7] };
+          const groups = { corner: [0, 2, 6, 8], center: [4], edge: [1, 3, 5, 7] };
           const groupKeys = Object.keys(groups);
           const randomGroupKey = groupKeys[Math.floor(Math.random() * groupKeys.length)];
           const possibleMoves = groups[randomGroupKey];
@@ -393,7 +395,10 @@ async function gameLogic(endpoint, params, query, m, client) {
           if (level === 'mudah') {
             const emptyIndices = board.map((cell, index) => cell === null ? index : null).filter(x => x !== null);
             aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-          } else {
+          } else if (level === 'normal') {
+            aiMoveIdx = getBestMoveNormal(board);
+          }
+          else {
             aiMoveIdx = getBestMove(board);
           }
         }
@@ -420,6 +425,12 @@ async function gameLogic(endpoint, params, query, m, client) {
           usersData.users[user].mingguan.value += 5;
           usersData.users[user].bulanan.value += 5;
           pointMessage = "Point +5.";
+        } else if (game.level === 'normal') {
+          usersData.users[user].points += 10;
+          usersData.users[user].harian.value += 10;
+          usersData.users[user].mingguan.value += 10;
+          usersData.users[user].bulanan.value += 10;
+          pointMessage = "Point +10.";
         }
         else {
           usersData.users[user].points += 99999;
@@ -433,37 +444,23 @@ async function gameLogic(endpoint, params, query, m, client) {
         await apiWriteData('rooms', roomsData);
         return `Kamu menang!\n${renderBoard(game.board)}\n${pointMessage}`;
       }
-      if (game.board.every(cell => cell !== null)) {
+      if (game.board.filter(cell => cell === null).length === 1) {
         delete currentRoom.ttt[user];
         await apiWriteData('rooms', roomsData);
         return `Permainan seri!\n${renderBoard(game.board)}`;
       }
-      const remaining = game.board.map((cell, index) => cell === null ? index : null).filter(x => x !== null);
-      if(remaining.length === 1) {
-        let lastIdx = remaining[0];
-        game.board[lastIdx] = 'ai';
-        if(checkWin(game.board, 'ai')) {
-          const usersData = await apiGetData('users');
-          initializeUser(usersData.users, user);
-          usersData.users[user].points = Math.max(usersData.users[user].points - 1, 0);
-          usersData.users[user].harian.value = Math.max(usersData.users[user].harian.value - 1, 0);
-          usersData.users[user].mingguan.value = Math.max(usersData.users[user].mingguan.value - 1, 0);
-          usersData.users[user].bulanan.value = Math.max(usersData.users[user].bulanan.value - 1, 0);
-          await apiWriteData('users', usersData);
-          delete currentRoom.ttt[user];
-          await apiWriteData('rooms', roomsData);
-          return `Kamu kalah!\n${renderBoard(game.board)}\nPoint -1.`;
-        } else {
-          delete currentRoom.ttt[user];
-          await apiWriteData('rooms', roomsData);
-          return `Permainan seri!\n${renderBoard(game.board)}`;
-        }
+      if (game.board.every(cell => cell !== null)) {
+        delete currentRoom.ttt[user];
+        await apiWriteData('rooms', roomsData);
+        return `Permainan seri!\n${renderBoard(game.board)}`;
       }
       game.turn = 'ai';
       let aiMoveIdx;
       if (game.level === 'mudah') {
         const emptyIndices = game.board.map((cell, index) => cell === null ? index : null).filter(x => x !== null);
         aiMoveIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+      } else if (game.level === 'normal') {
+        aiMoveIdx = getBestMoveNormal(board);
       }
       else {
         let emptyIndices = [];
@@ -523,12 +520,12 @@ async function gameLogic(endpoint, params, query, m, client) {
     if (!newName) return 'ketik `.setname nama-kamu` atau `.setname dafault`';
     const validNameRegex = /^[A-Za-z0-9_-]{1,60}$/;
     if (newName.toLowerCase() === 'dafault') {
-      if(usersData.users[user]) delete usersData.users[user].name;
+      if (usersData.users[user]) delete usersData.users[user].name;
       await apiWriteData('users', usersData);
       return 'Nama telah di-reset ke default.';
     } else {
       if (!validNameRegex.test(newName)) {
-        if(usersData.users[user] && usersData.users[user].name) delete usersData.users[user].name;
+        if (usersData.users[user] && usersData.users[user].name) delete usersData.users[user].name;
         await apiWriteData('users', usersData);
         return 'Nama tidak valid. Nama di-reset ke default.';
       } else {
@@ -544,17 +541,17 @@ async function gameLogic(endpoint, params, query, m, client) {
 }
 
 function renderBoard(board) {
-  const numberEmojis = ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣"];
+  const numberEmojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
   const symbols = board.map((cell, index) => {
     if (cell === 'user') return '❌';
     if (cell === 'ai') return '⭕';
     return numberEmojis[index];
   });
-  return `${symbols.slice(0,3).join(' ')}\n${symbols.slice(3,6).join(' ')}\n${symbols.slice(6,9).join(' ')}`;
+  return `${symbols.slice(0, 3).join(' ')}\n${symbols.slice(3, 6).join(' ')}\n${symbols.slice(6, 9).join(' ')}`;
 }
 
 function checkWin(board, player) {
-  const winCombinations = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  const winCombinations = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
   return winCombinations.some(comb => comb.every(index => board[index] === player));
 }
 
@@ -571,6 +568,16 @@ function getBestMove(board) {
   }
   return move;
 }
+
+function getBestMoveNormal(board) {
+  let bestMove = null;
+  const emptyIndices = board.map((cell, index) => cell === null ? index : null).filter(x => x !== null);
+  if (emptyIndices.length > 0) {
+    bestMove = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+  }
+  return bestMove;
+}
+
 
 function minimax(board, depth, isMaximizing) {
   if (checkWin(board, 'ai')) return 10 - depth;
