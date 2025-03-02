@@ -3,25 +3,29 @@ const API_ENDPOINT = 'https://copper-ambiguous-velvet.glitch.me/data';
 const USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; RMX2185 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.260 Mobile Safari/537.36';
 
 const apiGetData = async (dataType) => {
-  try { 
-    return (await axios.get(`${API_ENDPOINT}/${dataType}`, { headers: { 'User-Agent': USER_AGENT } })).data; 
-  } catch (error) { 
-    console.error(`Failed to get ${dataType} data from API:`, error); 
-    return { users: {}, rooms: {} }; 
+  try {
+    return (await axios.get(`${API_ENDPOINT}/${dataType}`, { headers: { 'User-Agent': USER_AGENT } })).data;
+  } catch (error) {
+    console.error(`Failed to get ${dataType} data from API:`, error);
+    return { users: {}, rooms: {} };
   }
 };
 const apiWriteData = async (dataType, data) => {
-  try { 
-    await axios.post(`${API_ENDPOINT}/${dataType}`, data, { headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/json' } }); 
-    return true; 
-  } catch (error) { 
-    console.error(`Failed to write ${dataType} data to API:`, error); 
-    return false; 
+  try {
+    await axios.post(`${API_ENDPOINT}/${dataType}`, data, { headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/json' } });
+    return true;
+  } catch (error) {
+    console.error(`Failed to write ${dataType} data to API:`, error);
+    return false;
   }
 };
-const fetchSoal = async (url, errMsg) => { 
-  try { return (await axios.get(url)).data; } 
-  catch (e) { console.error(errMsg, e); return []; } 
+const fetchSoal = async (url, errMsg) => {
+  try {
+    return (await axios.get(url)).data;
+  } catch (e) {
+    console.error(errMsg, e);
+    return [];
+  }
 };
 const fetchSoalSusunKata = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/susunkata.json', "Failed to fetch soal susun kata:");
 const fetchSoalSiapakahAku = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/siapakahaku.json', "Failed to fetch soal siapakah aku:");
@@ -49,8 +53,7 @@ function getDailyResetTime() {
 function getWeeklyResetTime() {
   const now = new Date(), local = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta", hour12: false }));
   local.setHours(0, 0, 0, 0);
-  const day = local.getDay();
-  let add = day === 1 ? 7 : day === 0 ? 1 : 8 - day;
+  const day = local.getDay(), add = day === 1 ? 7 : day === 0 ? 1 : 8 - day;
   local.setDate(local.getDate() + add);
   return local.getTime();
 }
@@ -196,33 +199,38 @@ async function gameLogic(endpoint, params, query, m, client) {
     let sortedUsers;
     if (type === 'semua') {
       sortedUsers = Object.entries(users)
-        .filter(([, data]) => (data.points || 0) > 0)
+        .filter(([_, data]) => (data.points || 0) > 0)
         .sort(([, a], [, b]) => (b.points || 0) - (a.points || 0))
         .slice(0, 10);
     } else if (type === 'hari') {
       sortedUsers = Object.entries(users)
-        .filter(([, data]) => (data.harian ? data.harian.value : 0) > 0)
+        .filter(([_, data]) => ((data.harian ? data.harian.value : 0) > 0))
         .sort(([, a], [, b]) => ((b.harian ? b.harian.value : 0) - (a.harian ? a.harian.value : 0)))
         .slice(0, 10);
     } else if (type === 'minggu') {
       sortedUsers = Object.entries(users)
-        .filter(([, data]) => (data.mingguan ? data.mingguan.value : 0) > 0)
+        .filter(([_, data]) => ((data.mingguan ? data.mingguan.value : 0) > 0))
         .sort(([, a], [, b]) => ((b.mingguan ? b.mingguan.value : 0) - (a.mingguan ? a.mingguan.value : 0)))
         .slice(0, 10);
     } else if (type === 'bulan') {
       sortedUsers = Object.entries(users)
-        .filter(([, data]) => (data.bulanan ? data.bulanan.value : 0) > 0)
+        .filter(([_, data]) => ((data.bulanan ? data.bulanan.value : 0) > 0))
         .sort(([, a], [, b]) => ((b.bulanan ? b.bulanan.value : 0) - (a.bulanan ? a.bulanan.value : 0)))
         .slice(0, 10);
     }
     let topUsersFormatted = `Top 10 Poin ${type}\n\n\`\`\`\nNo.  Username        Points\n-------------------------\n`;
     let mentions = [], positionMessage = '';
+    const mapping = { hari: 'harian', minggu: 'mingguan', bulan: 'bulanan' };
     sortedUsers.forEach(([userName, data], i) => {
       let displayName = (data.name && /^[A-Za-z0-9_-]{1,60}$/.test(data.name)) ? data.name : userName;
-      topUsersFormatted += `${(i + 1).toString().padEnd(3)}  @${displayName} ${ (type === 'semua' ? String(data.points || 0) : String((data[type] ? data[type].value : 0)) ).padEnd(6) }\n`;
+      let pointsVal = type === 'semua' ? (data.points || 0) : (data[mapping[type]] ? data[mapping[type]].value : 0);
+      topUsersFormatted += `${(i + 1).toString().padEnd(3)}  @${displayName} ${String(pointsVal).padEnd(6)}\n`;
       if (!data.name) mentions.push(`${userName}@s.whatsapp.net`);
       if (userName === user) {
-        positionMessage = i === 0 ? "wahh hebat banget ada di peringkat pertama 😁" : i <= 2 ? `Selamat! Kamu berada di peringkat ${i + 1} besar!` : i >= sortedUsers.length - 2 ? `Lumayan lah ya, peringkat ${i + 1}.` : `Kamu di peringkat ${i + 1}, biasa aja sih.`;
+        if (i === 0) positionMessage = "wahh hebat banget ada di peringkat pertama 😁";
+        else if (i <= 2) positionMessage = `Selamat! Kamu berada di peringkat ${i + 1} besar!`;
+        else if (i >= sortedUsers.length - 2) positionMessage = `Lumayan lah ya, peringkat ${i + 1}.`;
+        else positionMessage = `Kamu di peringkat ${i + 1}, biasa aja sih.`;
       }
     });
     topUsersFormatted += '```';
@@ -269,7 +277,7 @@ async function gameLogic(endpoint, params, query, m, client) {
         return "ketik `.ttt sulit` `.ttt mudah` atau `.ttt normal`\n\n*Hadiah*:\n- Sulit: 99999 poin\n- Mudah: 5 poin\n- Normal: 10 poin";
       let level = query.text.toLowerCase(), board = Array(9).fill(null), turn = (level === 'sulit' ? (Math.random() < 0.5 ? 'user' : 'ai') : 'user');
       game = { gameType: 'tictactoe', board, level, turn, answered: false, attempts: 0, timestamp: Date.now(), user };
-      currentRoom.ttt[user] = game; 
+      currentRoom.ttt[user] = game;
       await apiWriteData('rooms', roomsData);
       let msg = `Tic Tac Toe (${level}) game dimulai!\n${renderBoard(board)}\n`;
       if (turn === 'user') msg += "Giliran kamu, kirim nomor kotak (1-9) untuk menempatkan ❌.";
@@ -291,8 +299,8 @@ async function gameLogic(endpoint, params, query, m, client) {
           }
           aiMoveIdx = bestMove;
         }
-        game.board[aiMoveIdx] = 'ai'; 
-        game.turn = 'user'; 
+        game.board[aiMoveIdx] = 'ai';
+        game.turn = 'user';
         await apiWriteData('rooms', roomsData);
         msg = `Tic Tac Toe (${level}) game dimulai!\n*AI memilih angka ${aiMoveIdx + 1}*\n${renderBoard(game.board)}\nGiliran kamu, kirim nomor kotak (1-9) untuk langkah selanjutnya.`;
       }
@@ -325,7 +333,7 @@ async function gameLogic(endpoint, params, query, m, client) {
           await apiWriteData('users', usersData);
           resMsg += "Kamu kalah!";
         } else resMsg += "Permainan seri!";
-        delete currentRoom.ttt[user]; 
+        delete currentRoom.ttt[user];
         await apiWriteData('rooms', roomsData);
         return resMsg;
       }
