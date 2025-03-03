@@ -526,16 +526,21 @@ Dirasakan: ${gempaData.dirasakan}
             if (!msg) return m.reply("Masukkan kata kunci untuk pencarian gambar");
             try {
               m.reply("Sedang mencari gambar...");
-              const response = await axios.get(`https://api.agatz.xyz/api/pinsearch?message=${encodeURIComponent(msg)}`);
-              const images = response.data.data;
+              const response = await axios.get(`https://api.ryzendesu.vip/api/search/pinterest?query=${encodeURIComponent(msg)}`, {
+                headers: {
+                  'accept': 'application/json'
+                }
+              });
+              const images = response.data;
               if (images.length === 0) return m.reply("Gambar tidak ditemukan.");
-              const randomImage = images[Math.floor(Math.random() * images.length)].images_url;
+              const randomImage = images[Math.floor(Math.random() * images.length)].directLink;
               client.sendMessage(m.chat, { image: { url: randomImage } }, { quoted: m });
             } catch (e) {
               bug(e);
             }
             break;
           };
+
         case "videy": {
           if (!msg) return m.reply("*Ex:* .videy https://videy.co/v?id=6eWSwq2t");
           try {
