@@ -287,6 +287,87 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) { 
+        case "sholat": {
+    if (!msg) {
+        m.reply("Masukkan nama provinsi untuk melihat daftar kota/kabupaten atau jadwal sholat.\nContoh: '.sholat Jawa Barat'");
+        return;
+    }
+
+    m.reply("Sedang mencari informasi sholat 🤔");
+    try {
+        const responseKabkota = await axios.post("https://equran.id/api/v2/imsakiyah/kabkota", {
+            "provinsi": msg
+        });
+
+        if (responseKabkota.data.data.length > 0) {
+            let listKabkota = `*Daftar Kota/Kabupaten di Provinsi ${msg}*\n`;
+            responseKabkota.data.data.forEach((kabkota) => {
+                listKabkota += `- ${kabkota.nama}\n`;
+            });
+            listKabkota += `\nKetik 'sholat [nama provinsi] [nama kota/kabupaten]' untuk melihat jadwal sholat.`;
+            m.reply(listKabkota.trim());
+        } else {
+            const parts = msg.split(" ");
+            if (parts.length >= 2) {
+                const provinsi = parts[0];
+                const kabkota = parts.slice(1).join(" ");
+                const responseJadwal = await axios.post("https://equran.id/api/v2/imsakiyah", {
+                    "provinsi": provinsi,
+                    "kabkota": kabkota
+                });
+
+                if (responseJadwal.data.status === "OK") {
+                    const jadwal = responseJadwal.data.data.jadwal;
+                    let jadwalSholat = `*Jadwal Sholat ${kabkota}, ${provinsi} (2025/1446 H)*\n`;
+                    jadwalSholat += `\n*Tanggal:* ${jadwal.tanggal}`;
+                    jadwalSholat += `\n*Imsak:* ${jadwal.imsak}`;
+                    jadwalSholat += `\n*Subuh:* ${jadwal.subuh}`;
+                    jadwalSholat += `\n*Dzuhur:* ${jadwal.dzuhur}`;
+                    jadwalSholat += `\n*Ashar:* ${jadwal.ashar}`;
+                    jadwalSholat += `\n*Maghrib:* ${jadwal.maghrib}`;
+                    jadwalSholat += `\n*Isya:* ${jadwal.isya}`;
+                    m.reply(jadwalSholat);
+                } else {
+                    m.reply(`Jadwal sholat untuk ${kabkota}, ${provinsi} tidak ditemukan.\nPastikan nama provinsi dan kota/kabupaten benar.\n\n*Berikut daftar provinsi yang tersedia:*`);
+                    const responseProvinsiFallback = await axios.get("https://equran.id/api/v2/imsakiyah/provinsi");
+                    let listProvinsiFallback = "";
+                    responseProvinsiFallback.data.data.forEach((provinsiList) => {
+                        listProvinsiFallback += `- ${provinsiList.nama}\n`;
+                    });
+                    m.reply(listProvinsiFallback.trim());
+                }
+
+
+            } else {
+                m.reply("Provinsi tidak ditemukan atau format input tidak sesuai.\nMasukkan nama provinsi yang benar atau 'sholat [provinsi] [kota/kabupaten]'.\n\n*Berikut daftar provinsi yang tersedia:*");
+                const responseProvinsiFallback2 = await axios.get("https://equran.id/api/v2/imsakiyah/provinsi");
+                let listProvinsiFallback2 = "";
+                responseProvinsiFallback2.data.data.forEach((provinsiList2) => {
+                    listProvinsiFallback2 += `- ${provinsiList2.nama}\n`;
+                });
+                m.reply(listProvinsiFallback2.trim());
+            }
+        }
+
+
+    } catch (e) {
+        bug(e);
+        m.reply("Provinsi tidak ditemukan.\n\n*Berikut daftar provinsi yang tersedia:*");
+        try {
+            const responseProvinsiError = await axios.get("https://equran.id/api/v2/imsakiyah/provinsi");
+            let listProvinsiError = "";
+            responseProvinsiError.data.data.forEach((provinsiError) => {
+                listProvinsiError += `- ${provinsiError.nama}\n`;
+            });
+            m.reply(listProvinsiError.trim());
+        } catch (errorProvinsi) {
+            bug(errorProvinsi);
+            m.reply("Terjadi kesalahan saat mengambil data. Silakan coba lagi nanti.");
+        }
+    }
+    break;
+};
+
         case "setname":{
           const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
   const query = { text: msg };
