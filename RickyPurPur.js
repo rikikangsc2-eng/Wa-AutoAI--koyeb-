@@ -286,7 +286,7 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
       switch (command) { 
         case "rpg":{
           const params = { user: m.sender.split("@")[0], room: m.chat.split("@") };
-          const query = { text: body };
+          const query = { text: msg.toLowerCase() };
           const gameResponse = await game.gameLogic("rpg", params, query, m, client);
           m.reply(gameResponse);
         break;}
