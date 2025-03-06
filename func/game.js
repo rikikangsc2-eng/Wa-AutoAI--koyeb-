@@ -1,7 +1,6 @@
 const axios = require('axios');
 const API_ENDPOINT = 'https://copper-ambiguous-velvet.glitch.me/data';
 const USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; RMX2185 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, seperti Gecko) Chrome/131.0.6778.260 Mobile Safari/537.36';
-
 const apiGetData = async (dataType) => {
   try {
     return (await axios.get(`${API_ENDPOINT}/${dataType}`, { headers: { 'User-Agent': USER_AGENT } })).data;
@@ -10,7 +9,6 @@ const apiGetData = async (dataType) => {
     return { users: {}, rooms: {} };
   }
 };
-
 const apiWriteData = async (dataType, data) => {
   try {
     await axios.post(`${API_ENDPOINT}/${dataType}`, data, { headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/json' } });
@@ -20,7 +18,6 @@ const apiWriteData = async (dataType, data) => {
     return false;
   }
 };
-
 const fetchSoal = async (url, errMsg) => {
   try {
     return (await axios.get(url)).data;
@@ -29,12 +26,10 @@ const fetchSoal = async (url, errMsg) => {
     return [];
   }
 };
-
 const fetchSoalSusunKata = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/susunkata.json', "Gagal mengambil soal susun kata:");
 const fetchSoalSiapakahAku = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/siapakahaku.json', "Gagal mengambil soal siapakah aku:");
 const fetchSoalTebakTebakan = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebaktebakan.json', "Gagal mengambil soal tebak tebakan:");
 const fetchSoalTebakGambar = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebakgambar.json', "Gagal mengambil soal tebak gambar:");
-
 function scrambleWithVowelsFirst(word) {
   const vowels = "AIUEOaiueo", letters = word.split(''), v = [], c = [];
   letters.forEach(l => vowels.includes(l) ? v.push(l) : c.push(l));
@@ -42,7 +37,6 @@ function scrambleWithVowelsFirst(word) {
   c.sort(() => Math.random() - 0.5);
   return v.concat(c).join('-');
 }
-
 function generateHint(answer, perc) {
   const arr = answer.toLowerCase().split(''), indices = [];
   for (let i = 0; i < arr.length; i++) { if (arr[i] !== ' ') indices.push(i); }
@@ -51,7 +45,6 @@ function generateHint(answer, perc) {
   const revealSet = new Set(shuffled.slice(0, reveal));
   return arr.map((ch, i) => revealSet.has(i) ? ch : (ch === ' ' ? ' ' : '×')).join('');
 }
-
 function getDailyResetTime() {
   const now = new Date(),
     local = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta", hour12: false }));
@@ -59,7 +52,6 @@ function getDailyResetTime() {
   if (local.getTime() <= now.getTime()) local.setDate(local.getDate() + 1);
   return local.getTime();
 }
-
 function getWeeklyResetTime() {
   const now = new Date(),
     local = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta", hour12: false }));
@@ -69,7 +61,6 @@ function getWeeklyResetTime() {
   local.setDate(local.getDate() + add);
   return local.getTime();
 }
-
 function getMonthlyResetTime() {
   const now = new Date(),
     local = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta", hour12: false }));
@@ -78,14 +69,12 @@ function getMonthlyResetTime() {
   local.setMonth(local.getMonth() + 1);
   return local.getTime();
 }
-
 function getQuestResetTime() {
   const now = new Date(),
     local = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta", hour12: false }));
   local.setHours(0, 0, 0, 0);
   return local.getTime();
 }
-
 function initializeUser(users, user) {
   if (!users[user]) {
     users[user] = {
@@ -100,7 +89,6 @@ function initializeUser(users, user) {
     if (!users[user].bulanan) users[user].bulanan = { value: 0, expires: getMonthlyResetTime() };
   }
 }
-
 function initializeRPG(users, user) {
   if (!users[user].rpg) {
     users[user].rpg = {
@@ -112,13 +100,14 @@ function initializeRPG(users, user) {
       def: 5,
       gold: 50,
       inventory: [],
+      equippedWeapon: null,
+      artifacts: 0,
       globalQuestProgress: 0,
       globalQuestCompleted: false,
       lastRecovery: Date.now()
     };
   }
 }
-
 function generateMonster(playerLevel) {
   const monsters = ['Goblin', 'Orc', 'Troll', 'Serigala', 'Bandit', 'Harpy'];
   const name = monsters[Math.floor(Math.random() * monsters.length)];
@@ -130,7 +119,6 @@ function generateMonster(playerLevel) {
   const goldReward = 10 + level * 3;
   return { name, level, hp, atk, def, expReward, goldReward };
 }
-
 let globalQuest = null;
 const questList = [
   { jenis: 'battle', deskripsi: 'Kalahkan 3 Goblin', target: 3, expReward: 50, goldReward: 20 },
@@ -154,12 +142,10 @@ const questList = [
   { jenis: 'harta', deskripsi: 'Temukan gulungan rahasia', target: 1, expReward: 105, goldReward: 50 },
   { jenis: 'battle', deskripsi: 'Taklukkan 3 Prajurit bayaran', target: 3, expReward: 100, goldReward: 60 }
 ];
-
 function generateGlobalQuest() {
   globalQuest = questList[Math.floor(Math.random() * questList.length)];
   globalQuest.timestamp = getQuestResetTime();
 }
-
 async function resetExpiredUserData() {
   const usersData = await apiGetData('users');
   let updated = false, now = Date.now();
@@ -175,7 +161,6 @@ async function resetExpiredUserData() {
   if (updated) await apiWriteData('users', usersData);
 }
 setInterval(resetExpiredUserData, 3600000);
-
 function renderBoard(board) {
   const numberEmojis = ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣"];
   return board.map((cell, i) => cell === 'user' ? '❌' : cell === 'ai' ? '⭕' : numberEmojis[i]).slice(0, 3).join(' ') + '\n' +
@@ -212,7 +197,6 @@ function minimax(board, depth, isMaximizing, level) {
     return best;
   }
 }
-
 async function gameLogic(endpoint, params, query, m, client) {
   const { user, room } = params || {};
   const { text, hintType } = query || {};
@@ -230,11 +214,7 @@ async function gameLogic(endpoint, params, query, m, client) {
     await apiWriteData('rooms', roomsData);
     return soalMessage(selectedSoal);
   };
-
   if (endpoint === 'susunkata') {
-    const scrambled = scrambleWithVowelsFirst((await ambilSoal(fetchSoalSusunKata, 'susunkata', soal => {
-      return `*Soal Susun Kata:*\nAyo, susun kata ini: *${scrambled}*\nTipe: *${soal.tipe}*`;
-    })) || '');
     return await ambilSoal(fetchSoalSusunKata, 'susunkata', soal => {
       const scr = scrambleWithVowelsFirst(soal.jawaban);
       return `*Soal Susun Kata:*\nAyo, susun kata ini: *${scr}*\nTipe: *${soal.tipe}*`;
@@ -636,7 +616,11 @@ async function gameLogic(endpoint, params, query, m, client) {
           return `*RPG - Error:*\nKamu belum memulai pertempuran. Ketik *mulai*. \n\nalicia-RPG`;
         const battle = roomsData.rooms[room].rpgBattles[user];
         let attackMsg = '';
-        const damageUser = Math.max(player.atk - battle.monster.def, 1);
+        let weaponBonus = 0;
+        if (player.equippedWeapon) weaponBonus = player.equippedWeapon.bonus;
+        let baseDamage = Math.max(player.atk + weaponBonus - battle.monster.def, 1);
+        let randomFactor = Math.random() * 0.1 + 0.9;
+        let damageUser = Math.floor(baseDamage * randomFactor);
         battle.monster.hp -= damageUser;
         attackMsg += `Kamu menyerang *${battle.monster.name}* dan memberi damage *${damageUser}*.\n`;
         if (battle.monster.hp <= 0) {
@@ -646,13 +630,38 @@ async function gameLogic(endpoint, params, query, m, client) {
           player.exp += expGain;
           player.gold += goldGain;
           if (globalQuest && globalQuest.jenis === 'battle') { player.globalQuestProgress += 1; }
+          if (player.equippedWeapon) {
+            player.equippedWeapon.xp = (player.equippedWeapon.xp || 0) + 10;
+            if (player.equippedWeapon.xp >= 100) { player.equippedWeapon.level += 1; player.equippedWeapon.xp -= 100; player.equippedWeapon.bonus += 1; attackMsg += `Senjata naik level ke ${player.equippedWeapon.level}! `; }
+          }
+          if (Math.random() < 0.2) {
+            const weaponStore = [
+              { id: 1, name: "Pedang Kayu", costPoints: 10, costGold: 5, bonus: 2 },
+              { id: 2, name: "Tombak", costPoints: 15, costGold: 8, bonus: 3 },
+              { id: 3, name: "Kapak", costPoints: 20, costGold: 10, bonus: 4 },
+              { id: 4, name: "Belati", costPoints: 12, costGold: 6, bonus: 2 },
+              { id: 5, name: "Busur", costPoints: 18, costGold: 9, bonus: 3 },
+              { id: 6, name: "Pedang Besi", costPoints: 25, costGold: 12, bonus: 5 },
+              { id: 7, name: "Golok", costPoints: 15, costGold: 8, bonus: 3 },
+              { id: 8, name: "Parang", costPoints: 20, costGold: 10, bonus: 4 },
+              { id: 9, name: "Pedang Perak", costPoints: 30, costGold: 15, bonus: 6 },
+              { id: 10, name: "Pedang Emas", costPoints: 50, costGold: 25, bonus: 10 }
+            ];
+            let droppedWeapon = weaponStore[Math.floor(Math.random() * weaponStore.length)];
+            let newWeapon = { id: droppedWeapon.id, name: droppedWeapon.name, level: 1, xp: 0, bonus: droppedWeapon.bonus, baseCost: droppedWeapon.costPoints };
+            player.inventory.push(newWeapon);
+            attackMsg += `\nKamu menemukan senjata: ${newWeapon.name}!`;
+          }
+          if (Math.random() < 0.1) {
+            player.artifacts = (player.artifacts || 0) + 1;
+            attackMsg += `\nKamu menemukan artefak untuk menempa senjata!`;
+          }
           attackMsg += `Kamu dapat *${expGain}* EXP dan *${goldGain}* emas.\n`;
           const expNeeded = player.level * 100;
           if (player.exp >= expNeeded) { player.level += 1; player.exp -= expNeeded; player.maxHp += 20; player.atk += 5; player.def += 2; player.hp = player.maxHp; attackMsg += `Selamat, kamu naik ke level *${player.level}*! (HP: *${player.maxHp}*, ATK: *${player.atk}*, DEF: *${player.def}*)\n`; }
           delete roomsData.rooms[room].rpgBattles[user];
           await apiWriteData('rooms', roomsData);
           await apiWriteData('users', usersData);
-          if (globalQuest && globalQuest.jenis === 'battle' && player.globalQuestProgress >= globalQuest.target && !player.globalQuestCompleted) { player.exp += globalQuest.expReward; player.gold += globalQuest.goldReward; player.globalQuestCompleted = true; attackMsg += `\nSelamat, misi global selesai! Kamu dapat *${globalQuest.expReward}* EXP dan *${globalQuest.goldReward}* emas.\n`; }
           return attackMsg + `\n\nalicia-RPG`;
         }
         battle.turn = 'monster';
@@ -673,7 +682,7 @@ async function gameLogic(endpoint, params, query, m, client) {
         else { const freeAttack = Math.max(roomsData.rooms[room].rpgBattles[user].monster.atk - player.def, 1); player.hp -= freeAttack; let escapeMsg = `*RPG - Kabur Gagal:*\n*${roomsData.rooms[room].rpgBattles[user].monster.name}* menyerang dan memberi damage *${freeAttack}*.\n`; if (player.hp <= 0) { escapeMsg += `Kamu kalah karena HP habis.`; player.hp = 0; delete roomsData.rooms[room].rpgBattles[user]; } else { escapeMsg += `HP kamu sekarang: *${player.hp}*. Tetap berjuang atau coba kabur lagi.`; } await apiWriteData('rooms', roomsData); await apiWriteData('users', usersData); return escapeMsg + `\n\nalicia-RPG`; }
       }
       case 'status': {
-        let statusMsg = `*RPG - Status Petualangan:*\nLevel: *${player.level}*\nEXP: *${player.exp}/${player.level * 100}*\nHP: *${player.hp}/${player.maxHp}*\nATK: *${player.atk}*\nDEF: *${player.def}*\nEmas: *${player.gold}*\nInventory: *${player.inventory.length > 0 ? player.inventory.join(', ') : 'Kosong'}*`;
+        let statusMsg = `*RPG - Status Petualangan:*\nLevel: *${player.level}*\nEXP: *${player.exp}/${player.level * 100}*\nHP: *${player.hp}/${player.maxHp}*\nATK: *${player.atk}*\nDEF: *${player.def}*\nEmas: *${player.gold}*\nInventory: *${player.inventory.length > 0 ? player.inventory.map((w, i) => `${i+1}. ${w.name} (Lvl:${w.level})`).join(', ') : 'Kosong'}*\nSenjata Dipakai: *${player.equippedWeapon ? player.equippedWeapon.name : 'Tidak ada'}*`;
         if (roomsData.rooms[room].rpgBattles[user]) { const b = roomsData.rooms[room].rpgBattles[user]; statusMsg += `\n\nSedang bertarung melawan *${b.monster.name}* (HP: *${b.monster.hp}*).`; }
         return statusMsg + `\n\nalicia-RPG`;
       }
@@ -694,10 +703,124 @@ async function gameLogic(endpoint, params, query, m, client) {
         await apiWriteData('users', usersData);
         return questMsg + `\n\nalicia-RPG`;
       }
+      case 'heal': {
+        if (player.hp >= player.maxHp) return `HP kamu sudah penuh.`;
+        let method = args[0] ? args[0].toLowerCase() : 'point';
+        let missing = player.maxHp - player.hp;
+        let costPoints = Math.ceil((missing / player.maxHp) * 10);
+        if (method === 'point') {
+          if (usersData.users[user].points < costPoints) return `Poin tidak cukup. Butuh ${costPoints} poin.`;
+          usersData.users[user].points -= costPoints;
+          player.hp = player.maxHp;
+          await apiWriteData('users', usersData);
+          return `Heal berhasil dengan mengurangi ${costPoints} poin. HP kamu sekarang penuh.`;
+        } else if (method === 'emas') {
+          let costGold = Math.ceil(costPoints / 2);
+          if (player.gold < costGold) return `Emas tidak cukup. Butuh ${costGold} emas.`;
+          player.gold -= costGold;
+          player.hp = player.maxHp;
+          await apiWriteData('users', usersData);
+          return `Heal berhasil dengan mengurangi ${costGold} emas. HP kamu sekarang penuh.`;
+        } else {
+          return `Metode pembayaran tidak valid. Pilih 'point' atau 'emas'.`;
+        }
+      }
+      case 'toko': {
+        if (!args[0] || args[0].toLowerCase() !== 'senjata') return `Perintah toko tidak valid. Gunakan: toko senjata`;
+        const weaponStore = [
+          { id: 1, name: "Pedang Kayu", costPoints: 10, costGold: 5, bonus: 2 },
+          { id: 2, name: "Tombak", costPoints: 15, costGold: 8, bonus: 3 },
+          { id: 3, name: "Kapak", costPoints: 20, costGold: 10, bonus: 4 },
+          { id: 4, name: "Belati", costPoints: 12, costGold: 6, bonus: 2 },
+          { id: 5, name: "Busur", costPoints: 18, costGold: 9, bonus: 3 },
+          { id: 6, name: "Pedang Besi", costPoints: 25, costGold: 12, bonus: 5 },
+          { id: 7, name: "Golok", costPoints: 15, costGold: 8, bonus: 3 },
+          { id: 8, name: "Parang", costPoints: 20, costGold: 10, bonus: 4 },
+          { id: 9, name: "Pedang Perak", costPoints: 30, costGold: 15, bonus: 6 },
+          { id: 10, name: "Pedang Emas", costPoints: 50, costGold: 25, bonus: 10 }
+        ];
+        if (args.length === 1) {
+          let listMsg = `*Toko Senjata:*\n`;
+          weaponStore.forEach(ws => {
+            listMsg += `${ws.id}. ${ws.name} - ${ws.costPoints} poin / ${ws.costGold} emas\n`;
+          });
+          listMsg += `\nUntuk membeli, ketik: toko senjata [nomor] [point/emas]`;
+          return listMsg;
+        } else if (args.length >= 3) {
+          let weaponId = parseInt(args[1]);
+          let payMethod = args[2].toLowerCase();
+          let selected = weaponStore.find(w => w.id === weaponId);
+          if (!selected) return `Senjata tidak ditemukan.`;
+          if (payMethod === 'point') {
+            if (usersData.users[user].points < selected.costPoints) return `Poin tidak cukup. Butuh ${selected.costPoints} poin.`;
+            usersData.users[user].points -= selected.costPoints;
+          } else if (payMethod === 'emas') {
+            if (player.gold < selected.costGold) return `Emas tidak cukup. Butuh ${selected.costGold} emas.`;
+            player.gold -= selected.costGold;
+          } else {
+            return `Metode pembayaran tidak valid. Gunakan 'point' atau 'emas'.`;
+          }
+          let newWeapon = { id: selected.id, name: selected.name, level: 1, xp: 0, bonus: selected.bonus, baseCost: selected.costPoints };
+          player.inventory.push(newWeapon);
+          await apiWriteData('users', usersData);
+          return `Pembelian berhasil: ${newWeapon.name} telah ditambahkan ke inventory.`;
+        } else {
+          return `Perintah toko tidak lengkap. Gunakan: toko senjata [nomor] [point/emas]`;
+        }
+      }
+      case 'inv': {
+        let invMsg = `*Inventory Senjata:*\n`;
+        if (player.inventory.length === 0) invMsg += `Kosong.`;
+        else {
+          player.inventory.forEach((w, i) => {
+            invMsg += `${i+1}. ${w.name} (Lvl: ${w.level}, XP: ${w.xp}, Bonus: ${w.bonus})\n`;
+          });
+        }
+        invMsg += `\nArtefak: ${player.artifacts || 0}`;
+        return invMsg;
+      }
+      case 'pakai': {
+        if (player.inventory.length === 0) return `Inventory kosong.`;
+        let index = parseInt(args[0]) - 1;
+        if (isNaN(index) || index < 0 || index >= player.inventory.length) return `Indeks senjata tidak valid.`;
+        player.equippedWeapon = player.inventory[index];
+        await apiWriteData('users', usersData);
+        return `Senjata ${player.equippedWeapon.name} telah dipakai.`;
+      }
+      case 'jual': {
+        if (player.inventory.length === 0) return `Inventory kosong.`;
+        let index = parseInt(args[0]) - 1;
+        if (isNaN(index) || index < 0 || index >= player.inventory.length) return `Indeks senjata tidak valid.`;
+        let weaponToSell = player.inventory.splice(index, 1)[0];
+        let sellGold = Math.floor((weaponToSell.baseCost || 10) / 2);
+        player.gold += sellGold;
+        if (player.equippedWeapon && player.equippedWeapon.id === weaponToSell.id) {
+          delete player.equippedWeapon;
+        }
+        await apiWriteData('users', usersData);
+        return `Senjata ${weaponToSell.name} dijual dan mendapatkan ${sellGold} emas.`;
+      }
+      case 'tempa': {
+        if (player.inventory.length === 0) return `Inventory kosong.`;
+        if (!player.artifacts || player.artifacts < 1) return `Tidak ada artefak untuk menempa senjata.`;
+        let index = parseInt(args[0]) - 1;
+        if (isNaN(index) || index < 0 || index >= player.inventory.length) return `Indeks senjata tidak valid.`;
+        let weaponToForge = player.inventory[index];
+        player.artifacts -= 1;
+        weaponToForge.xp = (weaponToForge.xp || 0) + 20;
+        let msg = `Artefak digunakan untuk menempa ${weaponToForge.name}. XP bertambah 20.`;
+        if (weaponToForge.xp >= 100) {
+          weaponToForge.level += 1;
+          weaponToForge.xp -= 100;
+          weaponToForge.bonus += 1;
+          msg += ` Senjata naik level ke ${weaponToForge.level}!`;
+        }
+        await apiWriteData('users', usersData);
+        return msg;
+      }
       default:
-        return `*RPG - Error:*\nPerintah tidak dikenal. Gunakan *mulai*, *serang*, *kabur*, *status*, atau *quest*. \n\nalicia-RPG`;
+        return `*RPG - Error:*\nPerintah tidak dikenal. Gunakan *mulai*, *serang*, *kabur*, *status*, *quest*, *heal*, *toko senjata*, *inv*, *pakai*, *jual*, atau *tempa*. \n\nalicia-RPG`;
     }
   } else return `*Error:*\nEndpoint tidak dikenal.`;
 }
-
 module.exports = { gameLogic };
