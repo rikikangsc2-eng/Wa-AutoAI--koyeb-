@@ -109,38 +109,39 @@ function initializeRPG(users, user) {
   }
 }
 function generateMonster(playerLevel) {
-  const monsters = ['Goblin', 'Orc', 'Troll', 'Serigala', 'Bandit', 'Harpy'];
+  const monsters = ['Goblin', 'Orc', 'Troll', 'Serigala', 'Bandit', 'Harpy', 'Prajurit', 'Penyihir', 'Golem'];
   const name = monsters[Math.floor(Math.random() * monsters.length)];
-  const level = playerLevel;
-  const hp = 50 + level * 10 + Math.floor(Math.random() * 10);
-  const atk = 5 + level * 2 + Math.floor(Math.random() * 3);
-  const def = 3 + level + Math.floor(Math.random() * 2);
-  const expReward = 20 + level * 5;
-  const goldReward = 10 + level * 3;
-  return { name, level, hp, atk, def, expReward, goldReward };
+  const level = playerLevel + Math.floor(Math.random() * 2) - 1;
+  const actualLevel = Math.max(1, level);
+  const hp = 60 + actualLevel * 15 + Math.floor(Math.random() * 20);
+  const atk = 8 + actualLevel * 3 + Math.floor(Math.random() * 5);
+  const def = 4 + actualLevel * 2 + Math.floor(Math.random() * 3);
+  const expReward = 25 + actualLevel * 8;
+  const goldReward = 15 + actualLevel * 5;
+  return { name, level: actualLevel, hp, atk, def, expReward, goldReward };
 }
 let globalQuest = null;
 const questList = [
-  { jenis: 'battle', deskripsi: 'Kalahkan 3 Goblin', target: 3, expReward: 50, goldReward: 20 },
-  { jenis: 'collection', deskripsi: 'Kumpulkan 5 Ramuan', target: 5, expReward: 40, goldReward: 15 },
-  { jenis: 'exploration', deskripsi: 'Jelajahi 3 wilayah baru', target: 3, expReward: 60, goldReward: 25 },
-  { jenis: 'harta', deskripsi: 'Temukan harta karun tersembunyi', target: 1, expReward: 80, goldReward: 50 },
-  { jenis: 'battle', deskripsi: 'Tumbangkan 5 Bandit', target: 5, expReward: 70, goldReward: 30 },
-  { jenis: 'collection', deskripsi: 'Kumpulkan 7 Benda Ajaib', target: 7, expReward: 90, goldReward: 40 },
-  { jenis: 'exploration', deskripsi: 'Jelajahi 4 gua misterius', target: 4, expReward: 100, goldReward: 50 },
-  { jenis: 'harta', deskripsi: 'Cari petunjuk rahasia di reruntuhan', target: 1, expReward: 60, goldReward: 35 },
-  { jenis: 'battle', deskripsi: 'Kalahkan 4 Orc', target: 4, expReward: 80, goldReward: 30 },
-  { jenis: 'collection', deskripsi: 'Kumpulkan 6 Permata', target: 6, expReward: 70, goldReward: 25 },
-  { jenis: 'exploration', deskripsi: 'Jelajahi 5 daerah terlarang', target: 5, expReward: 110, goldReward: 55 },
-  { jenis: 'harta', deskripsi: 'Buka peti harta yang tersembunyi', target: 1, expReward: 100, goldReward: 60 },
-  { jenis: 'battle', deskripsi: 'Tumbangkan 2 Troll', target: 2, expReward: 120, goldReward: 70 },
-  { jenis: 'collection', deskripsi: 'Kumpulkan 8 Artefak kuno', target: 8, expReward: 130, goldReward: 80 },
-  { jenis: 'exploration', deskripsi: 'Telusuri 3 reruntuhan kuno', target: 3, expReward: 75, goldReward: 35 },
-  { jenis: 'battle', deskripsi: 'Hancurkan 4 Kapak Besi', target: 4, expReward: 85, goldReward: 40 },
-  { jenis: 'collection', deskripsi: 'Kumpulkan 5 Jimat mistis', target: 5, expReward: 65, goldReward: 30 },
-  { jenis: 'exploration', deskripsi: 'Jelajahi 2 kastil angker', target: 2, expReward: 95, goldReward: 45 },
-  { jenis: 'harta', deskripsi: 'Temukan gulungan rahasia', target: 1, expReward: 105, goldReward: 50 },
-  { jenis: 'battle', deskripsi: 'Taklukkan 3 Prajurit bayaran', target: 3, expReward: 100, goldReward: 60 }
+  { jenis: 'battle', deskripsi: 'Kalahkan 5 Goblin', target: 5, expReward: 70, goldReward: 30 },
+  { jenis: 'collection', deskripsi: 'Kumpulkan 8 Ramuan', target: 8, expReward: 50, goldReward: 20 },
+  { jenis: 'exploration', deskripsi: 'Jelajahi 2 wilayah baru', target: 2, expReward: 80, goldReward: 40 },
+  { jenis: 'harta', deskripsi: 'Temukan harta karun tersembunyi', target: 1, expReward: 100, goldReward: 70 },
+  { jenis: 'battle', deskripsi: 'Tumbangkan 7 Bandit', target: 7, expReward: 90, goldReward: 50 },
+  { jenis: 'collection', deskripsi: 'Kumpulkan 10 Benda Ajaib', target: 10, expReward: 120, goldReward: 60 },
+  { jenis: 'exploration', deskripsi: 'Jelajahi 3 gua misterius', target: 3, expReward: 130, goldReward: 70 },
+  { jenis: 'harta', deskripsi: 'Cari petunjuk rahasia di reruntuhan', target: 1, expReward: 80, goldReward: 50 },
+  { jenis: 'battle', deskripsi: 'Kalahkan 6 Orc', target: 6, expReward: 100, goldReward: 50 },
+  { jenis: 'collection', deskripsi: 'Kumpulkan 9 Permata', target: 9, expReward: 90, goldReward: 40 },
+  { jenis: 'exploration', deskripsi: 'Jelajahi 4 daerah terlarang', target: 4, expReward: 140, goldReward: 80 },
+  { jenis: 'harta', deskripsi: 'Buka peti harta yang tersembunyi', target: 1, expReward: 120, goldReward: 80 },
+  { jenis: 'battle', deskripsi: 'Tumbangkan 3 Troll', target: 3, expReward: 150, goldReward: 90 },
+  { jenis: 'collection', deskripsi: 'Kumpulkan 12 Artefak kuno', target: 12, expReward: 160, goldReward: 100 },
+  { jenis: 'exploration', deskripsi: 'Telusuri 2 reruntuhan kuno', target: 2, expReward: 95, goldReward: 55 },
+  { jenis: 'battle', deskripsi: 'Hancurkan 6 Kapak Besi', target: 6, expReward: 105, goldReward: 60 },
+  { jenis: 'collection', deskripsi: 'Kumpulkan 8 Jimat mistis', target: 8, expReward: 85, goldReward: 40 },
+  { jenis: 'exploration', deskripsi: 'Jelajahi 1 kastil angker', target: 1, expReward: 115, goldReward: 65 },
+  { jenis: 'harta', deskripsi: 'Temukan gulungan rahasia', target: 1, expReward: 135, goldReward: 80 },
+  { jenis: 'battle', deskripsi: 'Taklukkan 4 Prajurit bayaran', target: 4, expReward: 120, goldReward: 70 }
 ];
 function generateGlobalQuest() {
   globalQuest = questList[Math.floor(Math.random() * questList.length)];
@@ -585,109 +586,263 @@ async function gameLogic(endpoint, params, query, m, client) {
     initializeRPG(usersData.users, user);
     const roomsData = await apiGetData('rooms');
     if (!roomsData.rooms[room]) roomsData.rooms[room] = {};
-    if (!roomsData.rooms[room].rpgBattles) roomsData.rooms[room].rpgBattles = {};
+    if (!roomsData.rooms[room].rpgAdventure) roomsData.rooms[room].rpgAdventure = {};
     let player = usersData.users[user].rpg;
     let now = Date.now();
-    if (now - player.lastRecovery >= 24 * 3600000) { player.hp = player.maxHp; player.lastRecovery = now; }
+    if (now - player.lastRecovery >= 30 * 60000) {
+        player.hp = Math.min(player.maxHp, player.hp + Math.ceil(player.maxHp * 0.2));
+        player.lastRecovery = now;
+    }
     const inputText = text ? text.trim() : '';
     const [subCmd, ...args] = inputText.split(' ');
     const cmd = subCmd.toLowerCase();
     switch(cmd) {
       case 'mulai': {
-        if (roomsData.rooms[room].rpgBattles[user])
-          return `*RPG - Pertempuran:*\nKamu sudah dalam pertempuran seru!`;
-        const monster = generateMonster(player.level);
-        const turn = Math.random() < 0.5 ? 'user' : 'monster';
-        roomsData.rooms[room].rpgBattles[user] = { monster, turn };
+        if (roomsData.rooms[room].rpgAdventure[user])
+          return `*RPG - Petualangan:*\nKamu sedang berpetualang!`;
+        const adventureState = {
+            round: 0,
+            rewards: { exp: 0, gold: 0, artifacts: 0 },
+            inventoryChanges: [],
+            lastEvent: null,
+            isRunning: true,
+            startTime: now
+        };
+        roomsData.rooms[room].rpgAdventure[user] = adventureState;
         await apiWriteData('rooms', roomsData);
-        let battleMsg = `*RPG - Pertempuran Dimulai!*\nKamu bertarung melawan *${monster.name}* (Lvl *${monster.level}*) dengan HP *${monster.hp}*.\n`;
-        if (turn === 'user') battleMsg += `Giliranmu menyerang! Ketik *serang*.`;
-        else {
-          const damage = Math.max(monster.atk - player.def, 1);
-          player.hp -= damage;
-          battleMsg += `*${monster.name}* menyerang dulu dan memberi damage *${damage}* padamu.\nHP kamu: *${player.hp}*.\nSekarang giliranmu menyerang! Ketik *serang*.`;
-          if (player.hp <= 0) { battleMsg += `\nWaduh, kamu kalah dalam pertempuran.`; player.hp = 0; delete roomsData.rooms[room].rpgBattles[user]; await apiWriteData('rooms', roomsData); await apiWriteData('users', usersData); return battleMsg; }
+        return `*RPG - Petualangan Dimulai!*\nKetik *lanjut* untuk berpetualang, atau *berhenti* untuk mengakhiri petualangan.`;
+      }
+      case 'lanjut': {
+        const adventure = roomsData.rooms[room].rpgAdventure[user];
+        if (!adventure) return `*RPG - Error:*\nPetualangan belum dimulai. Ketik *mulai*.`;
+        if (!adventure.isRunning) return `*RPG - Error:*\nPetualangan sudah berakhir. Mulai petualangan baru dengan ketik *mulai*.`;
+
+        adventure.round += 1;
+        let eventType = Math.random();
+        let eventMsg = `*RPG - Ronde ${adventure.round} Petualangan:*\n`;
+
+        if (eventType < 0.6) { // 60% Monster Encounter
+          const monster = generateMonster(player.level);
+          adventure.lastEvent = 'monster';
+          adventure.currentMonster = monster;
+          eventMsg += `Kamu bertemu *${monster.name}* (Lvl ${monster.level})! HP Monster: ${monster.hp}\n`;
+          eventMsg += `Ketik *serang* untuk melawan atau *kabur* untuk mencoba melarikan diri.`;
+        } else if (eventType < 0.8) { // 20% Treasure/Artifact Find
+          adventure.lastEvent = 'treasure';
+          if (Math.random() < 0.5) {
+            let goldFind = 50 + Math.floor(Math.random() * 100);
+            adventure.rewards.gold += goldFind;
+            eventMsg += `Kamu menemukan peti berisi *${goldFind} emas*! Berkah!\n`;
+          } else {
+            adventure.rewards.artifacts += 1;
+            eventMsg += `Kamu menemukan *Artefak Kuno*! Sangat beruntung!\n`;
+          }
+          eventMsg += `Ketik *lanjut* untuk meneruskan petualangan.`;
+        } else if (eventType < 0.9) { // 10% Trap Event
+          adventure.lastEvent = 'trap';
+          let hpLossPercentage = 0.1 + Math.random() * 0.2;
+          let hpLoss = Math.floor(player.hp * hpLossPercentage);
+          player.hp -= hpLoss;
+          eventMsg += `Kamu terjebak! Kehilangan *${hpLoss} HP*.\n`;
+          if (player.hp <= 0) {
+              player.hp = 0;
+              eventMsg += `HP habis! Petualangan berakhir.\n`;
+              adventure.isRunning = false;
+              adventure.endTime = now;
+          } else {
+              eventMsg += `HP Kamu: *${player.hp}*\n`;
+          }
+          eventMsg += `Ketik *lanjut* untuk meneruskan petualangan.`;
         }
+        else { // 10% Nothing Happens
+          adventure.lastEvent = 'nothing';
+          eventMsg += `Kamu berjalan tanpa kejadian berarti.\nKetenangan...\n`;
+          eventMsg += `Ketik *lanjut* untuk meneruskan petualangan.`;
+        }
+
+        await apiWriteData('rooms', roomsData);
         await apiWriteData('users', usersData);
-        return battleMsg;
+        return eventMsg;
       }
       case 'serang': {
-        if (!roomsData.rooms[room].rpgBattles[user])
-          return `*RPG - Error:*\nKamu belum memulai pertempuran. Ketik *mulai*.`;
-        const battle = roomsData.rooms[room].rpgBattles[user];
-        let attackMsg = '';
-        let weaponBonus = 0;
-        if (player.equippedWeapon) weaponBonus = player.equippedWeapon.bonus;
-        let baseDamage = Math.max(player.atk + weaponBonus - battle.monster.def, 1);
-        let randomFactor = Math.random() * 0.1 + 0.9;
-        let damageUser = Math.floor(baseDamage * randomFactor);
-        battle.monster.hp -= damageUser;
-        attackMsg += `Kamu menyerang *${battle.monster.name}* dan memberi damage *${damageUser}*.\n`;
-        if (battle.monster.hp <= 0) {
-          attackMsg += `Mantap, kamu mengalahkan *${battle.monster.name}*!\n`;
-          const expGain = battle.monster.expReward;
-          const goldGain = battle.monster.goldReward;
-          player.exp += expGain;
-          player.gold += goldGain;
-          if (globalQuest && globalQuest.jenis === 'battle') { player.globalQuestProgress += 1; }
-          if (player.equippedWeapon) {
-            player.equippedWeapon.xp = (player.equippedWeapon.xp || 0) + 10;
-            if (player.equippedWeapon.xp >= 100) { player.equippedWeapon.level += 1; player.equippedWeapon.xp -= 100; player.equippedWeapon.bonus += 1; attackMsg += `Senjata naik level ke ${player.equippedWeapon.level}! `; }
-          }
-          if (Math.random() < 0.2) {
-            const weaponStore = [
-              { id: 1, name: "Pedang Kayu", costPoints: 10, costGold: 5, bonus: 2 },
-              { id: 2, name: "Tombak", costPoints: 15, costGold: 8, bonus: 3 },
-              { id: 3, name: "Kapak", costPoints: 20, costGold: 10, bonus: 4 },
-              { id: 4, name: "Belati", costPoints: 12, costGold: 6, bonus: 2 },
-              { id: 5, name: "Busur", costPoints: 18, costGold: 9, bonus: 3 },
-              { id: 6, name: "Pedang Besi", costPoints: 25, costGold: 12, bonus: 5 },
-              { id: 7, name: "Golok", costPoints: 15, costGold: 8, bonus: 3 },
-              { id: 8, name: "Parang", costPoints: 20, costGold: 10, bonus: 4 },
-              { id: 9, name: "Pedang Perak", costPoints: 30, costGold: 15, bonus: 6 },
-              { id: 10, name: "Pedang Emas", costPoints: 50, costGold: 25, bonus: 10 }
-            ];
-            let droppedWeapon = weaponStore[Math.floor(Math.random() * weaponStore.length)];
-            let newWeapon = { id: droppedWeapon.id, name: droppedWeapon.name, level: 1, xp: 0, bonus: droppedWeapon.bonus, baseCost: droppedWeapon.costPoints };
-            player.inventory.push(newWeapon);
-            attackMsg += `\nKamu menemukan senjata: ${newWeapon.name}!`;
-          }
-          if (Math.random() < 0.1) {
-            player.artifacts = (player.artifacts || 0) + 1;
-            attackMsg += `\nKamu menemukan artefak untuk menempa senjata!`;
-          }
-          attackMsg += `Kamu dapat *${expGain}* EXP dan *${goldGain}* emas.\n`;
-          const expNeeded = player.level * 100;
-          if (player.exp >= expNeeded) { player.level += 1; player.exp -= expNeeded; player.maxHp += 20; player.atk += 5; player.def += 2; player.hp = player.maxHp; attackMsg += `Selamat, kamu naik ke level *${player.level}*! (HP: *${player.maxHp}*, ATK: *${player.atk}*, DEF: *${player.def}*)\n`; }
-          delete roomsData.rooms[room].rpgBattles[user];
-          await apiWriteData('rooms', roomsData);
-          await apiWriteData('users', usersData);
-          return attackMsg;
+        const adventure = roomsData.rooms[room].rpgAdventure[user];
+        if (!adventure) return `*RPG - Error:*\nPetualangan belum dimulai. Ketik *mulai*.`;
+        if (!adventure.isRunning) return `*RPG - Error:*\nPetualangan sudah berakhir. Mulai petualangan baru dengan ketik *mulai*.`;
+        if (adventure.lastEvent !== 'monster' || !adventure.currentMonster) return `*RPG - Error:*\nTidak ada monster untuk diserang. Ketik *lanjut* untuk berpetualang.`;
+
+        let battleLog = `*RPG - Pertempuran Ronde ${adventure.round}:*\n`;
+        let monster = adventure.currentMonster;
+        let totalDamageToMonster = 0;
+        let totalDamageToPlayer = 0;
+        let weaponBonus = player.equippedWeapon ? player.equippedWeapon.bonus : 0;
+
+        for (let attackRound = 0; attackRound < 3; attackRound++) { // Simulate 3 attack rounds
+            if (monster.hp <= 0 || player.hp <= 0) break;
+
+            // Player Attack
+            let baseDamageToMonster = Math.max(player.atk + weaponBonus - monster.def, 1);
+            let randomFactorUser = Math.random() * 0.1 + 0.9;
+            let damageToMonster = Math.floor(baseDamageToMonster * randomFactorUser);
+            monster.hp -= damageToMonster;
+            totalDamageToMonster += damageToMonster;
+            battleLog += `Kamu menyerang ${monster.name} dan memberikan ${damageToMonster} damage. HP Monster: ${monster.hp > 0 ? monster.hp : 0}\n`;
+
+            if (monster.hp <= 0) {
+                battleLog += `\n*${monster.name} dikalahkan!*\n`;
+                let expGain = monster.expReward;
+                let goldGain = monster.goldReward;
+                let artifactDrop = Math.random() < 0.1 ? 1 : 0;
+                let weaponDropChance = 0.1 + (player.level * 0.01);
+
+                adventure.rewards.exp += expGain;
+                adventure.rewards.gold += goldGain;
+                adventure.rewards.artifacts += artifactDrop;
+
+                if (globalQuest && globalQuest.jenis === 'battle') { player.globalQuestProgress += 1; }
+
+                if (player.equippedWeapon) {
+                    player.equippedWeapon.xp = (player.equippedWeapon.xp || 0) + 10;
+                    if (player.equippedWeapon.xp >= 100) { player.equippedWeapon.level += 1; player.equippedWeapon.xp -= 100; player.equippedWeapon.bonus += 1; battleLog += `Senjata ${player.equippedWeapon.name} naik level ke ${player.equippedWeapon.level}!\n`; }
+                }
+
+                if (Math.random() < weaponDropChance) {
+                    const weaponStore = [
+                        { id: 1, name: "Pedang Kayu", costPoints: 10, costGold: 150, bonus: 2 },
+                        { id: 2, name: "Tombak", costPoints: 15, costGold: 200, bonus: 3 },
+                        { id: 3, name: "Kapak", costPoints: 20, costGold: 250, bonus: 4 },
+                        { id: 4, name: "Belati", costPoints: 12, costGold: 170, bonus: 2 },
+                        { id: 5, name: "Busur", costPoints: 18, costGold: 230, bonus: 3 },
+                        { id: 6, name: "Pedang Besi", costPoints: 25, costGold: 300, bonus: 5 },
+                        { id: 7, name: "Golok", costPoints: 15, costGold: 200, bonus: 3 },
+                        { id: 8, name: "Parang", costPoints: 20, costGold: 250, bonus: 4 },
+                        { id: 9, name: "Pedang Perak", costPoints: 30, costGold: 350, bonus: 6 },
+                        { id: 10, name: "Pedang Emas", costPoints: 50, costGold: 550, bonus: 10 }
+                    ];
+                    let droppedWeapon = weaponStore[Math.floor(Math.random() * weaponStore.length)];
+                    let newWeapon = { id: droppedWeapon.id, name: droppedWeapon.name, level: 1, xp: 0, bonus: droppedWeapon.bonus, baseCost: droppedWeapon.costPoints };
+                    player.inventory.push(newWeapon);
+                    adventure.inventoryChanges.push({ type: 'add', item: newWeapon });
+                    battleLog += `Kamu menemukan senjata: ${newWeapon.name}!\n`;
+                }
+                if (artifactDrop > 0) battleLog += `Kamu menemukan ${artifactDrop} artefak!\n`;
+                battleLog += `Mendapatkan ${expGain} EXP dan ${goldGain} emas.\n`;
+
+                adventure.lastEvent = 'none';
+                delete adventure.currentMonster;
+                break; // Monster defeated, end battle rounds
+            }
+
+            // Monster Attack
+            let baseDamageToPlayer = Math.max(monster.atk - player.def, 1);
+            let randomFactorMonster = Math.random() * 0.1 + 0.9;
+            let damageToPlayer = Math.floor(baseDamageToPlayer * randomFactorMonster);
+            player.hp -= damageToPlayer;
+            totalDamageToPlayer += damageToPlayer;
+            battleLog += `${monster.name} menyerangmu dan memberikan ${damageToPlayer} damage. HP Kamu: ${player.hp > 0 ? player.hp : 0}\n`;
+
+            if (player.hp <= 0) {
+                player.hp = 0;
+                battleLog += `\n*Kamu kalah dalam pertempuran!*\nPetualangan berakhir.\n`;
+                adventure.isRunning = false;
+                adventure.endTime = now;
+                break; // Player defeated, end battle rounds
+            }
         }
-        battle.turn = 'monster';
-        const damageMonster = Math.max(battle.monster.atk - player.def, 1);
-        player.hp -= damageMonster;
-        attackMsg += `*${battle.monster.name}* membalas serang dan memberi damage *${damageMonster}* padamu.\n`;
-        if (player.hp <= 0) { attackMsg += `\nSayang, kamu kalah dalam pertempuran.`; player.hp = 0; delete roomsData.rooms[room].rpgBattles[user]; await apiWriteData('rooms', roomsData); await apiWriteData('users', usersData); return attackMsg; }
-        attackMsg += `Sisa HP *${battle.monster.name}*: *${battle.monster.hp}*\nHP kamu: *${player.hp}*\nGiliranmu lagi menyerang! Ketik *serang*.`;
-        battle.turn = 'user';
+
+        battleLog += `\n*--- Rangkuman Pertempuran ---*\n`;
+        battleLog += `Total damage diberikan ke ${monster.name}: ${totalDamageToMonster}\n`;
+        battleLog += `Total damage diterima dari ${monster.name}: ${totalDamageToPlayer}\n`;
+        battleLog += `HP Kamu sekarang: ${player.hp}\n`;
+        if (monster.hp > 0 && player.hp > 0) battleLog += `Pertempuran berlanjut. Ketik *serang* lagi atau *kabur*.\n`;
+        else if (player.hp > 0) battleLog += `Ketik *lanjut* untuk meneruskan petualangan.\n`;
+
+        const expNeeded = player.level * 100;
+        if (player.exp >= expNeeded) { player.level += 1; player.exp -= expNeeded; player.maxHp += 20; player.atk += 5; player.def += 2; player.hp = player.maxHp; battleLog += `\nSelamat, kamu naik ke level *${player.level}*! (HP: *${player.maxHp}*, ATK: *${player.atk}*, DEF: *${player.def}*)\n`; }
+
+
         await apiWriteData('rooms', roomsData);
         await apiWriteData('users', usersData);
-        return attackMsg;
+        return battleLog;
+
       }
       case 'kabur': {
-        if (!roomsData.rooms[room].rpgBattles[user])
-          return `*RPG - Error:*\nKamu tidak sedang bertarung!`;
-        if (Math.random() < 0.5) { delete roomsData.rooms[room].rpgBattles[user]; await apiWriteData('rooms', roomsData); return `*RPG - Kabur:*\nKamu berhasil kabur dengan selamat!`; }
-        else { const freeAttack = Math.max(roomsData.rooms[room].rpgBattles[user].monster.atk - player.def, 1); player.hp -= freeAttack; let escapeMsg = `*RPG - Kabur Gagal:*\n*${roomsData.rooms[room].rpgBattles[user].monster.name}* menyerang dan memberi damage *${freeAttack}*.\n`; if (player.hp <= 0) { escapeMsg += `Kamu kalah karena HP habis.`; player.hp = 0; delete roomsData.rooms[room].rpgBattles[user]; } else { escapeMsg += `HP kamu sekarang: *${player.hp}*. Tetap berjuang atau coba kabur lagi.`; } await apiWriteData('rooms', roomsData); await apiWriteData('users', usersData); return escapeMsg; }
+        const adventure = roomsData.rooms[room].rpgAdventure[user];
+        if (!adventure) return `*RPG - Error:*\nPetualangan belum dimulai. Ketik *mulai*.`;
+        if (!adventure.isRunning) return `*RPG - Error:*\nPetualangan sudah berakhir. Mulai petualangan baru dengan ketik *mulai*.`;
+        if (adventure.lastEvent !== 'monster') return `*RPG - Error:*\nTidak ada monster untuk kabur. Ketik *lanjut* untuk berpetualang.`;
+
+        if (Math.random() < 0.7) {
+            delete adventure.currentMonster;
+            adventure.lastEvent = 'none';
+            await apiWriteData('rooms', roomsData);
+            return `*RPG - Kabur:*\nBerhasil melarikan diri dari pertempuran! Ketik *lanjut* untuk meneruskan petualangan.`;
+        } else {
+            let freeAttack = Math.max(adventure.currentMonster.atk - player.def, 1);
+            player.hp -= freeAttack;
+            let escapeMsg = `*RPG - Kabur Gagal:*\nSaat mencoba kabur, ${adventure.currentMonster.name} menyerang dan memberikan ${freeAttack} damage.\n`;
+            if (player.hp <= 0) {
+                player.hp = 0;
+                escapeMsg += `HP habis! Petualangan berakhir.\n`;
+                adventure.isRunning = false;
+                adventure.endTime = now;
+            } else {
+                escapeMsg += `HP Kamu sekarang: ${player.hp}. Ketik *serang* atau *kabur* lagi.\n`;
+            }
+            await apiWriteData('rooms', roomsData);
+            await apiWriteData('users', usersData);
+            return escapeMsg;
+        }
+      }
+      case 'berhenti': {
+        const adventure = roomsData.rooms[room].rpgAdventure[user];
+        if (!adventure || !adventure.isRunning) return `*RPG - Error:*\nTidak ada petualangan yang sedang berjalan.`;
+        adventure.isRunning = false;
+        adventure.endTime = now;
+
+        player.exp += adventure.rewards.exp;
+        player.gold += adventure.rewards.gold;
+        player.artifacts += adventure.rewards.artifacts;
+
+        const expNeeded = player.level * 100;
+        if (player.exp >= expNeeded) { player.level += 1; player.exp -= expNeeded; player.maxHp += 20; player.atk += 5; player.def += 2; player.hp = player.maxHp; }
+
+        delete roomsData.rooms[room].rpgAdventure[user];
+        await apiWriteData('rooms', roomsData);
+        await apiWriteData('users', usersData);
+
+        let summaryMsg = `*RPG - Petualangan Berakhir!*\n--- Ringkasan Petualangan ---\n`;
+        summaryMsg += `Ronde yang dilewati: ${adventure.round}\n`;
+        summaryMsg += `EXP diperoleh: ${adventure.rewards.exp}\n`;
+        summaryMsg += `Emas diperoleh: ${adventure.rewards.gold}\n`;
+        summaryMsg += `Artefak ditemukan: ${adventure.rewards.artifacts}\n`;
+        if (player.level > usersData.users[user].rpg.level ) summaryMsg += `Naik level menjadi: ${player.level}!\n`;
+
+        if (globalQuest && player.globalQuestProgress >= globalQuest.target && !player.globalQuestCompleted) {
+          player.exp += globalQuest.expReward;
+          player.gold += globalQuest.goldReward;
+          player.globalQuestCompleted = true;
+          summaryMsg += `\nSelamat, misi global selesai! Kamu dapat *${globalQuest.expReward}* EXP dan *${globalQuest.goldReward}* emas.\n`;
+        }
+        await apiWriteData('users', usersData);
+
+        return summaryMsg;
       }
       case 'status': {
-        let statusMsg = `*RPG - Status Petualangan:*\nLevel: *${player.level}*\nEXP: *${player.exp}/${player.level * 100}*\nHP: *${player.hp}/${player.maxHp}*\nATK: *${player.atk}*\nDEF: *${player.def}*\nEmas: *${player.gold}*\nInventory: *${player.inventory.length > 0 ? player.inventory.map((w, i) => `${i+1}. ${w.name} (Lvl:${w.level})`).join(', ') : 'Kosong'}*\nSenjata Dipakai: *${player.equippedWeapon ? player.equippedWeapon.name : 'Tidak ada'}*`;
-        if (roomsData.rooms[room].rpgBattles[user]) { const b = roomsData.rooms[room].rpgBattles[user]; statusMsg += `\n\nSedang bertarung melawan *${b.monster.name}* (HP: *${b.monster.hp}*).`; }
+        let statusMsg = `*RPG - Status Petualangan:*\nLevel: *${player.level}*\nEXP: *${player.exp}/${player.level * 100}*\nHP: *${player.hp}/${player.maxHp}*\nATK: *${player.atk}*\nDEF: *${player.def}*\nEmas: *${player.gold}*\nArtefak: *${player.artifacts || 0}*\nInventory: *${player.inventory.length > 0 ? player.inventory.map((w, i) => `${i+1}. ${w.name} (Lvl:${w.level})`).join(', ') : 'Kosong'}*\nSenjata Dipakai: *${player.equippedWeapon ? player.equippedWeapon.name : 'Tidak ada'}*`;
+        const adventure = roomsData.rooms[room].rpgAdventure[user];
+        if (adventure && adventure.isRunning && adventure.lastEvent === 'monster' && adventure.currentMonster) {
+             statusMsg += `\n\nSedang bertarung melawan *${adventure.currentMonster.name}* (HP: *${adventure.currentMonster.hp}*).`;
+             statusMsg += `\nKetik *serang* atau *kabur*.`;
+        } else if (adventure && adventure.isRunning) {
+            statusMsg += `\n\nSedang berpetualang. Ronde ke ${adventure.round}.`;
+            statusMsg += `\nKetik *lanjut* atau *berhenti*.`;
+        } else {
+            statusMsg += `\n\nTidak sedang berpetualang. Ketik *mulai* untuk memulai petualangan.`;
+        }
         return statusMsg;
       }
       case 'quest': {
-        const resetTime = getDailyResetTime();
+        const resetTime = getQuestResetTime();
         if (!globalQuest || globalQuest.timestamp < getQuestResetTime()) { generateGlobalQuest(); }
         let timeLeft = Math.ceil((resetTime - now) / 3600000);
         if (isNaN(timeLeft)) timeLeft = 24;
@@ -707,7 +862,7 @@ async function gameLogic(endpoint, params, query, m, client) {
         if (player.hp >= player.maxHp) return `HP kamu sudah penuh.`;
         let method = args[0] ? args[0].toLowerCase() : 'emas';
         let missing = player.maxHp - player.hp;
-        let costPoints = Math.ceil((missing / player.maxHp) * 10);
+        let costPoints = Math.ceil((missing / player.maxHp) * 20); // Increased point cost for heal
         if (method === 'point') {
           if (usersData.users[user].points < costPoints) return `Poin tidak cukup. Butuh ${costPoints} poin.`;
           usersData.users[user].points -= costPoints;
@@ -715,7 +870,7 @@ async function gameLogic(endpoint, params, query, m, client) {
           await apiWriteData('users', usersData);
           return `Heal berhasil dengan mengurangi ${costPoints} poin. HP kamu sekarang penuh.`;
         } else if (method === 'emas') {
-          let costGold = Math.ceil(costPoints / 2);
+          let costGold = Math.ceil(costPoints); // Increased gold cost for heal
           if (player.gold < costGold) return `Emas tidak cukup. Butuh ${costGold} emas.`;
           player.gold -= costGold;
           player.hp = player.maxHp;
@@ -728,16 +883,16 @@ async function gameLogic(endpoint, params, query, m, client) {
       case 'toko': {
         if (!args[0] || args[0].toLowerCase() !== 'senjata') return `Perintah toko tidak valid. Gunakan: toko senjata`;
         const weaponStore = [
-          { id: 1, name: "Pedang Kayu", costPoints: 10, costGold: 5, bonus: 2 },
-          { id: 2, name: "Tombak", costPoints: 15, costGold: 8, bonus: 3 },
-          { id: 3, name: "Kapak", costPoints: 20, costGold: 10, bonus: 4 },
-          { id: 4, name: "Belati", costPoints: 12, costGold: 6, bonus: 2 },
-          { id: 5, name: "Busur", costPoints: 18, costGold: 9, bonus: 3 },
-          { id: 6, name: "Pedang Besi", costPoints: 25, costGold: 12, bonus: 5 },
-          { id: 7, name: "Golok", costPoints: 15, costGold: 8, bonus: 3 },
-          { id: 8, name: "Parang", costPoints: 20, costGold: 10, bonus: 4 },
-          { id: 9, name: "Pedang Perak", costPoints: 30, costGold: 15, bonus: 6 },
-          { id: 10, name: "Pedang Emas", costPoints: 50, costGold: 25, bonus: 10 }
+          { id: 1, name: "Pedang Kayu", costPoints: 20, costGold: 300, bonus: 2 },
+          { id: 2, name: "Tombak", costPoints: 30, costGold: 400, bonus: 3 },
+          { id: 3, name: "Kapak", costPoints: 40, costGold: 500, bonus: 4 },
+          { id: 4, name: "Belati", costPoints: 25, costGold: 350, bonus: 2 },
+          { id: 5, name: "Busur", costPoints: 35, costGold: 450, bonus: 3 },
+          { id: 6, name: "Pedang Besi", costPoints: 50, costGold: 600, bonus: 5 },
+          { id: 7, name: "Golok", costPoints: 30, costGold: 400, bonus: 3 },
+          { id: 8, name: "Parang", costPoints: 40, costGold: 500, bonus: 4 },
+          { id: 9, name: "Pedang Perak", costPoints: 60, costGold: 700, bonus: 6 },
+          { id: 10, name: "Pedang Emas", costPoints: 100, costGold: 1100, bonus: 10 }
         ];
         if (args.length === 1) {
           let listMsg = `*Toko Senjata:*\n`;
@@ -762,6 +917,7 @@ async function gameLogic(endpoint, params, query, m, client) {
           }
           let newWeapon = { id: selected.id, name: selected.name, level: 1, xp: 0, bonus: selected.bonus, baseCost: selected.costPoints };
           player.inventory.push(newWeapon);
+          adventure.inventoryChanges.push({ type: 'add', item: newWeapon });
           await apiWriteData('users', usersData);
           return `Pembelian berhasil: ${newWeapon.name} telah ditambahkan ke inventory.`;
         } else {
@@ -792,7 +948,7 @@ async function gameLogic(endpoint, params, query, m, client) {
         let index = parseInt(args[0]) - 1;
         if (isNaN(index) || index < 0 || index >= player.inventory.length) return `Indeks senjata tidak valid.`;
         let weaponToSell = player.inventory.splice(index, 1)[0];
-        let sellGold = Math.floor((weaponToSell.baseCost || 10) / 2);
+        let sellGold = Math.floor((weaponToSell.baseCost || 20) / 2); // Base cost increased to 20
         player.gold += sellGold;
         if (player.equippedWeapon && player.equippedWeapon.id === weaponToSell.id) {
           delete player.equippedWeapon;
@@ -819,7 +975,7 @@ async function gameLogic(endpoint, params, query, m, client) {
         return msg;
       }
       default:
-        return `*RPG - Error:*\nPerintah tidak dikenal. Gunakan *mulai*, *serang*, *kabur*, *status*, *quest*, *heal*, *toko senjata*, *inv*, *pakai*, *jual*, atau *tempa*. \n\nReply dan ketik printah nya`;
+        return `*RPG - Perintah:* Gunakan *mulai*, *lanjut*, *serang*, *kabur*, *berhenti*, *status*, *quest*, *heal [point/emas]*, *toko senjata [nomor] [point/emas]*, *inv*, *pakai [nomor]*, *jual [nomor]*, atau *tempa [nomor]*.`;
     }
   } else return `*Error:*\nEndpoint tidak dikenal.`;
 }
