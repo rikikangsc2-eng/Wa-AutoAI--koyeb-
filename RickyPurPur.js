@@ -239,6 +239,15 @@ const autoAI = async () => {
       }
     }
 if (m.quoted && !cekCmd(m.body)) {
+  if (m.quoted.text.includes("alicia-RPG")){
+    const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
+      const query = { text: body };
+      const gameResponse = await game.gameLogic("rpg", params, query);
+      m.reply(gameResponse);
+    return;
+  }
+}
+if (m.quoted && !cekCmd(m.body)) {
   if (m.quoted.text.includes("Alicia-TTT")) {
     const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
     const query = { text: body };
@@ -288,7 +297,7 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
           const params = { user: m.sender.split("@")[0], room: m.chat.split("@") };
           const query = { text: msg.toLowerCase() };
           const gameResponse = await game.gameLogic("rpg", params, query, m, client);
-          m.reply(gameResponse);
+          m.reply(gameResponse+"\n\n*Note:* game masih dalam pengembangan jadi mau kasih saran tag owner aja ya");
         break;}
         case "setname":{
           const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };

@@ -2,7 +2,6 @@ const axios = require('axios');
 const API_ENDPOINT = 'https://copper-ambiguous-velvet.glitch.me/data';
 const USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; RMX2185 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, seperti Gecko) Chrome/131.0.6778.260 Mobile Safari/537.36';
 
-// Fungsi untuk mengambil data dari API
 const apiGetData = async (dataType) => {
   try {
     return (await axios.get(`${API_ENDPOINT}/${dataType}`, { headers: { 'User-Agent': USER_AGENT } })).data;
@@ -12,7 +11,6 @@ const apiGetData = async (dataType) => {
   }
 };
 
-// Fungsi untuk menulis data ke API
 const apiWriteData = async (dataType, data) => {
   try {
     await axios.post(`${API_ENDPOINT}/${dataType}`, data, { headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/json' } });
@@ -23,7 +21,6 @@ const apiWriteData = async (dataType, data) => {
   }
 };
 
-// Fungsi untuk mengambil soal dari URL tertentu
 const fetchSoal = async (url, errMsg) => {
   try {
     return (await axios.get(url)).data;
@@ -32,12 +29,12 @@ const fetchSoal = async (url, errMsg) => {
     return [];
   }
 };
+
 const fetchSoalSusunKata = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/susunkata.json', "Gagal mengambil soal susun kata:");
 const fetchSoalSiapakahAku = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/siapakahaku.json', "Gagal mengambil soal siapakah aku:");
 const fetchSoalTebakTebakan = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebaktebakan.json', "Gagal mengambil soal tebak tebakan:");
 const fetchSoalTebakGambar = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebakgambar.json', "Gagal mengambil soal tebak gambar:");
 
-// Fungsi bantu untuk mengacak kata dengan vokal di depan
 function scrambleWithVowelsFirst(word) {
   const vowels = "AIUEOaiueo", letters = word.split(''), v = [], c = [];
   letters.forEach(l => vowels.includes(l) ? v.push(l) : c.push(l));
@@ -45,7 +42,6 @@ function scrambleWithVowelsFirst(word) {
   return v.concat(c).join('-');
 }
 
-// Fungsi untuk menghasilkan hint berdasarkan persentase pengungkapan
 function generateHint(answer, perc) {
   const arr = answer.toLowerCase().split(''), indices = [];
   for (let i = 0; i < arr.length; i++) { if (arr[i] !== ' ') indices.push(i); }
@@ -54,12 +50,12 @@ function generateHint(answer, perc) {
   return arr.map((ch, i) => revealSet.has(i) ? ch : (ch === ' ' ? ' ' : '×')).join('');
 }
 
-// Fungsi untuk mendapatkan waktu reset harian, mingguan, dan bulanan (zona waktu Asia/Jakarta)
 function getDailyResetTime() {
   const now = new Date(), local = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta", hour12: false }));
   local.setHours(0, 0, 0, 0); if (local.getTime() <= now.getTime()) local.setDate(local.getDate() + 1);
   return local.getTime();
 }
+
 function getWeeklyResetTime() {
   const now = new Date(), local = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta", hour12: false }));
   local.setHours(0, 0, 0, 0);
@@ -67,13 +63,13 @@ function getWeeklyResetTime() {
   local.setDate(local.getDate() + add);
   return local.getTime();
 }
+
 function getMonthlyResetTime() {
   const now = new Date(), local = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta", hour12: false }));
   local.setHours(0, 0, 0, 0); local.setDate(1); local.setMonth(local.getMonth() + 1);
   return local.getTime();
 }
 
-// Inisialisasi data pengguna untuk game quiz (points dan reset waktu)
 function initializeUser(users, user) {
   if (!users[user]) users[user] = { points: 0, harian: { value: 0, expires: getDailyResetTime() }, mingguan: { value: 0, expires: getWeeklyResetTime() }, bulanan: { value: 0, expires: getMonthlyResetTime() } };
   else {
@@ -83,7 +79,6 @@ function initializeUser(users, user) {
   }
 }
 
-// Inisialisasi data RPG untuk pengguna jika belum ada
 function initializeRPG(users, user) {
   if (!users[user].rpg) {
     users[user].rpg = {
@@ -94,16 +89,17 @@ function initializeRPG(users, user) {
       atk: 10,
       def: 5,
       gold: 50,
-      inventory: []
+      inventory: [],
+      quest: null,
+      lastRecovery: Date.now()
     };
   }
 }
 
-// Fungsi untuk menghasilkan monster berdasarkan level pemain
 function generateMonster(playerLevel) {
   const monsters = ['Goblin', 'Orc', 'Troll', 'Serigala', 'Bandit', 'Harpy'];
   const name = monsters[Math.floor(Math.random() * monsters.length)];
-  const level = playerLevel; // Level monster disamakan dengan level pemain
+  const level = playerLevel;
   const hp = 50 + level * 10 + Math.floor(Math.random() * 10);
   const atk = 5 + level * 2 + Math.floor(Math.random() * 3);
   const def = 3 + level + Math.floor(Math.random() * 2);
@@ -112,7 +108,6 @@ function generateMonster(playerLevel) {
   return { name, level, hp, atk, def, expReward, goldReward };
 }
 
-// Fungsi untuk reset data harian pengguna secara berkala
 async function resetExpiredUserData() {
   const usersData = await apiGetData('users');
   let updated = false, now = Date.now();
@@ -129,7 +124,6 @@ async function resetExpiredUserData() {
 }
 setInterval(resetExpiredUserData, 3600000);
 
-// Fungsi untuk merender papan Tic Tac Toe (tetap dipertahankan dari kode asli)
 function renderBoard(board) {
   const numberEmojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
   return board.map((cell, i) => cell === 'user' ? '❌' : cell === 'ai' ? '⭕' : numberEmojis[i]).slice(0, 3).join(' ') + '\n' +
@@ -167,41 +161,36 @@ function minimax(board, depth, isMaximizing, level) {
   }
 }
 
-// Fungsi utama untuk menangani logika game
 async function gameLogic(endpoint, params, query, m, client) {
   const { user, room } = params || {};
   const { text, hintType } = query || {};
-
-  // Fungsi bantu untuk mengambil soal berdasarkan tipe game quiz
   const ambilSoal = async (soalFetcher, gameType, soalMessage) => {
     const roomsData = await apiGetData('rooms');
     const currentRoom = roomsData.rooms[room];
-    if (currentRoom && currentRoom.currentQuestion) return 'Soal sudah diambil. Jawab atau nyerah dulu!';
+    if (currentRoom && currentRoom.currentQuestion) return 'Soal sudah diambil. Jawab atau nyerah dulu!' + "\n\nalicia-RPG";
     const soalList = await soalFetcher();
-    if (soalList.length === 0) return `Soal ${gameType} lagi kosong, coba nanti ya!`;
+    if (soalList.length === 0) return `Soal ${gameType} lagi kosong, coba nanti ya!` + "\n\nalicia-RPG";
     const selectedSoal = soalList[Math.floor(Math.random() * soalList.length)];
     if (!roomsData.rooms[room]) roomsData.rooms[room] = { currentQuestion: null };
     roomsData.rooms[room].currentQuestion = { ...selectedSoal, gameType, answered: false, attempts: 0, timestamp: Date.now() };
     await apiWriteData('rooms', roomsData);
-    return soalMessage(selectedSoal);
+    return soalMessage(selectedSoal) + "\n\nalicia-RPG";
   };
-
-  // Logika game quiz yang sudah ada
   if (endpoint === 'susunkata') {
     return await ambilSoal(fetchSoalSusunKata, 'susunkata', soal => {
       const scrambled = scrambleWithVowelsFirst(soal.jawaban);
-      return `Soal susun kata berikut: ${scrambled} - Tipe: ${soal.tipe}`;
+      return `Ayo, susun kata ini: ${scrambled} - Tipe: ${soal.tipe}`;
     });
   } else if (endpoint === 'siapakahaku') {
-    return await ambilSoal(fetchSoalSiapakahAku, 'siapakahaku', soal => `Soal siapakah aku berikut: ${soal.soal}`);
+    return await ambilSoal(fetchSoalSiapakahAku, 'siapakahaku', soal => `Coba tebak, siapakah aku: ${soal.soal}`);
   } else if (endpoint === 'tebaktebakan') {
-    return await ambilSoal(fetchSoalTebakTebakan, 'tebaktebakan', soal => `Soal tebak tebakan berikut: ${soal.soal}`);
+    return await ambilSoal(fetchSoalTebakTebakan, 'tebaktebakan', soal => `Ayo, tebak tebakan ini: ${soal.soal}`);
   } else if (endpoint === 'tebakgambar') {
     const roomsData = await apiGetData('rooms');
     const currentRoom = roomsData.rooms[room];
-    if (currentRoom && currentRoom.currentQuestion) return 'Soal sudah diambil. Jawab atau nyerah dulu!';
+    if (currentRoom && currentRoom.currentQuestion) return 'Soal sudah diambil. Jawab atau nyerah dulu!' + "\n\nalicia-RPG";
     const soalList = await fetchSoalTebakGambar();
-    if (soalList.length === 0) return 'Soal tebak gambar lagi kosong, coba nanti ya!';
+    if (soalList.length === 0) return 'Soal tebak gambar lagi kosong, coba nanti ya!' + "\n\nalicia-RPG";
     const selectedSoal = soalList[Math.floor(Math.random() * soalList.length)];
     if (!roomsData.rooms[room]) roomsData.rooms[room] = { currentQuestion: null };
     roomsData.rooms[room].currentQuestion = { ...selectedSoal, gameType: 'tebakgambar', answered: false, attempts: 0, timestamp: Date.now() };
@@ -212,8 +201,8 @@ async function gameLogic(endpoint, params, query, m, client) {
     const usersData = await apiGetData('users');
     const roomsData = await apiGetData('rooms');
     let currentRoom = roomsData.rooms[room];
-    if (!currentRoom || !currentRoom.currentQuestion) return 'Ambil soal dulu sebelum jawab!';
-    if (currentRoom.currentQuestion.answered) return 'Soal sudah dijawab atau timeout. Ambil soal baru!';
+    if (!currentRoom || !currentRoom.currentQuestion) return 'Ambil soal dulu sebelum jawab!' + "\n\nalicia-RPG";
+    if (currentRoom.currentQuestion.answered) return 'Soal sudah dijawab atau timeout. Ambil soal baru!' + "\n\nalicia-RPG";
     const jawabanBenar = currentRoom.currentQuestion.jawaban.toLowerCase();
     const jawabanUser = text ? text.toLowerCase() : '';
     let attempts = currentRoom.currentQuestion.attempts || 0;
@@ -226,7 +215,7 @@ async function gameLogic(endpoint, params, query, m, client) {
       await apiWriteData('users', usersData);
       roomsData.rooms[room].currentQuestion = null;
       await apiWriteData('rooms', roomsData);
-      return 'Jawaban kamu benar! Point +3.';
+      return 'Jawaban kamu benar! Point +3.' + "\n\nalicia-RPG";
     } else {
       attempts++;
       currentRoom.currentQuestion.attempts = attempts;
@@ -241,27 +230,27 @@ async function gameLogic(endpoint, params, query, m, client) {
         const jawaban = currentRoom.currentQuestion.jawaban;
         roomsData.rooms[room].currentQuestion = null;
         await apiWriteData('rooms', roomsData);
-        return `Jawaban salah 3 kali. Soal dihapus. Point -3. Silakan ambil soal baru. Jawaban yang benar adalah: ${jawaban}`;
+        return `Jawaban salah 3 kali. Soal dihapus. Point -3. Jawaban yang benar adalah: ${jawaban}` + "\n\nalicia-RPG";
       } else {
-        return `Jawaban Salah! Kesempatan menjawab tersisa ${3 - attempts} kali lagi.`;
+        return `Jawaban salah! Kesempatan tersisa ${3 - attempts} kali.` + "\n\nalicia-RPG";
       }
     }
   } else if (endpoint === 'hint') {
     const usersData = await apiGetData('users');
     const roomsData = await apiGetData('rooms');
     const currentRoom = roomsData.rooms[room];
-    if (currentRoom && currentRoom.ttt && currentRoom.ttt[user]) return 'Tidak ada hint dalam permainan ini.';
-    if (!currentRoom || !currentRoom.currentQuestion) return 'Ambil soal dulu sebelum minta hint!';
-    if (currentRoom.currentQuestion.answered) return 'Soal sudah dijawab atau timeout, tidak bisa minta hint lagi.';
+    if (currentRoom && currentRoom.ttt && currentRoom.ttt[user]) return 'Tidak ada hint dalam permainan ini.' + "\n\nalicia-RPG";
+    if (!currentRoom || !currentRoom.currentQuestion) return 'Ambil soal dulu sebelum minta hint!' + "\n\nalicia-RPG";
+    if (currentRoom.currentQuestion.answered) return 'Soal sudah dijawab atau timeout, tidak bisa minta hint lagi.' + "\n\nalicia-RPG";
     const jawaban = currentRoom.currentQuestion.jawaban;
     let hintPercentage = 0, pointCost = 0;
     if (hintType === 'murah') { hintPercentage = 0.3; pointCost = 0; }
     else if (hintType === 'mahal') { hintPercentage = 0.5; pointCost = 1; }
     else if (hintType === 'sultan') { hintPercentage = 0.8; pointCost = 2; }
-    else return 'Tipe hint tidak valid. Pilih: murah, mahal, sultan';
+    else return 'Tipe hint tidak valid. Pilih: murah, mahal, sultan' + "\n\nalicia-RPG";
     initializeUser(usersData.users, user);
     if (pointCost > 0) {
-      if (usersData.users[user].points < pointCost) return `Poin tidak cukup untuk hint ${hintType}. Butuh ${pointCost} poin. Poin kamu: ${usersData.users[user].points}`;
+      if (usersData.users[user].points < pointCost) return `Poin tidak cukup untuk hint ${hintType}. Butuh ${pointCost} poin. Poin kamu: ${usersData.users[user].points}` + "\n\nalicia-RPG";
       usersData.users[user].points -= pointCost;
       usersData.users[user].harian.value = Math.max(usersData.users[user].harian.value - pointCost, 0);
       usersData.users[user].mingguan.value = Math.max(usersData.users[user].mingguan.value - pointCost, 0);
@@ -269,16 +258,16 @@ async function gameLogic(endpoint, params, query, m, client) {
       await apiWriteData('users', usersData);
     }
     const hintText = generateHint(jawaban, hintPercentage);
-    return `Hint ${hintType} (${pointCost > 0 ? `-${pointCost} poin` : 'gratis'}):\nJawaban: ${hintText}`;
+    return `Hint ${hintType} (${pointCost > 0 ? `-${pointCost} poin` : 'gratis'}):\nJawaban: ${hintText}` + "\n\nalicia-RPG";
   } else if (endpoint === 'point') {
     const usersData = await apiGetData('users');
     initializeUser(usersData.users, user);
     const { points, harian, mingguan, bulanan } = usersData.users[user];
-    return `Poin Semua: ${points}\nPoin Harian: ${harian.value}\nPoin Mingguan: ${mingguan.value}\nPoin Bulanan: ${bulanan.value}`;
+    return `Poin Semua: ${points}\nPoin Harian: ${harian.value}\nPoin Mingguan: ${mingguan.value}\nPoin Bulanan: ${bulanan.value}` + "\n\nalicia-RPG";
   } else if (endpoint === 'top') {
     const type = (text || '').toLowerCase();
     if (!['hari', 'minggu', 'bulan', 'semua'].includes(type)) {
-      m.reply("*Ketik:* `.top hari` `.top minggu` `.top bulan` atau `.top semua`");
+      m.reply("Ketik: top hari, top minggu, top bulan, atau top semua" + "\n\nalicia-RPG");
       return;
     }
     const usersData = await apiGetData('users');
@@ -314,14 +303,14 @@ async function gameLogic(endpoint, params, query, m, client) {
       topUsersFormatted += `${(i + 1).toString().padEnd(3)}  @${displayName} ${String(pointsVal).padEnd(6)}\n`;
       if (!data.name) mentions.push(`${userName}@s.whatsapp.net`);
       if (userName === user) {
-        if (i === 0) positionMessage = "wahh hebat banget ada di peringkat pertama 😁";
-        else if (i <= 2) positionMessage = `Selamat! Kamu berada di peringkat ${i + 1} besar!`;
-        else if (i >= sortedUsers.length - 2) positionMessage = `Lumayan lah ya, peringkat ${i + 1}.`;
-        else positionMessage = `Kamu di peringkat ${i + 1}, biasa aja sih.`;
+        if (i === 0) positionMessage = "Wah, kamu juara nomor satu!";
+        else if (i <= 2) positionMessage = `Mantap! Kamu ada di peringkat ${i + 1} besar!`;
+        else if (i >= sortedUsers.length - 2) positionMessage = `Lumayan, peringkat ${i + 1}.`;
+        else positionMessage = `Peringkat kamu: ${i + 1}.`;
       }
     });
     topUsersFormatted += '```';
-    const finalCaption = topUsersFormatted + '\n' + positionMessage + "\n_Anda bisa mengubah Username di_ `.setname`\n\n*Note:* 3 sepuh refresh 24 jam";
+    const finalCaption = topUsersFormatted + '\n' + positionMessage + "\nUbah Username dengan setname\n\nNote: Refresh setiap 24 jam" + "\n\nalicia-RPG";
     const imgResponse = await axios.get('https://express-vercel-ytdl.vercel.app/top', { responseType: 'arraybuffer' });
     const imageBuffer = Buffer.from(imgResponse.data);
     client.sendMessage(m.chat, { image: imageBuffer, caption: finalCaption, mentions, mimetype: "image/jpeg" }, { quoted: m });
@@ -330,7 +319,7 @@ async function gameLogic(endpoint, params, query, m, client) {
     const roomsData = await apiGetData('rooms');
     const usersData = await apiGetData('users');
     const currentRoom = roomsData.rooms[room];
-    if (!currentRoom) return 'Tidak ada permainan yang sedang berjalan!';
+    if (!currentRoom) return 'Tidak ada permainan yang berjalan!' + "\n\nalicia-RPG";
     if (currentRoom.ttt && currentRoom.ttt[user]) {
       delete currentRoom.ttt[user];
       await apiWriteData('rooms', roomsData);
@@ -340,7 +329,7 @@ async function gameLogic(endpoint, params, query, m, client) {
       usersData.users[user].mingguan.value = Math.max(usersData.users[user].mingguan.value - 1, 0);
       usersData.users[user].bulanan.value = Math.max(usersData.users[user].bulanan.value - 1, 0);
       await apiWriteData('users', usersData);
-      return `Yah nyerah? Cupu! Permainan tic tac toe kamu dihentikan.\nPoint -1.`;
+      return 'Yah, nyerah ya? Point -1.' + "\n\nalicia-RPG";
     } else if (currentRoom.currentQuestion) {
       const jawabanBenar = currentRoom.currentQuestion.jawaban;
       currentRoom.currentQuestion = null;
@@ -351,8 +340,8 @@ async function gameLogic(endpoint, params, query, m, client) {
       usersData.users[user].mingguan.value = Math.max(usersData.users[user].mingguan.value - 3, 0);
       usersData.users[user].bulanan.value = Math.max(usersData.users[user].bulanan.value - 3, 0);
       await apiWriteData('users', usersData);
-      return `Yah nyerah? Cupu! Jawaban yang benar adalah: ${jawabanBenar}. Point -3.`;
-    } else return 'Tidak ada soal yang bisa diserahin!';
+      return `Yah, nyerah ya? Jawaban yang benar: ${jawabanBenar}. Point -3.` + "\n\nalicia-RPG";
+    } else return 'Tidak ada soal untuk diserahin!' + "\n\nalicia-RPG";
   } else if (endpoint === 'tictactoe') {
     const roomsData = await apiGetData('rooms');
     if (!roomsData.rooms[room]) roomsData.rooms[room] = {};
@@ -361,13 +350,13 @@ async function gameLogic(endpoint, params, query, m, client) {
     let game = currentRoom.ttt[user];
     if (!game) {
       if (!query || !query.text || !['sulit', 'mudah', 'normal'].includes(query.text.toLowerCase()))
-        return "ketik `.ttt sulit` `.ttt mudah` atau `.ttt normal`\n\n*Hadiah*:\n- Sulit: 99999 poin\n- Mudah: 5 poin\n- Normal: 10 poin";
+        return "Pilih level: sulit, mudah, atau normal\nHadiah: Sulit: 99999 poin, Mudah: 5 poin, Normal: 10 poin" + "\n\nalicia-RPG";
       let level = query.text.toLowerCase(), board = Array(9).fill(null), turn = (level === 'sulit' ? (Math.random() < 0.5 ? 'user' : 'ai') : 'user');
       game = { gameType: 'tictactoe', board, level, turn, answered: false, attempts: 0, timestamp: Date.now(), user };
       currentRoom.ttt[user] = game;
       await apiWriteData('rooms', roomsData);
-      let msg = `Tic Tac Toe (${level}) game dimulai!\n${renderBoard(board)}\n`;
-      if (turn === 'user') msg += "Giliran kamu, kirim nomor kotak (1-9) untuk menempatkan ❌.";
+      let msg = `Permainan Tic Tac Toe (${level}) dimulai!\n${renderBoard(board)}\n`;
+      if (turn === 'user') msg += "Giliranmu, kirim nomor kotak (1-9).";
       else {
         let aiMoveIdx;
         if (board.every(cell => cell === null)) {
@@ -389,14 +378,14 @@ async function gameLogic(endpoint, params, query, m, client) {
         game.board[aiMoveIdx] = 'ai';
         game.turn = 'user';
         await apiWriteData('rooms', roomsData);
-        msg = `Tic Tac Toe (${level}) game dimulai!\n*AI memilih angka ${aiMoveIdx + 1}*\n${renderBoard(game.board)}\nGiliran kamu, kirim nomor kotak (1-9) untuk langkah selanjutnya.`;
+        msg = `Tic Tac Toe (${level}) dimulai!\n*AI memilih angka ${aiMoveIdx + 1}*\n${renderBoard(game.board)}\nGiliranmu.`;
       }
-      return msg;
+      return msg + "\n\nalicia-RPG";
     } else {
-      if (game.turn !== 'user') return "Tunggu giliranmu.";
+      if (game.turn !== 'user') return "Tunggu giliranmu." + "\n\nalicia-RPG";
       const move = parseInt(query.text), idx = move - 1;
-      if (isNaN(move) || move < 1 || move > 9) return "Masukkan nomor kotak yang valid (1-9) untuk langkahmu.";
-      if (game.board[idx] !== null) return "Kotak sudah terisi, pilih kotak lain.";
+      if (isNaN(move) || move < 1 || move > 9) return "Masukkan nomor kotak yang valid (1-9)." + "\n\nalicia-RPG";
+      if (game.board[idx] !== null) return "Kotak sudah terisi, pilih yang lain." + "\n\nalicia-RPG";
       game.board[idx] = 'user';
       const userWin = checkWin(game.board, 'user'), aiWin = checkWin(game.board, 'ai');
       if (userWin || aiWin || game.board.every(cell => cell !== null)) {
@@ -419,10 +408,10 @@ async function gameLogic(endpoint, params, query, m, client) {
           usersData.users[user].bulanan.value = Math.max(usersData.users[user].bulanan.value - 1, 0);
           await apiWriteData('users', usersData);
           resMsg += "Kamu kalah!";
-        } else resMsg += "Permainan seri!";
+        } else resMsg += "Seri!";
         delete currentRoom.ttt[user];
         await apiWriteData('rooms', roomsData);
-        return resMsg;
+        return resMsg + "\n\nalicia-RPG";
       }
       let aiMoveIdx;
       if (game.level === 'mudah') {
@@ -478,219 +467,196 @@ async function gameLogic(endpoint, params, query, m, client) {
           usersData.users[user].bulanan.value = Math.max(usersData.users[user].bulanan.value - 1, 0);
           await apiWriteData('users', usersData);
           resMsg += "Kamu kalah!";
-        } else resMsg += "Permainan seri!";
+        } else resMsg += "Seri!";
         delete currentRoom.ttt[user];
         await apiWriteData('rooms', roomsData);
-        return resMsg;
+        return resMsg + "\n\nalicia-RPG";
       }
       game.turn = 'user';
       await apiWriteData('rooms', roomsData);
-      return `${aiExp}\n${renderBoard(game.board)}\nGiliran kamu. Kirim nomor kotak (1-9) untuk langkah selanjutnya.`;
+      return `${aiExp}\n${renderBoard(game.board)}\nGiliran kamu.` + "\n\nalicia-RPG";
     }
   } else if (endpoint === 'setname') {
     const usersData = await apiGetData('users');
     let newName = text;
-    if (!newName) return 'ketik `.setname nama-kamu` atau `.setname dafault`';
+    if (!newName) return 'Ketik setname nama-kamu atau setname dafault' + "\n\nalicia-RPG";
     const validNameRegex = /^[A-Za-z0-9_-]{1,60}$/;
     if (newName.toLowerCase() === 'dafault') {
       if (usersData.users[user]) delete usersData.users[user].name;
       await apiWriteData('users', usersData);
-      return 'Nama telah di-reset ke default.';
+      return 'Nama di-reset ke default.' + "\n\nalicia-RPG";
     } else {
       if (!validNameRegex.test(newName)) {
         if (usersData.users[user] && usersData.users[user].name) delete usersData.users[user].name;
         await apiWriteData('users', usersData);
-        return 'Nama tidak valid. Nama di-reset ke default.';
+        return 'Nama tidak valid, di-reset ke default.' + "\n\nalicia-RPG";
       } else {
         initializeUser(usersData.users, user);
         usersData.users[user].name = newName;
         await apiWriteData('users', usersData);
-        return `Nama telah disetel ke ${newName}.`;
+        return `Nama disetel ke ${newName}.` + "\n\nalicia-RPG";
       }
     }
-  }
-  // PENAMBAHAN FITUR RPG
-  else if (endpoint === 'rpg') {
-    // Inisialisasi data pengguna dan data RPG
+  } else if (endpoint === 'rpg') {
     const usersData = await apiGetData('users');
     initializeUser(usersData.users, user);
     initializeRPG(usersData.users, user);
     const roomsData = await apiGetData('rooms');
     if (!roomsData.rooms[room]) roomsData.rooms[room] = {};
     if (!roomsData.rooms[room].rpgBattles) roomsData.rooms[room].rpgBattles = {};
-
-    // Parsing subperintah untuk fitur RPG
+    let player = usersData.users[user].rpg;
+    let now = Date.now();
+    if (now - player.lastRecovery >= 24 * 3600000) {
+      player.hp = player.maxHp;
+      player.lastRecovery = now;
+    }
     const inputText = text ? text.trim() : '';
     const [subCmd, ...args] = inputText.split(' ');
     const cmd = subCmd.toLowerCase();
-
-    switch (cmd) {
+    switch(cmd) {
       case 'mulai': {
-        // Memulai pertempuran RPG
-        if (roomsData.rooms[room].rpgBattles[user]) {
-          return 'Kamu sudah sedang dalam pertempuran!';
-        }
-        const player = usersData.users[user].rpg;
+        if (roomsData.rooms[room].rpgBattles[user]) return 'Kamu sudah dalam pertempuran seru!' + "\n\nalicia-RPG";
         const monster = generateMonster(player.level);
-        // Tentukan giliran secara acak
         const turn = Math.random() < 0.5 ? 'user' : 'monster';
         roomsData.rooms[room].rpgBattles[user] = { monster, turn };
         await apiWriteData('rooms', roomsData);
-        let battleMsg = `Pertempuran dimulai!\nKamu menghadapi ${monster.name} (Lvl ${monster.level})\nHP ${monster.name}: ${monster.hp}\n`;
-        if (turn === 'user') {
-          battleMsg += 'Giliran kamu menyerang terlebih dahulu. Ketik `.rpg serang` untuk menyerang.';
-        } else {
-          // Jika monster menyerang dulu
+        let battleMsg = `Pertempuran seru dimulai!\nKamu bertarung melawan ${monster.name} (Lvl ${monster.level}) dengan HP ${monster.hp}.\n`;
+        if (turn === 'user') battleMsg += "Giliranmu menyerang! Ketik 'serang'.";
+        else {
           const damage = Math.max(monster.atk - player.def, 1);
           player.hp -= damage;
-          battleMsg += `${monster.name} menyerang terlebih dahulu dan memberikan ${damage} damage padamu.\n`;
+          battleMsg += `${monster.name} menyerang dulu dan memberi damage ${damage} padamu.\nHP kamu: ${player.hp}.\nSekarang giliranmu menyerang! Ketik 'serang'.`;
           if (player.hp <= 0) {
-            battleMsg += 'Kamu telah kalah dalam pertempuran.';
+            battleMsg += "Ups, kamu kalah dalam pertempuran.";
             player.hp = 0;
             delete roomsData.rooms[room].rpgBattles[user];
             await apiWriteData('rooms', roomsData);
             await apiWriteData('users', usersData);
-            return battleMsg;
-          } else {
-            battleMsg += `HP kamu sekarang: ${player.hp}\nGiliran kamu menyerang. Ketik \`.rpg serang\` untuk menyerang.`;
+            return battleMsg + "\n\nalicia-RPG";
           }
         }
         await apiWriteData('users', usersData);
-        return battleMsg;
+        return battleMsg + "\n\nalicia-RPG";
       }
       case 'serang': {
-        // Perintah untuk menyerang musuh
-        if (!roomsData.rooms[room].rpgBattles[user]) {
-          return 'Kamu belum memulai pertempuran. Ketik `.rpg mulai` untuk memulai.';
-        }
+        if (!roomsData.rooms[room].rpgBattles[user]) return 'Kamu belum memulai pertarungan. Ketik "mulai".' + "\n\nalicia-RPG";
         const battle = roomsData.rooms[room].rpgBattles[user];
-        const currentPlayer = usersData.users[user].rpg;
+        if (battle.turn !== 'user') return 'Bukan giliranmu untuk menyerang!' + "\n\nalicia-RPG";
         let attackMsg = '';
-        if (battle.turn !== 'user') {
-          return 'Bukan giliran kamu untuk menyerang.';
-        }
-        // Serangan pemain
-        const damageUser = Math.max(currentPlayer.atk - battle.monster.def, 1);
+        const damageUser = Math.max(player.atk - battle.monster.def, 1);
         battle.monster.hp -= damageUser;
-        attackMsg += `Kamu menyerang ${battle.monster.name} dan memberikan ${damageUser} damage.\n`;
+        attackMsg += `Kamu menyerang ${battle.monster.name} dan memberi damage ${damageUser}.\n`;
         if (battle.monster.hp <= 0) {
-          attackMsg += `Selamat! Kamu mengalahkan ${battle.monster.name}.\n`;
+          attackMsg += `Hebat! Kamu mengalahkan ${battle.monster.name}.\n`;
           const expGain = battle.monster.expReward;
           const goldGain = battle.monster.goldReward;
-          currentPlayer.exp += expGain;
-          currentPlayer.gold += goldGain;
-          attackMsg += `Kamu mendapatkan ${expGain} EXP dan ${goldGain} emas.\n`;
-          // Cek naik level
-          const expNeeded = currentPlayer.level * 100;
-          if (currentPlayer.exp >= expNeeded) {
-            currentPlayer.level += 1;
-            currentPlayer.exp -= expNeeded;
-            currentPlayer.maxHp += 20;
-            currentPlayer.atk += 5;
-            currentPlayer.def += 2;
-            currentPlayer.hp = currentPlayer.maxHp;
-            attackMsg += `Selamat! Kamu naik ke level ${currentPlayer.level}.\nStatistik bertambah: HP ${currentPlayer.maxHp}, ATK ${currentPlayer.atk}, DEF ${currentPlayer.def}.\n`;
+          player.exp += expGain;
+          player.gold += goldGain;
+          if (player.quest && player.quest.jenis === 'battle') {
+            player.quest.progress = (player.quest.progress || 0) + 1;
+          }
+          attackMsg += `Kamu dapat ${expGain} EXP dan ${goldGain} emas.\n`;
+          const expNeeded = player.level * 100;
+          if (player.exp >= expNeeded) {
+            player.level += 1;
+            player.exp -= expNeeded;
+            player.maxHp += 20;
+            player.atk += 5;
+            player.def += 2;
+            player.hp = player.maxHp;
+            attackMsg += `Selamat, kamu naik ke level ${player.level}! HP: ${player.maxHp}, ATK: ${player.atk}, DEF: ${player.def}.\n`;
           }
           delete roomsData.rooms[room].rpgBattles[user];
           await apiWriteData('rooms', roomsData);
           await apiWriteData('users', usersData);
-          return attackMsg;
+          return attackMsg + "\n\nalicia-RPG";
         }
-        // Giliran monster menyerang
         battle.turn = 'monster';
-        const damageMonster = Math.max(battle.monster.atk - currentPlayer.def, 1);
-        currentPlayer.hp -= damageMonster;
-        attackMsg += `${battle.monster.name} menyerang balik dan memberikan ${damageMonster} damage padamu.\n`;
-        if (currentPlayer.hp <= 0) {
-          attackMsg += 'Kamu telah kalah dalam pertempuran.\n';
-          currentPlayer.hp = 0;
+        const damageMonster = Math.max(battle.monster.atk - player.def, 1);
+        player.hp -= damageMonster;
+        attackMsg += `${battle.monster.name} membalas serang dan memberi damage ${damageMonster} padamu.\n`;
+        if (player.hp <= 0) {
+          attackMsg += "Sayang, kamu kalah dalam pertempuran.";
+          player.hp = 0;
           delete roomsData.rooms[room].rpgBattles[user];
           await apiWriteData('rooms', roomsData);
           await apiWriteData('users', usersData);
-          return attackMsg;
+          return attackMsg + "\n\nalicia-RPG";
         }
-        attackMsg += `HP ${battle.monster.name}: ${battle.monster.hp}\nHP kamu: ${currentPlayer.hp}\nGiliran kamu menyerang lagi. Ketik \`.rpg serang\` untuk melanjutkan.`;
+        attackMsg += `Sisa HP ${battle.monster.name}: ${battle.monster.hp}\nHP kamu: ${player.hp}\nGiliranmu lagi menyerang! Ketik 'serang'.`;
         battle.turn = 'user';
         await apiWriteData('rooms', roomsData);
         await apiWriteData('users', usersData);
-        return attackMsg;
+        return attackMsg + "\n\nalicia-RPG";
       }
       case 'kabur': {
-        // Perintah untuk melarikan diri dari pertempuran
-        if (!roomsData.rooms[room].rpgBattles[user]) {
-          return 'Kamu tidak sedang dalam pertempuran.';
-        }
+        if (!roomsData.rooms[room].rpgBattles[user]) return 'Kamu tidak sedang bertarung!' + "\n\nalicia-RPG";
         if (Math.random() < 0.5) {
           delete roomsData.rooms[room].rpgBattles[user];
           await apiWriteData('rooms', roomsData);
-          return 'Kamu berhasil kabur dari pertempuran.';
+          return 'Kamu berhasil kabur dengan selamat!' + "\n\nalicia-RPG";
         } else {
-          const currentP = usersData.users[user].rpg;
-          const battleEscape = roomsData.rooms[room].rpgBattles[user];
-          const freeAttack = Math.max(battleEscape.monster.atk - currentP.def, 1);
-          currentP.hp -= freeAttack;
-          let escapeMsg = `Kamu gagal kabur! ${battleEscape.monster.name} menyerang dan memberikan ${freeAttack} damage.\n`;
-          if (currentP.hp <= 0) {
-            escapeMsg += 'Kamu telah kalah dalam pertempuran.';
-            currentP.hp = 0;
+          const freeAttack = Math.max(roomsData.rooms[room].rpgBattles[user].monster.atk - player.def, 1);
+          player.hp -= freeAttack;
+          let escapeMsg = `Kabur gagal! ${roomsData.rooms[room].rpgBattles[user].monster.name} menyerang dan memberi damage ${freeAttack}.\n`;
+          if (player.hp <= 0) {
+            escapeMsg += "Kamu kalah karena HP habis.";
+            player.hp = 0;
             delete roomsData.rooms[room].rpgBattles[user];
           } else {
-            escapeMsg += `HP kamu sekarang: ${currentP.hp}. Tetap bertarung atau coba kabur lagi.`;
+            escapeMsg += `HP kamu sekarang: ${player.hp}. Tetap berjuang atau coba kabur lagi.`;
           }
           await apiWriteData('rooms', roomsData);
           await apiWriteData('users', usersData);
-          return escapeMsg;
+          return escapeMsg + "\n\nalicia-RPG";
         }
       }
       case 'status': {
-        // Menampilkan status RPG pemain
-        const playerStatus = usersData.users[user].rpg;
-        let statusMsg = `Status RPG Kamu:\nLevel: ${playerStatus.level}\nEXP: ${playerStatus.exp}/${playerStatus.level * 100}\nHP: ${playerStatus.hp}/${playerStatus.maxHp}\nATK: ${playerStatus.atk}\nDEF: ${playerStatus.def}\nEmas: ${playerStatus.gold}\nInventory: ${playerStatus.inventory.length > 0 ? playerStatus.inventory.join(', ') : 'Kosong'}`;
+        let statusMsg = `Status Petualanganmu:\nLevel: ${player.level}\nEXP: ${player.exp}/${player.level * 100}\nHP: ${player.hp}/${player.maxHp}\nATK: ${player.atk}\nDEF: ${player.def}\nEmas: ${player.gold}\nInventory: ${player.inventory.length > 0 ? player.inventory.join(', ') : 'Kosong'}`;
         if (roomsData.rooms[room].rpgBattles[user]) {
           const b = roomsData.rooms[room].rpgBattles[user];
-          statusMsg += `\n\nSedang dalam pertempuran melawan ${b.monster.name} (HP: ${b.monster.hp}). Giliran: ${b.turn}`;
+          statusMsg += `\n\nSedang bertarung melawan ${b.monster.name} (HP: ${b.monster.hp}). Giliran: ${b.turn}`;
         }
-        return statusMsg;
+        return statusMsg + "\n\nalicia-RPG";
       }
       case 'quest': {
-        // Menghasilkan quest sederhana untuk pemain
+        let questMsg = '';
+        const questDuration = 24 * 3600000;
+        if (player.quest) {
+          if (now - player.quest.timestamp >= questDuration) {
+            if ((player.quest.progress || 0) >= player.quest.target) {
+              player.exp += player.quest.expReward;
+              player.gold += player.quest.goldReward;
+              questMsg += `Misi "${player.quest.deskripsi}" selesai dengan gemilang! Kamu dapat ${player.quest.expReward} EXP dan ${player.quest.goldReward} emas.\n`;
+            } else {
+              questMsg += `Waktu misi "${player.quest.deskripsi}" habis. Sayang, target tidak tercapai.\n`;
+            }
+            player.quest = null;
+          } else {
+            const timeLeft = Math.ceil((questDuration - (now - player.quest.timestamp)) / 3600000);
+            questMsg += `Misi aktif: ${player.quest.deskripsi}\nProgress: ${(player.quest.progress || 0)}/${player.quest.target}\nWaktu tersisa: ${timeLeft} jam.\n`;
+            await apiWriteData('users', usersData);
+            return questMsg + "\n\nalicia-RPG";
+          }
+        }
         const quests = [
           { jenis: 'battle', deskripsi: 'Kalahkan 3 Goblin', target: 3, expReward: 50, goldReward: 20 },
           { jenis: 'collection', deskripsi: 'Kumpulkan 5 Ramuan', target: 5, expReward: 40, goldReward: 15 },
-          { jenis: 'exploration', deskripsi: 'Jelajahi 3 wilayah baru', target: 3, expReward: 60, goldReward: 25 }
+          { jenis: 'exploration', deskripsi: 'Jelajahi 3 wilayah baru', target: 3, expReward: 60, goldReward: 25 },
+          { jenis: 'harta', deskripsi: 'Temukan harta karun tersembunyi', target: 1, expReward: 80, goldReward: 50 }
         ];
-        const quest = quests[Math.floor(Math.random() * quests.length)];
-        usersData.users[user].rpg.quest = quest;
+        const newQuest = quests[Math.floor(Math.random() * quests.length)];
+        newQuest.progress = 0;
+        newQuest.timestamp = now;
+        player.quest = newQuest;
+        questMsg += `Misi baru: ${newQuest.deskripsi}\nTarget: ${newQuest.target}\nHadiah: ${newQuest.expReward} EXP dan ${newQuest.goldReward} emas.\n`;
         await apiWriteData('users', usersData);
-        return `Quest baru: ${quest.deskripsi}\nHadiah: ${quest.expReward} EXP dan ${quest.goldReward} emas. Ketik \`.rpg quest selesai\` setelah menyelesaikan quest.`;
-      }
-      case 'quest selesai': {
-        // Menyelesaikan quest yang sedang aktif
-        if (!usersData.users[user].rpg.quest) {
-          return 'Kamu tidak memiliki quest aktif.';
-        }
-        const completedQuest = usersData.users[user].rpg.quest;
-        delete usersData.users[user].rpg.quest;
-        usersData.users[user].rpg.exp += completedQuest.expReward;
-        usersData.users[user].rpg.gold += completedQuest.goldReward;
-        let questMsg = `Quest "${completedQuest.deskripsi}" selesai!\nKamu mendapatkan ${completedQuest.expReward} EXP dan ${completedQuest.goldReward} emas.`;
-        const currentExpNeeded = usersData.users[user].rpg.level * 100;
-        if (usersData.users[user].rpg.exp >= currentExpNeeded) {
-          usersData.users[user].rpg.level += 1;
-          usersData.users[user].rpg.exp -= currentExpNeeded;
-          usersData.users[user].rpg.maxHp += 20;
-          usersData.users[user].rpg.atk += 5;
-          usersData.users[user].rpg.def += 2;
-          usersData.users[user].rpg.hp = usersData.users[user].rpg.maxHp;
-          questMsg += `\nSelamat! Kamu naik ke level ${usersData.users[user].rpg.level}.`;
-        }
-        await apiWriteData('users', usersData);
-        return questMsg;
+        return questMsg + "\n\nalicia-RPG";
       }
       default:
-        return 'Perintah RPG tidak dikenali. Gunakan salah satu:\n`.rpg mulai` - Mulai pertempuran\n`.rpg serang` - Serang musuh\n`.rpg kabur` - Kabur dari pertempuran\n`.rpg status` - Lihat status RPG\n`.rpg quest` - Dapatkan quest baru\n`.rpg quest selesai` - Selesaikan quest yang aktif\n\n*Note:* Masih dalam eksperimen Jadi beri masukan ke owner ide atau juga melapor bug';
+        return "Perintah tidak dikenal. Gunakan 'mulai', 'serang', 'kabur', 'status', atau 'quest'." + "\n\nalicia-RPG";
     }
-  } else return 'Endpoint tidak dikenal';
+  } else return 'Endpoint tidak dikenal' + "\n\nalicia-RPG";
 }
 
 module.exports = { gameLogic };
