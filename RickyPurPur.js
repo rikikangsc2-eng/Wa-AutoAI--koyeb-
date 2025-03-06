@@ -294,7 +294,7 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
     if (cekCmd(m.body)) {
       switch (command) { 
         case "rpg":{
-          const params = { user: m.sender.split("@")[0], room: m.chat.split("@") };
+          const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
           const query = { text: msg.toLowerCase() };
           const gameResponse = await game.gameLogic("rpg", params, query, m, client);
           m.reply(gameResponse+"\n\n*Note:* game masih dalam pengembangan jadi mau kasih saran tag owner aja ya");
