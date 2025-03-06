@@ -284,6 +284,12 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) { 
+        case "rpg":{
+          const params = { user: m.sender.split("@")[0], room: m.chat.split("@") };
+          const query = { text: body };
+          const gameResponse = await game.gameLogic("rpg", params, query, m, client);
+          
+        break;}
         case "setname":{
           const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
   const query = { text: msg };

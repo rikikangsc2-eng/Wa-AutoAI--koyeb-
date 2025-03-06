@@ -1,24 +1,29 @@
 const axios = require('axios');
 const API_ENDPOINT = 'https://copper-ambiguous-velvet.glitch.me/data';
-const USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; RMX2185 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.260 Mobile Safari/537.36';
+const USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; RMX2185 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, seperti Gecko) Chrome/131.0.6778.260 Mobile Safari/537.36';
 
+// Fungsi untuk mengambil data dari API
 const apiGetData = async (dataType) => {
   try {
     return (await axios.get(`${API_ENDPOINT}/${dataType}`, { headers: { 'User-Agent': USER_AGENT } })).data;
   } catch (error) {
-    console.error(`Failed to get ${dataType} data from API:`, error);
+    console.error(`Gagal mengambil data ${dataType} dari API:`, error);
     return { users: {}, rooms: {} };
   }
 };
+
+// Fungsi untuk menulis data ke API
 const apiWriteData = async (dataType, data) => {
   try {
     await axios.post(`${API_ENDPOINT}/${dataType}`, data, { headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/json' } });
     return true;
   } catch (error) {
-    console.error(`Failed to write ${dataType} data to API:`, error);
+    console.error(`Gagal menulis data ${dataType} ke API:`, error);
     return false;
   }
 };
+
+// Fungsi untuk mengambil soal dari URL tertentu
 const fetchSoal = async (url, errMsg) => {
   try {
     return (await axios.get(url)).data;
@@ -27,17 +32,20 @@ const fetchSoal = async (url, errMsg) => {
     return [];
   }
 };
-const fetchSoalSusunKata = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/susunkata.json', "Failed to fetch soal susun kata:");
-const fetchSoalSiapakahAku = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/siapakahaku.json', "Failed to fetch soal siapakah aku:");
-const fetchSoalTebakTebakan = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebaktebakan.json', "Failed to fetch soal tebak tebakan:");
-const fetchSoalTebakGambar = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebakgambar.json', "Failed to fetch soal tebak gambar:");
+const fetchSoalSusunKata = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/susunkata.json', "Gagal mengambil soal susun kata:");
+const fetchSoalSiapakahAku = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/siapakahaku.json', "Gagal mengambil soal siapakah aku:");
+const fetchSoalTebakTebakan = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebaktebakan.json', "Gagal mengambil soal tebak tebakan:");
+const fetchSoalTebakGambar = async () => fetchSoal('https://github.com/BochilTeam/database/raw/refs/heads/master/games/tebakgambar.json', "Gagal mengambil soal tebak gambar:");
 
+// Fungsi bantu untuk mengacak kata dengan vokal di depan
 function scrambleWithVowelsFirst(word) {
   const vowels = "AIUEOaiueo", letters = word.split(''), v = [], c = [];
   letters.forEach(l => vowels.includes(l) ? v.push(l) : c.push(l));
   v.sort(() => Math.random() - 0.5); c.sort(() => Math.random() - 0.5);
   return v.concat(c).join('-');
 }
+
+// Fungsi untuk menghasilkan hint berdasarkan persentase pengungkapan
 function generateHint(answer, perc) {
   const arr = answer.toLowerCase().split(''), indices = [];
   for (let i = 0; i < arr.length; i++) { if (arr[i] !== ' ') indices.push(i); }
@@ -45,6 +53,8 @@ function generateHint(answer, perc) {
   const revealSet = new Set(shuffled.slice(0, reveal));
   return arr.map((ch, i) => revealSet.has(i) ? ch : (ch === ' ' ? ' ' : '×')).join('');
 }
+
+// Fungsi untuk mendapatkan waktu reset harian, mingguan, dan bulanan (zona waktu Asia/Jakarta)
 function getDailyResetTime() {
   const now = new Date(), local = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta", hour12: false }));
   local.setHours(0, 0, 0, 0); if (local.getTime() <= now.getTime()) local.setDate(local.getDate() + 1);
@@ -62,6 +72,8 @@ function getMonthlyResetTime() {
   local.setHours(0, 0, 0, 0); local.setDate(1); local.setMonth(local.getMonth() + 1);
   return local.getTime();
 }
+
+// Inisialisasi data pengguna untuk game quiz (points dan reset waktu)
 function initializeUser(users, user) {
   if (!users[user]) users[user] = { points: 0, harian: { value: 0, expires: getDailyResetTime() }, mingguan: { value: 0, expires: getWeeklyResetTime() }, bulanan: { value: 0, expires: getMonthlyResetTime() } };
   else {
@@ -70,6 +82,37 @@ function initializeUser(users, user) {
     if (!users[user].bulanan) users[user].bulanan = { value: 0, expires: getMonthlyResetTime() };
   }
 }
+
+// Inisialisasi data RPG untuk pengguna jika belum ada
+function initializeRPG(users, user) {
+  if (!users[user].rpg) {
+    users[user].rpg = {
+      level: 1,
+      exp: 0,
+      hp: 100,
+      maxHp: 100,
+      atk: 10,
+      def: 5,
+      gold: 50,
+      inventory: []
+    };
+  }
+}
+
+// Fungsi untuk menghasilkan monster berdasarkan level pemain
+function generateMonster(playerLevel) {
+  const monsters = ['Goblin', 'Orc', 'Troll', 'Serigala', 'Bandit', 'Harpy'];
+  const name = monsters[Math.floor(Math.random() * monsters.length)];
+  const level = playerLevel; // Level monster disamakan dengan level pemain
+  const hp = 50 + level * 10 + Math.floor(Math.random() * 10);
+  const atk = 5 + level * 2 + Math.floor(Math.random() * 3);
+  const def = 3 + level + Math.floor(Math.random() * 2);
+  const expReward = 20 + level * 5;
+  const goldReward = 10 + level * 3;
+  return { name, level, hp, atk, def, expReward, goldReward };
+}
+
+// Fungsi untuk reset data harian pengguna secara berkala
 async function resetExpiredUserData() {
   const usersData = await apiGetData('users');
   let updated = false, now = Date.now();
@@ -86,8 +129,50 @@ async function resetExpiredUserData() {
 }
 setInterval(resetExpiredUserData, 3600000);
 
+// Fungsi untuk merender papan Tic Tac Toe (tetap dipertahankan dari kode asli)
+function renderBoard(board) {
+  const numberEmojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
+  return board.map((cell, i) => cell === 'user' ? '❌' : cell === 'ai' ? '⭕' : numberEmojis[i]).slice(0, 3).join(' ') + '\n' +
+         board.map((cell, i) => cell === 'user' ? '❌' : cell === 'ai' ? '⭕' : numberEmojis[i]).slice(3, 6).join(' ') + '\n' +
+         board.map((cell, i) => cell === 'user' ? '❌' : cell === 'ai' ? '⭕' : numberEmojis[i]).slice(6, 9).join(' ');
+}
+function checkWin(board, player) {
+  const wins = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+  return wins.some(c => c.every(i => board[i] === player));
+}
+function minimax(board, depth, isMaximizing, level) {
+  if (checkWin(board, 'ai')) return 10 - depth;
+  if (checkWin(board, 'user')) return depth - 10;
+  if (board.every(cell => cell !== null)) return 0;
+  if (isMaximizing) {
+    let best = -Infinity;
+    for (let i = 0; i < board.length; i++) {
+      if (board[i] === null) {
+        board[i] = 'ai';
+        best = Math.max(best, minimax(board, depth + 1, false, level));
+        board[i] = null;
+      }
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (let i = 0; i < board.length; i++) {
+      if (board[i] === null) {
+        board[i] = 'user';
+        best = Math.min(best, minimax(board, depth + 1, true, level));
+        board[i] = null;
+      }
+    }
+    return best;
+  }
+}
+
+// Fungsi utama untuk menangani logika game
 async function gameLogic(endpoint, params, query, m, client) {
-  const { user, room } = params || {}, { text, hintType } = query || {};
+  const { user, room } = params || {};
+  const { text, hintType } = query || {};
+
+  // Fungsi bantu untuk mengambil soal berdasarkan tipe game quiz
   const ambilSoal = async (soalFetcher, gameType, soalMessage) => {
     const roomsData = await apiGetData('rooms');
     const currentRoom = roomsData.rooms[room];
@@ -100,6 +185,8 @@ async function gameLogic(endpoint, params, query, m, client) {
     await apiWriteData('rooms', roomsData);
     return soalMessage(selectedSoal);
   };
+
+  // Logika game quiz yang sudah ada
   if (endpoint === 'susunkata') {
     return await ambilSoal(fetchSoalSusunKata, 'susunkata', soal => {
       const scrambled = scrambleWithVowelsFirst(soal.jawaban);
@@ -421,44 +508,189 @@ async function gameLogic(endpoint, params, query, m, client) {
         return `Nama telah disetel ke ${newName}.`;
       }
     }
-  } else return 'Endpoint tidak dikenal';
-}
-
-function renderBoard(board) {
-  const numberEmojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
-  return board.map((cell, i) => cell === 'user' ? '❌' : cell === 'ai' ? '⭕' : numberEmojis[i]).slice(0, 3).join(' ') + '\n' +
-         board.map((cell, i) => cell === 'user' ? '❌' : cell === 'ai' ? '⭕' : numberEmojis[i]).slice(3, 6).join(' ') + '\n' +
-         board.map((cell, i) => cell === 'user' ? '❌' : cell === 'ai' ? '⭕' : numberEmojis[i]).slice(6, 9).join(' ');
-}
-function checkWin(board, player) {
-  const wins = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
-  return wins.some(c => c.every(i => board[i] === player));
-}
-function minimax(board, depth, isMaximizing, level) {
-  if (checkWin(board, 'ai')) return 10 - depth;
-  if (checkWin(board, 'user')) return depth - 10;
-  if (board.every(cell => cell !== null)) return 0;
-  if (isMaximizing) {
-    let best = -Infinity;
-    for (let i = 0; i < board.length; i++) {
-      if (board[i] === null) {
-        board[i] = 'ai';
-        best = Math.max(best, minimax(board, depth + 1, false, level));
-        board[i] = null;
-      }
-    }
-    return best;
-  } else {
-    let best = Infinity;
-    for (let i = 0; i < board.length; i++) {
-      if (board[i] === null) {
-        board[i] = 'user';
-        best = Math.min(best, minimax(board, depth + 1, true, level));
-        board[i] = null;
-      }
-    }
-    return best;
   }
+  // PENAMBAHAN FITUR RPG
+  else if (endpoint === 'rpg') {
+    // Inisialisasi data pengguna dan data RPG
+    const usersData = await apiGetData('users');
+    initializeUser(usersData.users, user);
+    initializeRPG(usersData.users, user);
+    const roomsData = await apiGetData('rooms');
+    if (!roomsData.rooms[room]) roomsData.rooms[room] = {};
+    if (!roomsData.rooms[room].rpgBattles) roomsData.rooms[room].rpgBattles = {};
+
+    // Parsing subperintah untuk fitur RPG
+    const inputText = text ? text.trim() : '';
+    const [subCmd, ...args] = inputText.split(' ');
+    const cmd = subCmd.toLowerCase();
+
+    switch (cmd) {
+      case 'mulai': {
+        // Memulai pertempuran RPG
+        if (roomsData.rooms[room].rpgBattles[user]) {
+          return 'Kamu sudah sedang dalam pertempuran!';
+        }
+        const player = usersData.users[user].rpg;
+        const monster = generateMonster(player.level);
+        // Tentukan giliran secara acak
+        const turn = Math.random() < 0.5 ? 'user' : 'monster';
+        roomsData.rooms[room].rpgBattles[user] = { monster, turn };
+        await apiWriteData('rooms', roomsData);
+        let battleMsg = `Pertempuran dimulai!\nKamu menghadapi ${monster.name} (Lvl ${monster.level})\nHP ${monster.name}: ${monster.hp}\n`;
+        if (turn === 'user') {
+          battleMsg += 'Giliran kamu menyerang terlebih dahulu. Ketik `.rpg serang` untuk menyerang.';
+        } else {
+          // Jika monster menyerang dulu
+          const damage = Math.max(monster.atk - player.def, 1);
+          player.hp -= damage;
+          battleMsg += `${monster.name} menyerang terlebih dahulu dan memberikan ${damage} damage padamu.\n`;
+          if (player.hp <= 0) {
+            battleMsg += 'Kamu telah kalah dalam pertempuran.';
+            player.hp = 0;
+            delete roomsData.rooms[room].rpgBattles[user];
+            await apiWriteData('rooms', roomsData);
+            await apiWriteData('users', usersData);
+            return battleMsg;
+          } else {
+            battleMsg += `HP kamu sekarang: ${player.hp}\nGiliran kamu menyerang. Ketik \`.rpg serang\` untuk menyerang.`;
+          }
+        }
+        await apiWriteData('users', usersData);
+        return battleMsg;
+      }
+      case 'serang': {
+        // Perintah untuk menyerang musuh
+        if (!roomsData.rooms[room].rpgBattles[user]) {
+          return 'Kamu belum memulai pertempuran. Ketik `.rpg mulai` untuk memulai.';
+        }
+        const battle = roomsData.rooms[room].rpgBattles[user];
+        const currentPlayer = usersData.users[user].rpg;
+        let attackMsg = '';
+        if (battle.turn !== 'user') {
+          return 'Bukan giliran kamu untuk menyerang.';
+        }
+        // Serangan pemain
+        const damageUser = Math.max(currentPlayer.atk - battle.monster.def, 1);
+        battle.monster.hp -= damageUser;
+        attackMsg += `Kamu menyerang ${battle.monster.name} dan memberikan ${damageUser} damage.\n`;
+        if (battle.monster.hp <= 0) {
+          attackMsg += `Selamat! Kamu mengalahkan ${battle.monster.name}.\n`;
+          const expGain = battle.monster.expReward;
+          const goldGain = battle.monster.goldReward;
+          currentPlayer.exp += expGain;
+          currentPlayer.gold += goldGain;
+          attackMsg += `Kamu mendapatkan ${expGain} EXP dan ${goldGain} emas.\n`;
+          // Cek naik level
+          const expNeeded = currentPlayer.level * 100;
+          if (currentPlayer.exp >= expNeeded) {
+            currentPlayer.level += 1;
+            currentPlayer.exp -= expNeeded;
+            currentPlayer.maxHp += 20;
+            currentPlayer.atk += 5;
+            currentPlayer.def += 2;
+            currentPlayer.hp = currentPlayer.maxHp;
+            attackMsg += `Selamat! Kamu naik ke level ${currentPlayer.level}.\nStatistik bertambah: HP ${currentPlayer.maxHp}, ATK ${currentPlayer.atk}, DEF ${currentPlayer.def}.\n`;
+          }
+          delete roomsData.rooms[room].rpgBattles[user];
+          await apiWriteData('rooms', roomsData);
+          await apiWriteData('users', usersData);
+          return attackMsg;
+        }
+        // Giliran monster menyerang
+        battle.turn = 'monster';
+        const damageMonster = Math.max(battle.monster.atk - currentPlayer.def, 1);
+        currentPlayer.hp -= damageMonster;
+        attackMsg += `${battle.monster.name} menyerang balik dan memberikan ${damageMonster} damage padamu.\n`;
+        if (currentPlayer.hp <= 0) {
+          attackMsg += 'Kamu telah kalah dalam pertempuran.\n';
+          currentPlayer.hp = 0;
+          delete roomsData.rooms[room].rpgBattles[user];
+          await apiWriteData('rooms', roomsData);
+          await apiWriteData('users', usersData);
+          return attackMsg;
+        }
+        attackMsg += `HP ${battle.monster.name}: ${battle.monster.hp}\nHP kamu: ${currentPlayer.hp}\nGiliran kamu menyerang lagi. Ketik \`.rpg serang\` untuk melanjutkan.`;
+        battle.turn = 'user';
+        await apiWriteData('rooms', roomsData);
+        await apiWriteData('users', usersData);
+        return attackMsg;
+      }
+      case 'kabur': {
+        // Perintah untuk melarikan diri dari pertempuran
+        if (!roomsData.rooms[room].rpgBattles[user]) {
+          return 'Kamu tidak sedang dalam pertempuran.';
+        }
+        if (Math.random() < 0.5) {
+          delete roomsData.rooms[room].rpgBattles[user];
+          await apiWriteData('rooms', roomsData);
+          return 'Kamu berhasil kabur dari pertempuran.';
+        } else {
+          const currentP = usersData.users[user].rpg;
+          const battleEscape = roomsData.rooms[room].rpgBattles[user];
+          const freeAttack = Math.max(battleEscape.monster.atk - currentP.def, 1);
+          currentP.hp -= freeAttack;
+          let escapeMsg = `Kamu gagal kabur! ${battleEscape.monster.name} menyerang dan memberikan ${freeAttack} damage.\n`;
+          if (currentP.hp <= 0) {
+            escapeMsg += 'Kamu telah kalah dalam pertempuran.';
+            currentP.hp = 0;
+            delete roomsData.rooms[room].rpgBattles[user];
+          } else {
+            escapeMsg += `HP kamu sekarang: ${currentP.hp}. Tetap bertarung atau coba kabur lagi.`;
+          }
+          await apiWriteData('rooms', roomsData);
+          await apiWriteData('users', usersData);
+          return escapeMsg;
+        }
+      }
+      case 'status': {
+        // Menampilkan status RPG pemain
+        const playerStatus = usersData.users[user].rpg;
+        let statusMsg = `Status RPG Kamu:\nLevel: ${playerStatus.level}\nEXP: ${playerStatus.exp}/${playerStatus.level * 100}\nHP: ${playerStatus.hp}/${playerStatus.maxHp}\nATK: ${playerStatus.atk}\nDEF: ${playerStatus.def}\nEmas: ${playerStatus.gold}\nInventory: ${playerStatus.inventory.length > 0 ? playerStatus.inventory.join(', ') : 'Kosong'}`;
+        if (roomsData.rooms[room].rpgBattles[user]) {
+          const b = roomsData.rooms[room].rpgBattles[user];
+          statusMsg += `\n\nSedang dalam pertempuran melawan ${b.monster.name} (HP: ${b.monster.hp}). Giliran: ${b.turn}`;
+        }
+        return statusMsg;
+      }
+      case 'quest': {
+        // Menghasilkan quest sederhana untuk pemain
+        const quests = [
+          { jenis: 'battle', deskripsi: 'Kalahkan 3 Goblin', target: 3, expReward: 50, goldReward: 20 },
+          { jenis: 'collection', deskripsi: 'Kumpulkan 5 Ramuan', target: 5, expReward: 40, goldReward: 15 },
+          { jenis: 'exploration', deskripsi: 'Jelajahi 3 wilayah baru', target: 3, expReward: 60, goldReward: 25 }
+        ];
+        const quest = quests[Math.floor(Math.random() * quests.length)];
+        usersData.users[user].rpg.quest = quest;
+        await apiWriteData('users', usersData);
+        return `Quest baru: ${quest.deskripsi}\nHadiah: ${quest.expReward} EXP dan ${quest.goldReward} emas. Ketik \`.rpg quest selesai\` setelah menyelesaikan quest.`;
+      }
+      case 'quest selesai': {
+        // Menyelesaikan quest yang sedang aktif
+        if (!usersData.users[user].rpg.quest) {
+          return 'Kamu tidak memiliki quest aktif.';
+        }
+        const completedQuest = usersData.users[user].rpg.quest;
+        delete usersData.users[user].rpg.quest;
+        usersData.users[user].rpg.exp += completedQuest.expReward;
+        usersData.users[user].rpg.gold += completedQuest.goldReward;
+        let questMsg = `Quest "${completedQuest.deskripsi}" selesai!\nKamu mendapatkan ${completedQuest.expReward} EXP dan ${completedQuest.goldReward} emas.`;
+        const currentExpNeeded = usersData.users[user].rpg.level * 100;
+        if (usersData.users[user].rpg.exp >= currentExpNeeded) {
+          usersData.users[user].rpg.level += 1;
+          usersData.users[user].rpg.exp -= currentExpNeeded;
+          usersData.users[user].rpg.maxHp += 20;
+          usersData.users[user].rpg.atk += 5;
+          usersData.users[user].rpg.def += 2;
+          usersData.users[user].rpg.hp = usersData.users[user].rpg.maxHp;
+          questMsg += `\nSelamat! Kamu naik ke level ${usersData.users[user].rpg.level}.`;
+        }
+        await apiWriteData('users', usersData);
+        return questMsg;
+      }
+      default:
+        return 'Perintah RPG tidak dikenali. Gunakan salah satu:\n`.rpg mulai` - Mulai pertempuran\n`.rpg serang` - Serang musuh\n`.rpg kabur` - Kabur dari pertempuran\n`.rpg status` - Lihat status RPG\n`.rpg quest` - Dapatkan quest baru\n`.rpg quest selesai` - Selesaikan quest yang aktif\n\n*Note:* Masih dalam eksperimen Jadi beri masukan ke owner ide atau juga melapor bug';
+    }
+  } else return 'Endpoint tidak dikenal';
 }
 
 module.exports = { gameLogic };
