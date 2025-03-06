@@ -595,7 +595,7 @@ async function gameLogic(endpoint, params, query, m, client) {
     switch(cmd) {
       case 'mulai': {
         if (roomsData.rooms[room].rpgBattles[user])
-          return `*RPG - Pertempuran:*\nKamu sudah dalam pertempuran seru! \n\nalicia-RPG`;
+          return `*RPG - Pertempuran:*\nKamu sudah dalam pertempuran seru!`;
         const monster = generateMonster(player.level);
         const turn = Math.random() < 0.5 ? 'user' : 'monster';
         roomsData.rooms[room].rpgBattles[user] = { monster, turn };
@@ -606,14 +606,14 @@ async function gameLogic(endpoint, params, query, m, client) {
           const damage = Math.max(monster.atk - player.def, 1);
           player.hp -= damage;
           battleMsg += `*${monster.name}* menyerang dulu dan memberi damage *${damage}* padamu.\nHP kamu: *${player.hp}*.\nSekarang giliranmu menyerang! Ketik *serang*.`;
-          if (player.hp <= 0) { battleMsg += `\nWaduh, kamu kalah dalam pertempuran.`; player.hp = 0; delete roomsData.rooms[room].rpgBattles[user]; await apiWriteData('rooms', roomsData); await apiWriteData('users', usersData); return battleMsg + `\n\nalicia-RPG`; }
+          if (player.hp <= 0) { battleMsg += `\nWaduh, kamu kalah dalam pertempuran.`; player.hp = 0; delete roomsData.rooms[room].rpgBattles[user]; await apiWriteData('rooms', roomsData); await apiWriteData('users', usersData); return battleMsg; }
         }
         await apiWriteData('users', usersData);
-        return battleMsg + `\n\nalicia-RPG`;
+        return battleMsg;
       }
       case 'serang': {
         if (!roomsData.rooms[room].rpgBattles[user])
-          return `*RPG - Error:*\nKamu belum memulai pertempuran. Ketik *mulai*. \n\nalicia-RPG`;
+          return `*RPG - Error:*\nKamu belum memulai pertempuran. Ketik *mulai*.`;
         const battle = roomsData.rooms[room].rpgBattles[user];
         let attackMsg = '';
         let weaponBonus = 0;
@@ -662,29 +662,29 @@ async function gameLogic(endpoint, params, query, m, client) {
           delete roomsData.rooms[room].rpgBattles[user];
           await apiWriteData('rooms', roomsData);
           await apiWriteData('users', usersData);
-          return attackMsg + `\n\nalicia-RPG`;
+          return attackMsg;
         }
         battle.turn = 'monster';
         const damageMonster = Math.max(battle.monster.atk - player.def, 1);
         player.hp -= damageMonster;
         attackMsg += `*${battle.monster.name}* membalas serang dan memberi damage *${damageMonster}* padamu.\n`;
-        if (player.hp <= 0) { attackMsg += `\nSayang, kamu kalah dalam pertempuran.`; player.hp = 0; delete roomsData.rooms[room].rpgBattles[user]; await apiWriteData('rooms', roomsData); await apiWriteData('users', usersData); return attackMsg + `\n\nalicia-RPG`; }
+        if (player.hp <= 0) { attackMsg += `\nSayang, kamu kalah dalam pertempuran.`; player.hp = 0; delete roomsData.rooms[room].rpgBattles[user]; await apiWriteData('rooms', roomsData); await apiWriteData('users', usersData); return attackMsg; }
         attackMsg += `Sisa HP *${battle.monster.name}*: *${battle.monster.hp}*\nHP kamu: *${player.hp}*\nGiliranmu lagi menyerang! Ketik *serang*.`;
         battle.turn = 'user';
         await apiWriteData('rooms', roomsData);
         await apiWriteData('users', usersData);
-        return attackMsg + `\n\nalicia-RPG`;
+        return attackMsg;
       }
       case 'kabur': {
         if (!roomsData.rooms[room].rpgBattles[user])
-          return `*RPG - Error:*\nKamu tidak sedang bertarung! \n\nalicia-RPG`;
-        if (Math.random() < 0.5) { delete roomsData.rooms[room].rpgBattles[user]; await apiWriteData('rooms', roomsData); return `*RPG - Kabur:*\nKamu berhasil kabur dengan selamat! \n\nalicia-RPG`; }
-        else { const freeAttack = Math.max(roomsData.rooms[room].rpgBattles[user].monster.atk - player.def, 1); player.hp -= freeAttack; let escapeMsg = `*RPG - Kabur Gagal:*\n*${roomsData.rooms[room].rpgBattles[user].monster.name}* menyerang dan memberi damage *${freeAttack}*.\n`; if (player.hp <= 0) { escapeMsg += `Kamu kalah karena HP habis.`; player.hp = 0; delete roomsData.rooms[room].rpgBattles[user]; } else { escapeMsg += `HP kamu sekarang: *${player.hp}*. Tetap berjuang atau coba kabur lagi.`; } await apiWriteData('rooms', roomsData); await apiWriteData('users', usersData); return escapeMsg + `\n\nalicia-RPG`; }
+          return `*RPG - Error:*\nKamu tidak sedang bertarung!`;
+        if (Math.random() < 0.5) { delete roomsData.rooms[room].rpgBattles[user]; await apiWriteData('rooms', roomsData); return `*RPG - Kabur:*\nKamu berhasil kabur dengan selamat!`; }
+        else { const freeAttack = Math.max(roomsData.rooms[room].rpgBattles[user].monster.atk - player.def, 1); player.hp -= freeAttack; let escapeMsg = `*RPG - Kabur Gagal:*\n*${roomsData.rooms[room].rpgBattles[user].monster.name}* menyerang dan memberi damage *${freeAttack}*.\n`; if (player.hp <= 0) { escapeMsg += `Kamu kalah karena HP habis.`; player.hp = 0; delete roomsData.rooms[room].rpgBattles[user]; } else { escapeMsg += `HP kamu sekarang: *${player.hp}*. Tetap berjuang atau coba kabur lagi.`; } await apiWriteData('rooms', roomsData); await apiWriteData('users', usersData); return escapeMsg; }
       }
       case 'status': {
         let statusMsg = `*RPG - Status Petualangan:*\nLevel: *${player.level}*\nEXP: *${player.exp}/${player.level * 100}*\nHP: *${player.hp}/${player.maxHp}*\nATK: *${player.atk}*\nDEF: *${player.def}*\nEmas: *${player.gold}*\nInventory: *${player.inventory.length > 0 ? player.inventory.map((w, i) => `${i+1}. ${w.name} (Lvl:${w.level})`).join(', ') : 'Kosong'}*\nSenjata Dipakai: *${player.equippedWeapon ? player.equippedWeapon.name : 'Tidak ada'}*`;
         if (roomsData.rooms[room].rpgBattles[user]) { const b = roomsData.rooms[room].rpgBattles[user]; statusMsg += `\n\nSedang bertarung melawan *${b.monster.name}* (HP: *${b.monster.hp}*).`; }
-        return statusMsg + `\n\nalicia-RPG`;
+        return statusMsg;
       }
       case 'quest': {
         const resetTime = getDailyResetTime();
@@ -701,11 +701,11 @@ async function gameLogic(endpoint, params, query, m, client) {
           questMsg += `\nSelamat, misi global selesai! Kamu dapat *${globalQuest.expReward}* EXP dan *${globalQuest.goldReward}* emas.\n`;
         }
         await apiWriteData('users', usersData);
-        return questMsg + `\n\nalicia-RPG`;
+        return questMsg;
       }
       case 'heal': {
         if (player.hp >= player.maxHp) return `HP kamu sudah penuh.`;
-        let method = args[0] ? args[0].toLowerCase() : 'point';
+        let method = args[0] ? args[0].toLowerCase() : 'emas';
         let missing = player.maxHp - player.hp;
         let costPoints = Math.ceil((missing / player.maxHp) * 10);
         if (method === 'point') {
@@ -819,7 +819,7 @@ async function gameLogic(endpoint, params, query, m, client) {
         return msg;
       }
       default:
-        return `*RPG - Error:*\nPerintah tidak dikenal. Gunakan *mulai*, *serang*, *kabur*, *status*, *quest*, *heal*, *toko senjata*, *inv*, *pakai*, *jual*, atau *tempa*. \n\nalicia-RPG`;
+        return `*RPG - Error:*\nPerintah tidak dikenal. Gunakan *mulai*, *serang*, *kabur*, *status*, *quest*, *heal*, *toko senjata*, *inv*, *pakai*, *jual*, atau *tempa*. \n\nReply dan ketik printah nya`;
     }
   } else return `*Error:*\nEndpoint tidak dikenal.`;
 }
