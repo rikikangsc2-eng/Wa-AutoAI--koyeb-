@@ -242,7 +242,7 @@ if (m.quoted) {
   if (m.quoted.text.includes("alicia-RPG")){
     const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
       const query = { text: body };
-      const gameResponse = await axios.get(`https://express-vercel-ytdl.vercel.app/rpg?user=${params.user}&room=${params.room}&query=${query.text}`)
+      const gameResponse = await axios.get(`https://express-vercel-ytdl.vercel.app/rpg?user=${params.user}&q=${query.text}`);
       m.reply(gameResponse.data+"\n\nalicia-RPG\n*Reply Pesan Ini*");
     return;
   }
@@ -293,10 +293,14 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) { 
+        case "inv":{
+          const response = await axios.get(`https://express-vercel-ytdl.vercel.app/rpg?q=inv&user=${m.sender.split("@")[0]}`);
+          m.reply(response.data);
+        }
         case "rpg":{
           const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
           const query = { text: msg.toLowerCase() };
-          const gameResponse = await axios.get(`https://express-vercel-ytdl.vercel.app/rpg?user=${params.user}&room=${params.room}&query=${query.text}`)
+          const gameResponse = await axios.get(`https://express-vercel-ytdl.vercel.app/rpg?user=${params.user}&q=Segera lanjutkan atau mulai game-nya`)
           m.reply(gameResponse.data+"\n\nalicia-RPG\n*Reply Pesan Ini*");
         break};
         case "setname":{

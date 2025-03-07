@@ -16,7 +16,7 @@ downloader:["lirik", "tiktok", "ig", "play", "videy",'ytmp4'],
 menuAI:["persona", "reset", "think","riwayat","diff"],
 anime:["jadwal", "populer", "random","search"],
 tools:["hd","tourl", "img", "gempa", "tts"],
-fun:["susunkata","siapakahaku","point","top","nyerah","hint","tebaktebakan","tebakgambar","ttt","tictactoe","setname","rpg"],
+fun:["susunkata","siapakahaku","point","top","nyerah","hint","tebaktebakan","tebakgambar","ttt","tictactoe","setname","rpg","inv"],
 maker:[],
 other:["owner","sewa","gcbot","intro"],
   
