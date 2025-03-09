@@ -679,7 +679,7 @@ Dirasakan: ${gempaData.dirasakan}
         };
 
         case "menu": {
-          mq = {
+          const mq = {
   "key": {
     "remoteJid": "120363394639766595@g.us",
     "fromMe": false,
