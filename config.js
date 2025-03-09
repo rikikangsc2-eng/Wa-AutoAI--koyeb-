@@ -3,7 +3,7 @@ const global = {
 sessions: "rickyCreds",
 owner:'6283894391287',
 nobot:'6283873321433',
-gcbot:'https://chat.whatsapp.com/KwK93a3wAsP46D3NdIKK5K',
+gcbot:'https://chat.whatsapp.com/IO3DDRhKe3e1mKdCBYlUYr',
 apikey:'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',//groq-key
 apikey2:'AIzaSyANx0peHUXEH0Nb0is8RH5QuCtHo_dhWO8', //aistudio-google-key
 model_groq:'gemma2-9b-it',

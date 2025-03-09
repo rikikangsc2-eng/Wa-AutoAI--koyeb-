@@ -680,21 +680,30 @@ Dirasakan: ${gempaData.dirasakan}
 
         case "menu": {
           client.sendMessage(m.chat, {
-            "extendedTextMessage": {
-      "text": menu,
-      "previewType": "NONE",
-      "contextInfo": {
-        "forwardingScore": 1,
-        "isForwarded": true,
-        "forwardedNewsletterMessageInfo": {
-          "newsletterJid": "120363412016616004@newsletter",
-          "serverMessageId": 114,
-          "newsletterName": "AzzBOT"
-        }
-      },
-      "inviteLinkGroupTypeV2": "DEFAULT"
-    }
-          })
+                extendedTextMessage: {
+                    text: menu,
+                    contextInfo: {
+                        mentionedJid: [m.sender],
+                        externalAdReply: {
+                    title: "Error? kasih tau ya!",
+                    body: `"Ada yang error kasih tau ya"`,
+                    thumbnailUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtB5PE85IKyY_7goEGBxlH4-xZpaHOg4DuB1gc0QAf3S93QHqD27erRYE&s=10",
+                    sourceUrl: global.gcbot,
+                    mediaUrl: `https://ẉa.me/6283894391287`,
+                    renderLargerThumbnail: true,
+                    showAdAttribution: true,
+                    mediaType: 1,
+                },
+                forwardingScore: 19,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: "120363412016616004@newsletter",
+                    serverMessageId: 152
+                }
+                },
+                    mentions: [m.sender]
+                }
+            }, {})
           break;
         };
         case "gcbot": {
