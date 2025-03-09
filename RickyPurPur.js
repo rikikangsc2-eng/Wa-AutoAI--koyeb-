@@ -155,17 +155,18 @@ const autoAI = async () => {
     const parts = remainingText.split(/(\*\*[^\*]+\*\*|\[song.*?\]|\[Song.*?\]|\[song =.*?\]|\[Song =.*?\]|\[diffusion.*?\]|\[Diffusion.*?\]|\[diffusion =.*?\]|\[Diffusion =.*?\]|\[animesearch.*?\])/g);
     const mediaQueue = [];
     const textQueue = [];
+    const wait = "⏳";
     let currentText = "";
     for (let i = 0; i < parts.length; i++) {
       if (parts[i].toLowerCase().startsWith("[song=") || parts[i].toLowerCase().startsWith("[song =")) {
         const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await m.reply("`Alicia sedang mencari lagu; " + query + ". Tunggu ya...`");
+        await m.reply(wait);
         await play.get(m, client, query);
       } else if (parts[i].toLowerCase().startsWith("[animesearch=") || parts[i].toLowerCase().startsWith("[animesearch =")) {
         const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await m.reply("`Sedang mencari anime...`");
+        await m.reply(wait);
         try {
           const response = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&sfw`);
           const result = response.data.data;
@@ -192,7 +193,7 @@ const autoAI = async () => {
       } else if (parts[i].toLowerCase().startsWith("[diffusion=") || parts[i].toLowerCase().startsWith("[diffusion =")) {
         const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await m.reply("`Alicia sedang membuat gambar; " + query + ". Tunggu ya...`");
+        await m.reply(wait);
         try {
           const response = await axios.get(`https://api.ryzendesu.vip/api/ai/waifu-diff?prompt=${encodeURIComponent(query)}`, { responseType: "arraybuffer" });
           const imageBuffer = Buffer.from(response.data);
@@ -678,7 +679,7 @@ Dirasakan: ${gempaData.dirasakan}
         };
 
         case "menu": {
-          m.reply(menu);
+          m.reply(menu+"\n\n*Changelog:* https://whatsapp.com/channel/0029Vb3qLJRDuMRdjacRwe2T");
           break;
         };
         case "gcbot": {
