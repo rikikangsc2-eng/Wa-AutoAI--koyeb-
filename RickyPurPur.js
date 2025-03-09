@@ -23,6 +23,66 @@ const hd = require("./func/hd.js");
 const {jadwalAnime, populerAnime, random} = require("./func/anime.js");
 const game = require('./func/game.js')
 
+ /* QuotedMessage */
+const quotedMessage = {
+  "key": {
+    "remoteJid": "6283894391287@s.whatsapp.net",
+    "fromMe": false,
+    "id": "F3AD50F39BC38841E49DF7FE2B6E3273"
+  },
+  "messageTimestamp": 1741555669,
+  "pushName": "Pak PurPur",
+  "broadcast": false,
+  "message": {
+    "extendedTextMessage": {
+      "text": ".m",
+      "previewType": "NONE",
+      "contextInfo": {
+        "forwardingScore": 1,
+        "isForwarded": true,
+        "forwardedNewsletterMessageInfo": {
+          "newsletterJid": "120363412016616004@newsletter",
+          "serverMessageId": 114,
+          "newsletterName": "AzzBOT"
+        }
+      },
+      "inviteLinkGroupTypeV2": "DEFAULT"
+    },
+    "messageContextInfo": {
+      "deviceListMetadata": {
+        "recipientKeyHash": "ZWvqhNFFwHMrdA==",
+        "recipientTimestamp": "1741513324"
+      },
+      "deviceListMetadataVersion": 2,
+      "messageSecret": "/qUlCiIz3SMbhEwdJW5y9wmqmcWEb9FpRk79cYUUL9k="
+    }
+  },
+  "id": "F3AD50F39BC38841E49DF7FE2B6E3273",
+  "isBaileys": false,
+  "chat": "6283894391287@s.whatsapp.net",
+  "fromMe": false,
+  "isGroup": false,
+  "sender": "6283894391287@s.whatsapp.net",
+  "mtype": "extendedTextMessage",
+  "msg": {
+    "text": ".m",
+    "previewType": "NONE",
+    "contextInfo": {
+      "forwardingScore": 1,
+      "isForwarded": true,
+      "forwardedNewsletterMessageInfo": {
+        "newsletterJid": "120363412016616004@newsletter",
+        "serverMessageId": 114,
+        "newsletterName": "AzzBOT"
+      }
+    },
+    "inviteLinkGroupTypeV2": "DEFAULT"
+  },
+  "body": ".m",
+  "mentions": [],
+  "name": "Pak PurPur"
+}
+
 const botOwner = global.owner;
 const noBot = global.nobot;
 const botGroup = global.gcbot;
@@ -679,7 +739,7 @@ Dirasakan: ${gempaData.dirasakan}
         };
 
         case "menu": {
-          m.reply(menu+"\n\n*Changelog:* https://whatsapp.com/channel/0029Vb3qLJRDuMRdjacRwe2T");
+          client.sendMessage(m.chat, {text:menu},{quoted:quotedMessage});
           break;
         };
         case "gcbot": {
