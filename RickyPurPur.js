@@ -285,6 +285,11 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) { 
+        case "tulis": {
+          if (!text && !text.includes("|")) m.reply("*contoh:* .tulis 1 | teksnya");
+        const query = text.split("|")
+          client.sendMessage(m.chat, {image: {url: `https://express-vercel-ytdl.vercel.app/brat?type=${query[0].trim()}&text=${encodeURIComponent(query[1].trim())}`}, mimetype: "image/png"}, {quoted: m});
+        }
         case "setname":{
           const params = { user: m.sender.split("@")[0], room: m.chat.split("@")[0] };
   const query = { text: msg };
