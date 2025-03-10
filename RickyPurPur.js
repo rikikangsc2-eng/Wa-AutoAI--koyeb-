@@ -198,7 +198,7 @@ const autoAI = async () => {
           const response = await axios.get(`https://aihub.xtermai.xyz/api/text2img/animediff?key=Bell409&prompt=${encodeURIComponent(query)}`, { responseType: "arraybuffer" });
           const imageBuffer = Buffer.from(response.data);
           await new Promise(resolve => setTimeout(resolve, 1000));
-          await client.sendMessage(m.chat, { image: imageBuffer, caption: query }, { quoted: m });
+          await client.sendMessage(m.chat, { image: imageBuffer}, { quoted: m });
         } catch (error) {
           m.reply("Gagal membuat gambar:\n\n*Alternatif:* wa.me/13135550002?text=" + encodeURIComponent(query));
         }
@@ -684,16 +684,16 @@ Dirasakan: ${gempaData.dirasakan}
     "remoteJid": "120363394639766595@g.us",
     "fromMe": false,
     "id": "701A84583935D30735A173BE10719F2E",
-    "participant": "6283894391287@s.whatsapp.net"
+    "participant": "999999999999@s.whatsapp.net"
   },
   "messageTimestamp": 1741561884,
-  "pushName": "Pak PurPur",
+  "pushName": "Pria Hitam besar 👿",
   "broadcast": false,
   "message": {
     "imageMessage": {
       "url": "https://mmg.whatsapp.net/o1/v/t62.7118-24/f2/m269/AQPrTw8OEXMf4D4Ns-LZXHZtpT5JLdOc6rqyaL7bvMJJF5Anorb0tDfbFhUFOPIhSn_V_wtAG1JXgpakA8dJlWbmwkLmOuiPVh0ygF2lXw?ccb=9-4&oh=01_Q5AaIEK0VYwMZPU8iPA0gLoElN695hW1iDxYLR02lW0a-2Qt&oe=67F59615&_nc_sid=e6ed6c&mms3=true",
       "mimetype": "image/jpeg",
-      "caption": "*Alicia AI😎*",
+      "caption": "*Get Out!*",
       "fileSha256": "2SbnuSHfMzPYlOhdd3KIXAWRuiIn1viePcHOWSrigZw=",
       "fileLength": "24373",
       "height": 357,
@@ -721,13 +721,13 @@ Dirasakan: ${gempaData.dirasakan}
   "chat": "120363394639766595@g.us",
   "fromMe": false,
   "isGroup": true,
-  "sender": "6283894391287@s.whatsapp.net",
-  "participant": "6283894391287@s.whatsapp.net",
+  "sender": "9999999999999@s.whatsapp.net",
+  "participant": "999999999999@s.whatsapp.net",
   "mtype": "imageMessage",
   "msg": {
     "url": "https://mmg.whatsapp.net/o1/v/t62.7118-24/f2/m269/AQPrTw8OEXMf4D4Ns-LZXHZtpT5JLdOc6rqyaL7bvMJJF5Anorb0tDfbFhUFOPIhSn_V_wtAG1JXgpakA8dJlWbmwkLmOuiPVh0ygF2lXw?ccb=9-4&oh=01_Q5AaIEK0VYwMZPU8iPA0gLoElN695hW1iDxYLR02lW0a-2Qt&oe=67F59615&_nc_sid=e6ed6c&mms3=true",
     "mimetype": "image/jpeg",
-    "caption": "*Alicia AI😎*",
+    "caption": "*Get Out!*",
     "fileSha256": "2SbnuSHfMzPYlOhdd3KIXAWRuiIn1viePcHOWSrigZw=",
     "fileLength": "24373",
     "height": 357,
@@ -746,9 +746,9 @@ Dirasakan: ${gempaData.dirasakan}
     ],
     "midQualityFileSha256": "zm3FMSSAxYL8BuJLhn2uawk5j/l8dNByDsvZXKMp5X0="
   },
-  "body": "*Alicia AI😎*",
+  "body": "*Get Out!*",
   "mentions": [],
-  "name": "Pak PurPur"
+  "name": "Pria hitam besar 👿"
 }
           client.sendMessage(m.chat, {
             text: menu+"\n\n*Saluran:* https://whatsapp.com/channel/0029Vb3qLJRDuMRdjacRwe2T"
