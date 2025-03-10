@@ -17,7 +17,7 @@ menuAI:["persona", "reset", "think","riwayat","diff"],
 anime:["jadwal", "populer", "random","search"],
 tools:["hd","tourl", "img", "gempa", "tts"],
 fun:["susunkata","siapakahaku","point","top","nyerah","hint","tebaktebakan","tebakgambar","ttt","tictactoe","setname"],
-maker:["tulis"],
+maker:["tulis-putih", "tulis-hitam", "tulis-hijau"],
 other:["owner","sewa","gcbot","intro"],
   
 };
