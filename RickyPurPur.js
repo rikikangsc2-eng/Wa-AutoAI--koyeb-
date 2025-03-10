@@ -195,7 +195,7 @@ const autoAI = async () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         await m.reply(wait);
         try {
-          const response = await axios.get(`https://api.ryzendesu.vip/api/ai/waifu-diff?prompt=${encodeURIComponent(query)}`, { responseType: "arraybuffer" });
+          const response = await axios.get(`https://aihub.xtermai.xyz/api/text2img/animediff?key=Bell409&prompt=${encodeURIComponent(query)}`, { responseType: "arraybuffer" });
           const imageBuffer = Buffer.from(response.data);
           await new Promise(resolve => setTimeout(resolve, 1000));
           await client.sendMessage(m.chat, { image: imageBuffer, caption: query }, { quoted: m });
