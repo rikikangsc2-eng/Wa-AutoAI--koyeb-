@@ -228,55 +228,6 @@ const autoAI = async () => {
   }
 };
 
-
-const Luma = (image) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const response = await axios.post(`https://aihub.xtermai.xyz/api/img2video/luma?key=${global.xterm}`, image, {
-        headers: { 'Content-Type': 'application/octet-stream' },
-        responseType: 'stream'
-      });
-      response.data.on('data', (chunk) => {
-        try {
-          const eventString = chunk.toString();
-          const eventData = eventString.match(/data: (.+)/);
-          if (eventData && eventData[1]) {
-            const data = JSON.parse(eventData[1]);
-            console.log(data);
-            switch (data.status) {
-              case "pending":
-              case "processing":
-                console.log(data);
-                break;
-              case "failed":
-                response.data.destroy();
-                reject(data);
-                break;
-              case "completed":
-                response.data.destroy();
-                resolve(data);
-                break;
-              default:
-                console.log('Unknown status:', data);
-            }
-          }
-        } catch (e) {
-          console.error('Error processing chunk:', e.message);
-          response.data.destroy();
-          reject(e);
-        }
-      });
-      response.data.on('error', (err) => {
-        console.error('Stream error:', err.message);
-        reject(err);
-      });
-    } catch (error) {
-      console.error('Error:', error.message);
-      reject(error);
-    }
-  });
-};
-    
 //Jawab GAME
     if (m.quoted && !cekCmd(m.body)) {
       if (m.quoted.text.includes("AliciaGames")){
@@ -333,24 +284,6 @@ if (m.isGroup && m.quoted && !cekCmd(m.body)){
 
     if (cekCmd(m.body)) {
       switch (command) { 
-        
-case "luma": {
-  if (!m.mtype.includes("imageMessage")) return m.reply("Kirim gambar dengan caption .luma");
-  const image = await toUrl.get(m, client);
-  m.reply("Tunggu 1-2 menit...");
-  Luma(image)
-    .then((data) => {
-      if (data.url) {
-        client.sendMessage(m.chat, { video: { url: data.url } }, { quoted: m });
-      } else {
-        m.reply("Berhasil: " + JSON.stringify(data));
-      }
-    })
-    .catch((error) => {
-      m.reply("Gagal memproses gambar");
-    });
-  break;
-}
         case "tulis-putih": {
           if (!text) return reply("Masukkan teks");
                 client.sendMessage(m.chat, {image: {url: `https://pursky.vercel.app/api/bratimg?type=2&text=${encodeURIComponent(text)}`}, mimetype: "image/png"}, {quoted: m});
