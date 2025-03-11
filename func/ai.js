@@ -33,13 +33,13 @@ const updateRoomHistory = async (user, history) => {
   } catch (e) { console.error("Error updating room history", e); }
 };
 const manageTokenCount = history => {
-  let msgs = history.filter(m => m.role !== "system"),
+  let msgs = history.filter(m => m.role === "assistant"),
     total = openaiTokenCounter.chat(msgs, "gpt-4");
-  while (total > 1024 && history.filter(m => m.role !== "system").length > 1) {
+  while (total > 1024 && history.filter(m => m.role === "assistant").length > 1) {
     for (let i = 0; i < history.length; i++) {
-      if (history[i].role !== "system") { history.splice(i, 1); break; }
+      if (history[i].role === "assistant") { history.splice(i, 1); break; }
     }
-    msgs = history.filter(m => m.role !== "system");
+    msgs = history.filter(m => m.role === "assistant");
     total = openaiTokenCounter.chat(msgs, "gpt-4");
   }
   return history;
