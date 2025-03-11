@@ -619,7 +619,7 @@ Dirasakan: ${gempaData.dirasakan}
 
 *Alicia Model Name:* \`Gemma2-9b-it\`
 *Logic Ekstensi by:* \`Pur\``);
-};
+}break;
 
         case "m": {
           m.reply(JSON.stringify(m, null, 2));
