@@ -611,9 +611,14 @@ Dirasakan: ${gempaData.dirasakan}
         };
 
           case "ai": {
-  if (!m.isGroup) return m.reply("Fitur AI hanya untuk di group chat.");
-  m.reply("Hmm apaaa sihh reply ajaaa cok")
-  break;
+  m.reply(`> Alicia Ekstensi:
+- Memainkan musik "putar musik"
+- Membuat gambar art/pap "kirim/buat gambar"
+- Membuat Quotes, pantun, dll "Buat Quotes",
+- Mencari Anime "Cari anime one piece"
+
+*Alicia Model Name:* \`Gemma2-9b-it\`
+*Logic Ekstensi by:* \`Pur\``);
 };
 
         case "m": {
