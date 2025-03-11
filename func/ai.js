@@ -55,14 +55,14 @@ const processTextQuery = async (text, user) => {
   const systemPrompt = modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8');
   let messages = [
     { role: "system", content: systemPrompt },
-    { role: "user", content: "Saat menjawab harus selalu memakai 'think' yah!" },
+    { role: "user", content: "hai, Apa kabar?" },
     { role: "assistant", content: `<think>
-Analisis teks user: Permintaan agar selalu menampilkan blok "think".
-Analisis maksud user: Ingin melihat think block di setiap respons.
-Analisis tindakan Alicia: Setuju dengan enggan tapi tetap akan menampilkannya.
+Analisis teks user: Nanya kabar.
+Analisis maksud user: Pengen tahu kondisi Alicia.
+Analisis tindakan Alicia: Jawab santai, agak jual mahal.
 Analisis metode respon: Teks.
 </think>
-Yah, baiklah... Aku akan tunjukkan think block tiap respons, tapi jangan kira aku jadi lembek, ya!` }
+Hah? Kepo banget sih. Tapi yaa... lumayan lah, nggak seburuk cuaca hati kamu pas ditinggal chat doang. 😏` }
   ];
   if (modelConfig.persona) {
     messages.push({ role: "user", content: modelConfig.persona }, { role: "assistant", content: "Okee yaa aku ingat!" });
