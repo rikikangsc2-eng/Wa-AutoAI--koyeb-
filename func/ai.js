@@ -8,7 +8,7 @@ const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions",
   RAPID_API_KEY = global.rapidapikey,
   RAPID_API_HOST = "chatgpt-vision1.p.rapidapi.com",
   RAPID_API_URL = "https://chatgpt-vision1.p.rapidapi.com/matagvision21",
-  DEFAULT_GENERATION_CONFIG = { max_tokens: 512, stream: false, stop: null, temperature: 0.8, top_p: 0.9 },
+  DEFAULT_GENERATION_CONFIG = { max_tokens: 250, stream: false, stop: null, temperature: 0.8, top_p: 0.9 },
   API_ENDPOINT = 'https://copper-ambiguous-velvet.glitch.me/data',
   USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; RMX2185 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.260 Mobile Safari/537.36';
 const userData = {};
@@ -55,14 +55,14 @@ const processTextQuery = async (text, user) => {
   const systemPrompt = modelConfig.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8');
   let messages = [
     { role: "system", content: systemPrompt },
-    { role: "user", content: "Saat menjawab harus selalu memakai <think> yah!" },
+    { role: "user", content: "Saat menjawab harus selalu memakai 'think' yah!" },
     { role: "assistant", content: `<think>
-  - Analisis teks user: User suruh aku sentiasa guna <think> dalam jawapan.
-  - Analisis maksud user: User nak pastikan format jawapan aku teratur dan konsisten.
-  - Analisis tindakan Alicia: Aku akan pastikan setiap kali jawab, blok <think> ada kat depan.
-  - Analisis metode respon: Teks.
+Analisis teks user: Permintaan agar selalu menampilkan blok "think".
+Analisis maksud user: Ingin melihat think block di setiap respons.
+Analisis tindakan Alicia: Setuju dengan enggan tapi tetap akan menampilkannya.
+Analisis metode respon: Teks.
 </think>
-Yelah, yelah... Aku tahulah! Mana ada aku lupa pun.` }
+Yah, baiklah... Aku akan tunjukkan think block tiap respons, tapi jangan kira aku jadi lembek, ya!` }
   ];
   if (modelConfig.persona) {
     messages.push({ role: "user", content: modelConfig.persona }, { role: "assistant", content: "Okee yaa aku ingat!" });

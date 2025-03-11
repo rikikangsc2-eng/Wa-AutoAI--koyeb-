@@ -152,7 +152,7 @@ const autoAI = async () => {
     const remainingText = cleanedText
       .replace(/\*\*(.*?)\*\*/g, "*$1*")
       .replace(/```(.*?)```/g, "`$1`");
-    const parts = remainingText.split(/(\*\*[^\*]+\*\*|\[song.*?\]|\[Song.*?\]|\[song =.*?\]|\[Song =.*?\]|\[diffusion.*?\]|\[Diffusion.*?\]|\[diffusion =.*?\]|\[Diffusion =.*?\]|\[animesearch.*?\])/g);
+    const parts = remainingText.split(/(\*\*[^\*]+\*\*|\[song.*?\]|\[song =.*?\]|\[diffusion.*?\]|\[diffusion =.*?\]|\[animesearch.*?\]|\[animesearch =.*?\]|\[quotes.*?\]|\[quotes =.*?\])/g);
     const mediaQueue = [];
     const textQueue = [];
     const wait = "⏳";
@@ -198,9 +198,23 @@ const autoAI = async () => {
           const response = await axios.get(`https://aihub.xtermai.xyz/api/text2img/animediff?key=${global.xterm}&prompt=${encodeURIComponent(query)}`, { responseType: "arraybuffer" });
           const imageBuffer = Buffer.from(response.data);
           await new Promise(resolve => setTimeout(resolve, 1000));
-          await client.sendMessage(m.chat, { image: imageBuffer}, { quoted: m });
+          await client.sendMessage(m.chat, { image: imageBuffer }, { quoted: m });
         } catch (error) {
           m.reply("Gagal membuat gambar:\n\n*Alternatif:* wa.me/13135550002?text=" + encodeURIComponent(query));
+        }
+      } else if (parts[i].toLowerCase().startsWith("[quotes=") || parts[i].toLowerCase().startsWith("[quotes =")) {
+        let query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
+        if (query.length > 150) query = query.substring(0, 150);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await m.reply(wait);
+        try {
+          await client.sendMessage(m.chat, {
+            image: { url: `https://pursky.vercel.app/api/bratimg?type=2&text=${encodeURIComponent(query)}` },
+            mimetype: "image/png"
+          }, { quoted: m });
+        } catch (error) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await m.reply("Gagal membuat quotes image:\n\n" + error.message);
         }
       } else {
         currentText += `${currentText ? "\n" : ""}${parts[i].trim()}`;
@@ -227,6 +241,7 @@ const autoAI = async () => {
     delete gambar[m.sender];
   }
 };
+
 
 //Jawab GAME
     if (m.quoted && !cekCmd(m.body)) {
