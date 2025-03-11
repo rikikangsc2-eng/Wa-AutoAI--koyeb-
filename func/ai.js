@@ -33,9 +33,18 @@ const getUserRoom = async (user) => {
   let roomsData = await apiGetData('rooms');
   if (!roomsData || typeof roomsData !== 'object') roomsData = { rooms: {} };
   if (!roomsData.rooms) roomsData.rooms = {};
-  if (!roomsData.rooms[user] || !roomsData.rooms[user].settings) {
+  if (!roomsData.rooms[user]) {
     roomsData.rooms[user] = { settings: { systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "", lastTokenCount: 0 }, history: [] };
     await apiWriteData('rooms', roomsData);
+  } else {
+    if (!roomsData.rooms[user].history) {
+      roomsData.rooms[user].history = [];
+      await apiWriteData('rooms', roomsData);
+    }
+    if (!roomsData.rooms[user].settings) {
+      roomsData.rooms[user].settings = { systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "", lastTokenCount: 0 };
+      await apiWriteData('rooms', roomsData);
+    }
   }
   return roomsData.rooms[user];
 };
@@ -160,5 +169,8 @@ const handleImageQuery = async (url, text, user) => {
     return `Error processing image query: ${error.message}`;
   }
 };
-const riwayat = user => apiGetData('rooms').then(data => data.rooms && data.rooms[user] ? JSON.stringify(data.rooms[user].history, null, 2) : "Tidak ada riwayat untuk pengguna ini.");
+const riwayat = async user => {
+  let data = await apiGetData('rooms');
+  return data.rooms && data.rooms[user] ? JSON.stringify(data.rooms[user].history, null, 2) : "Tidak ada riwayat untuk pengguna ini.";
+};
 module.exports = { handleTextQuery, handleImageQuery, riwayat };
