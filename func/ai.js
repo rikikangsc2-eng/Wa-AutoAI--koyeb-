@@ -1,69 +1,36 @@
-const axios = require('axios'),
-  fs = require('fs'),
-  { global } = require('../config.js'),
-  openaiTokenCounter = require('openai-gpt-token-counter');
-const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions",
-  GEMMA_MODEL_NAME = global.model_groq,
-  API_KEY = global.apikey,
-  RAPID_API_KEY = global.rapidapikey,
-  RAPID_API_HOST = "chatgpt-vision1.p.rapidapi.com",
-  RAPID_API_URL = "https://chatgpt-vision1.p.rapidapi.com/matagvision21",
-  DEFAULT_GENERATION_CONFIG = { max_tokens: 250, stream: false, stop: null, temperature: 0.8, top_p: 0.9 },
-  API_ENDPOINT = 'https://copper-ambiguous-velvet.glitch.me/data',
-  USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; RMX2185 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.260 Mobile Safari/537.36';
-const apiGetData = async (dataType) => {
+const axios = require('axios');
+const fs = require('fs');
+const { global } = require('../config.js');
+const openaiTokenCounter = require('openai-gpt-token-counter');
+const GEMMA_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GEMMA_MODEL_NAME = global.model_groq;
+const API_KEY = global.apikey;
+const RAPID_API_KEY = global.rapidapikey;
+const RAPID_API_HOST = "chatgpt-vision1.p.rapidapi.com";
+const RAPID_API_URL = "https://chatgpt-vision1.p.rapidapi.com/matagvision21";
+const DEFAULT_GENERATION_CONFIG = { max_tokens: 250, stream: false, stop: null, temperature: 0.8, top_p: 0.9 };
+const userData = {};
+const getHistoryFilePath = user => `history-${user}.json`;
+const loadHistory = user => {
+  const filePath = getHistoryFilePath(user);
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, JSON.stringify([]), 'utf8');
+    return [];
+  }
   try {
-    const res = await axios.get(`${API_ENDPOINT}/${dataType}`, { headers: { 'User-Agent': USER_AGENT } });
-    return res.data;
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } catch (e) {
-    console.error(e);
-    return {};
+    return [];
   }
 };
-const apiWriteData = async (dataType, data) => {
-  try {
-    await axios.post(`${API_ENDPOINT}/${dataType}`, data, { headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/json' } });
-    return true;
-  } catch (e) {
-    console.error(e);
-    return false;
-  }
-};
-const getUserRoom = async (user) => {
-  let roomsData = await apiGetData('rooms');
-  if (!roomsData || typeof roomsData !== 'object') roomsData = { rooms: {} };
-  if (!roomsData.rooms) roomsData.rooms = {};
-  if (!roomsData.rooms[user]) {
-    roomsData.rooms[user] = { settings: { systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "", lastTokenCount: 0 }, history: [] };
-    await apiWriteData('rooms', roomsData);
-  } else {
-    if (!roomsData.rooms[user].history) {
-      roomsData.rooms[user].history = [];
-      await apiWriteData('rooms', roomsData);
-    }
-    if (!roomsData.rooms[user].settings) {
-      roomsData.rooms[user].settings = { systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "", lastTokenCount: 0 };
-      await apiWriteData('rooms', roomsData);
-    }
-  }
-  return roomsData.rooms[user];
-};
-const updateUserRoom = async (user, roomData) => {
-  let roomsData = await apiGetData('rooms');
-  if (!roomsData || typeof roomsData !== 'object') roomsData = { rooms: {} };
-  roomsData.rooms = roomsData.rooms || {};
-  roomsData.rooms[user] = roomData;
-  await apiWriteData('rooms', roomsData);
+const saveHistory = (user, history) => {
+  fs.writeFileSync(getHistoryFilePath(user), JSON.stringify(history), 'utf8');
 };
 const manageTokenCount = history => {
-  let msgs = history.filter(m => m.role !== "system"),
-    total = openaiTokenCounter.chat(msgs, "gpt-4");
+  let msgs = history.filter(m => m.role !== "system"), total = openaiTokenCounter.chat(msgs, "gpt-4");
   while (total > 2000 && history.filter(m => m.role !== "system").length > 1) {
     for (let i = 0; i < history.length; i++) {
-      if (history[i].role !== "system") {
-        history.splice(i, 1);
-        break;
-      }
+      if (history[i].role !== "system") { history.splice(i, 1); break; }
     }
     msgs = history.filter(m => m.role !== "system");
     total = openaiTokenCounter.chat(msgs, "gpt-4");
@@ -71,15 +38,13 @@ const manageTokenCount = history => {
   return history;
 };
 const processTextQuery = async (text, user) => {
-  let room = await getUserRoom(user);
-  let modelConfig = room.settings;
-  const promptFromFile = fs.readFileSync('./prompt.txt', 'utf8');
-  if (modelConfig.systemPrompt !== promptFromFile) modelConfig.systemPrompt = promptFromFile;
+  if (!userData[user]) userData[user] = { settings: { lastTokenCount: 0, systemPrompt: "", persona: "" } };
+  if (userData[user].settings.systemPrompt !== fs.readFileSync('./prompt.txt', 'utf8')) userData[user].settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
   const generationConfig = { ...DEFAULT_GENERATION_CONFIG };
-  let history = room.history || [];
+  let history = loadHistory(user);
   history.push({ role: "user", content: text });
-  let updatedHistory = manageTokenCount(history);
-  const systemPrompt = modelConfig.systemPrompt;
+  const updatedHistory = manageTokenCount(history);
+  const systemPrompt = userData[user].settings.systemPrompt || fs.readFileSync('./prompt.txt', 'utf8');
   let messages = [
     { role: "system", content: systemPrompt },
     { role: "user", content: "hai, Apa kabar?" },
@@ -91,8 +56,8 @@ Analisis metode respon: Teks.
 </think>
 Hah? Kepo banget sih. Tapi yaa... lumayan lah, nggak seburuk cuaca hati kamu pas ditinggal chat doang. 😏` }
   ];
-  if (modelConfig.persona) {
-    messages.push({ role: "user", content: modelConfig.persona }, { role: "assistant", content: "Okee yaa aku ingat!" });
+  if (userData[user].settings.persona) {
+    messages.push({ role: "user", content: userData[user].settings.persona }, { role: "assistant", content: "Okee yaa aku ingat!" });
   }
   messages.push(...updatedHistory);
   let responseText;
@@ -100,26 +65,18 @@ Hah? Kepo banget sih. Tapi yaa... lumayan lah, nggak seburuk cuaca hati kamu pas
     const response = await axios.post(GEMMA_API_URL, { model: GEMMA_MODEL_NAME, messages, ...generationConfig }, { headers: { Authorization: `Bearer ${API_KEY}` } });
     responseText = response.data.choices[0].message.content;
     updatedHistory.push({ role: "assistant", content: responseText });
-    room.history = updatedHistory;
-    modelConfig.lastTokenCount = updatedHistory.reduce((acc, m) => acc + m.content.length, 0);
-    room.settings = modelConfig;
-    await updateUserRoom(user, room);
+    saveHistory(user, updatedHistory);
+    userData[user].settings.lastTokenCount = updatedHistory.reduce((acc, m) => acc + m.content.length, 0);
   } catch (error) {
     if (error.response && error.response.status === 429) {
       try {
         const response = await axios.post(GEMMA_API_URL, { model: GEMMA_MODEL_NAME, messages, ...generationConfig }, { headers: { Authorization: `Bearer ${API_KEY}` } });
         responseText = response.data.choices[0].message.content;
         updatedHistory.push({ role: "assistant", content: responseText });
-        room.history = updatedHistory;
-        modelConfig.lastTokenCount = updatedHistory.reduce((acc, m) => acc + m.content.length, 0);
-        room.settings = modelConfig;
-        await updateUserRoom(user, room);
-      } catch (retryError) {
-        return `Terlalu sering membuat permintaan dalam waktu dekat!`;
-      }
-    } else {
-      return `API Error: ${error.message}`;
-    }
+        saveHistory(user, updatedHistory);
+        userData[user].settings.lastTokenCount = updatedHistory.reduce((acc, m) => acc + m.content.length, 0);
+      } catch (retryError) { return `Terlalu sering membuat permintaan dalam waktu dekat!`; }
+    } else { return `API Error: ${error.message}`; }
   }
   responseText = responseText.includes("<think>") && responseText.includes("</think>")
     ? responseText.replace(/<think>[\s\S]*?<\/think>/, "").trim()
@@ -127,29 +84,26 @@ Hah? Kepo banget sih. Tapi yaa... lumayan lah, nggak seburuk cuaca hati kamu pas
   return responseText;
 };
 const handleTextQuery = async (text, user) => {
-  let room = await getUserRoom(user);
+  if (!userData[user]) userData[user] = { settings: { systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "" } };
   if (text.toLowerCase() === "reset") {
-    room.settings.persona = "";
-    room.settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
-    room.history = [];
-    await updateUserRoom(user, room);
+    userData[user].settings.persona = "";
+    userData[user].settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
+    saveHistory(user, []);
     return "Riwayat percakapan, preferensi, dan persona telah direset.";
   }
   if (text.toLowerCase().startsWith("persona:")) {
     const persona = text.replace("persona:", "").trim();
-    room.settings.persona = persona;
-    await updateUserRoom(user, room);
+    userData[user].settings.persona = persona;
     return `Persona telah diatur: "${persona}"`;
   }
   if (text.toLowerCase() === "resetprompt") {
-    room.settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
-    await updateUserRoom(user, room);
+    userData[user].settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
     return "Prompt telah direset.";
   }
   return processTextQuery(text, user);
 };
 const handleImageQuery = async (url, text, user) => {
-  let room = await getUserRoom(user);
+  if (!userData[user]) userData[user] = { settings: { systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "" } };
   try {
     const payload = { messages: [{ role: "user", content: [{ type: "text", text }, { type: "image", url }] }], web_access: true };
     const response = await axios.post(RAPID_API_URL, payload, {
@@ -161,16 +115,16 @@ const handleImageQuery = async (url, text, user) => {
       }
     });
     const responseText = response.data.result;
-    room.history.push({ role: "user", content: `Gambar: ${url} , Pertanyaan: ${text}` }, { role: "assistant", content: responseText });
-    await updateUserRoom(user, room);
+    let history = loadHistory(user);
+    history.push({ role: "user", content: `Gambar: ${url} , Pertanyaan: ${text}` }, { role: "assistant", content: responseText });
+    saveHistory(user, history);
     return responseText;
   } catch (error) {
-    console.error("Error in handleImageQuery:", error);
     return `Error processing image query: ${error.message}`;
   }
 };
-const riwayat = async user => {
-  let data = await apiGetData('rooms');
-  return data.rooms && data.rooms[user] ? JSON.stringify(data.rooms[user].history, null, 2) : "Tidak ada riwayat untuk pengguna ini.";
+const riwayat = user => {
+  const history = loadHistory(user);
+  return history.length ? JSON.stringify(history, null, 2) : "Tidak ada riwayat untuk pengguna ini.";
 };
 module.exports = { handleTextQuery, handleImageQuery, riwayat };
