@@ -25,7 +25,6 @@ const usePairingCode = true;
 const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
 
 
-
 const question = (text) => {
   const rl = readline.createInterface({
     input: process.stdin,

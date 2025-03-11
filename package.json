@@ -4,6 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
+    "del": "cd rickyCreds && find . -not -name 'creds.json' -delete",
     "start": "bash rikiRun.bash",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
