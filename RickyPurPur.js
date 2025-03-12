@@ -136,14 +136,13 @@ const bug = async (err) => {
 
 const user = `${m.chat.split("@")[0]}`
 
+
 const autoAI = async () => {
   try {
     if (gambar[m.sender]) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       await client.sendMessage(m.chat, { react: { text: "✅", key: mkey[m.sender] } });
       mkey[m.sender] = null;
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await m.reply("*Memproses Gambar...*");
     }
     const hasil = gambar[m.sender]
       ? await ai.handleImageQuery(gambar[m.sender], m.body, user)
@@ -153,20 +152,38 @@ const autoAI = async () => {
       .replace(/\*\*(.*?)\*\*/g, "*$1*")
       .replace(/```(.*?)```/g, "`$1`");
     const parts = remainingText.split(/(\*\*[^\*]+\*\*|\[song.*?\]|\[song =.*?\]|\[diffusion.*?\]|\[diffusion =.*?\]|\[animesearch.*?\]|\[animesearch =.*?\]|\[quotes.*?\]|\[quotes =.*?\])/g);
+    const actions = new Set();
+    if (gambar[m.sender]) {
+      actions.add("membuat gambar");
+    }
+    for (let part of parts) {
+      const lower = part.toLowerCase();
+      if (lower.startsWith("[song=") || lower.startsWith("[song =")) {
+        actions.add("mencari musik");
+      } else if (lower.startsWith("[animesearch=") || lower.startsWith("[animesearch =")) {
+        actions.add("mencari anime");
+      } else if (lower.startsWith("[diffusion=") || lower.startsWith("[diffusion =")) {
+        actions.add("membuat gambar");
+      } else if (lower.startsWith("[quotes=") || lower.startsWith("[quotes =")) {
+        actions.add("membuat quotes");
+      }
+    }
+    if (actions.size > 0) {
+      const actionsArray = Array.from(actions);
+      const loadingMessage = `*${actionsArray.join(" & ")}* ⏳`;
+      await m.reply(loadingMessage);
+    }
     const mediaQueue = [];
     const textQueue = [];
-    const wait = "⏳";
     let currentText = "";
     for (let i = 0; i < parts.length; i++) {
       if (parts[i].toLowerCase().startsWith("[song=") || parts[i].toLowerCase().startsWith("[song =")) {
         const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await m.reply(wait);
         await play.get(m, client, query);
       } else if (parts[i].toLowerCase().startsWith("[animesearch=") || parts[i].toLowerCase().startsWith("[animesearch =")) {
         const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await m.reply(wait);
         try {
           const response = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&sfw`);
           const result = response.data.data;
@@ -193,7 +210,6 @@ const autoAI = async () => {
       } else if (parts[i].toLowerCase().startsWith("[diffusion=") || parts[i].toLowerCase().startsWith("[diffusion =")) {
         const query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await m.reply(wait);
         try {
           const response = await axios.get(`https://aihub.xtermai.xyz/api/text2img/animediff?key=${global.xterm}&prompt=${encodeURIComponent(query)}`, { responseType: "arraybuffer" });
           const imageBuffer = Buffer.from(response.data);
@@ -206,7 +222,6 @@ const autoAI = async () => {
         let query = parts[i].replace(/^\[.*?=/i, "").replace(/\]$/, "").trim();
         if (query.length > 150) query = query.substring(0, 150);
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await m.reply(wait);
         try {
           await client.sendMessage(m.chat, {
             image: { url: `https://pursky.vercel.app/api/bratimg?type=2&text=${encodeURIComponent(query)}` },
@@ -241,6 +256,7 @@ const autoAI = async () => {
     delete gambar[m.sender];
   }
 };
+
 
 
 //Jawab GAME
