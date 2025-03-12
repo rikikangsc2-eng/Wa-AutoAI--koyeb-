@@ -10,22 +10,52 @@ const RAPID_API_HOST = "chatgpt-vision1.p.rapidapi.com";
 const RAPID_API_URL = "https://chatgpt-vision1.p.rapidapi.com/matagvision21";
 const DEFAULT_GENERATION_CONFIG = { max_tokens: 250, stream: false, stop: null, temperature: 0.8, top_p: 0.9 };
 const userData = {};
-const getHistoryFilePath = user => `history-${user}.json`;
+const DB_FOLDER = "./db";
+
+const ensureDbFolder = () => {
+  if (!fs.existsSync(DB_FOLDER)) fs.mkdirSync(DB_FOLDER, { recursive: true });
+};
+
 const loadHistory = user => {
-  const filePath = getHistoryFilePath(user);
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, JSON.stringify([]), 'utf8');
-    return [];
+  ensureDbFolder();
+  const files = fs.readdirSync(DB_FOLDER).filter(file => new RegExp(`^${user}-(\\d+)\\.json$`).test(file));
+  let history = [];
+  let chosenFile = null;
+  let latestTimestamp = 0;
+  files.forEach(file => {
+    const match = file.match(new RegExp(`^${user}-(\\d+)\\.json$`));
+    if (match) {
+      const timestamp = parseInt(match[1], 10);
+      if (Date.now() - timestamp > 7 * 24 * 60 * 60 * 1000) {
+        fs.unlinkSync(`${DB_FOLDER}/${file}`);
+      } else if (timestamp > latestTimestamp) {
+        latestTimestamp = timestamp;
+        chosenFile = file;
+      }
+    }
+  });
+  if (chosenFile) {
+    try {
+      history = JSON.parse(fs.readFileSync(`${DB_FOLDER}/${chosenFile}`, 'utf8'));
+    } catch (e) {
+      history = [];
+    }
+  } else {
+    history = [];
+    const newFile = `${user}-${Date.now()}.json`;
+    fs.writeFileSync(`${DB_FOLDER}/${newFile}`, JSON.stringify(history), 'utf8');
   }
-  try {
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  } catch (e) {
-    return [];
-  }
+  return history;
 };
+
 const saveHistory = (user, history) => {
-  fs.writeFileSync(getHistoryFilePath(user), JSON.stringify(history), 'utf8');
+  ensureDbFolder();
+  const files = fs.readdirSync(DB_FOLDER).filter(file => new RegExp(`^${user}-(\\d+)\\.json$`).test(file));
+  files.forEach(file => fs.unlinkSync(`${DB_FOLDER}/${file}`));
+  const newFile = `${user}-${Date.now()}.json`;
+  fs.writeFileSync(`${DB_FOLDER}/${newFile}`, JSON.stringify(history), 'utf8');
 };
+
 const manageTokenCount = history => {
   let msgs = history.filter(m => m.role !== "system"), total = openaiTokenCounter.chat(msgs, "gpt-4");
   while (total > 2000 && history.filter(m => m.role !== "system").length > 1) {
@@ -37,9 +67,11 @@ const manageTokenCount = history => {
   }
   return history;
 };
+
 const processTextQuery = async (text, user) => {
   if (!userData[user]) userData[user] = { settings: { lastTokenCount: 0, systemPrompt: "", persona: "" } };
-  if (userData[user].settings.systemPrompt !== fs.readFileSync('./prompt.txt', 'utf8')) userData[user].settings.systemPrompt = fs.readFileSync('./prompt.txt', 'utf8');
+  const promptTxt = fs.readFileSync('./prompt.txt', 'utf8');
+  if (userData[user].settings.systemPrompt !== promptTxt) userData[user].settings.systemPrompt = promptTxt;
   const generationConfig = { ...DEFAULT_GENERATION_CONFIG };
   let history = loadHistory(user);
   history.push({ role: "user", content: text });
@@ -83,6 +115,7 @@ Hah? Kepo banget sih. Tapi yaa... lumayan lah, nggak seburuk cuaca hati kamu pas
     : responseText.replace("<think>", "").trim();
   return responseText;
 };
+
 const handleTextQuery = async (text, user) => {
   if (!userData[user]) userData[user] = { settings: { systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "" } };
   if (text.toLowerCase() === "reset") {
@@ -102,6 +135,7 @@ const handleTextQuery = async (text, user) => {
   }
   return processTextQuery(text, user);
 };
+
 const handleImageQuery = async (url, text, user) => {
   if (!userData[user]) userData[user] = { settings: { systemPrompt: fs.readFileSync('./prompt.txt', 'utf8'), persona: "" } };
   try {
@@ -123,8 +157,10 @@ const handleImageQuery = async (url, text, user) => {
     return `Error processing image query: ${error.message}`;
   }
 };
+
 const riwayat = user => {
   const history = loadHistory(user);
   return history.length ? JSON.stringify(history, null, 2) : "Tidak ada riwayat untuk pengguna ini.";
 };
+
 module.exports = { handleTextQuery, handleImageQuery, riwayat };
